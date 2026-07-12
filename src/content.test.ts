@@ -91,6 +91,10 @@ describe("portfolio evidence contract", () => {
     expect(work.every((item) => item.href.startsWith("https://"))).toBe(true);
     expect(work.every((item) => item.status.length > 0)).toBe(true);
     expect(work.every((item) => item.artifact.length > 0)).toBe(true);
+    expect(work.find((item) => item.title === "FFT Learning Notes")).toMatchObject({
+      href: "https://fft-learning.vercel.app/",
+      status: "Live learning tool",
+    });
   });
 
   it("does not model unsupported career or impact claims", () => {
