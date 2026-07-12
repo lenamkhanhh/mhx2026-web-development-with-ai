@@ -1,5 +1,5 @@
 export type EvidenceTone = "academic" | "competitive" | "achievement";
-export type WorkStatus = "Current work" | "Early project" | "Evolving notes";
+export type WorkStatus = "Current work" | "Early project" | "Evolving notes" | "Live learning tool";
 export type ArtifactKind = "training" | "voxel" | "fft";
 
 export interface EvidenceItem {
@@ -190,15 +190,15 @@ export const work: WorkItem[] = [
   },
   {
     title: "FFT Learning Notes",
-    status: "Evolving notes",
-    type: "Study notes",
-    focus: "Mathematics · Algorithms",
+    status: "Live learning tool",
+    type: "Interactive study project",
+    focus: "Mathematics · Algorithms · JavaScript",
     detail:
-      "An evolving collection of visual and written notes for understanding Fast Fourier Transform from first principles.",
-    artifact: "Derivation notes · butterfly structure · implementation checklist",
+      "An interactive notebook for exploring radix-2 FFT output, spectrum bins, and the butterfly structure from first principles.",
+    artifact: "Spectrum explorer · butterfly stages · tested radix-2 implementation",
     artifactKind: "fft",
-    href: "https://github.com/lenamkhanhh/FFT-Learning",
-    action: "Open learning notes",
+    href: "https://fft-learning.vercel.app/",
+    action: "Open interactive notebook",
   },
 ];
 
