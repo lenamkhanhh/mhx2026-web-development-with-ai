@@ -440,12 +440,13 @@ svg { display: block; }
 .foundation-stage-index {
   position: absolute;
   top: 27px;
-  left: -88px;
+  left: -114px;
   width: 50px;
   text-align: right;
   color: var(--blue);
   font: 11px var(--mono);
 }
+.foundation-stage-copy { padding-left: 24px; }
 .foundation-stage-copy h3 {
   max-width: 640px;
   margin: 0;
@@ -942,8 +943,8 @@ svg { display: block; }
   .foundation-heading { grid-template-columns: 1fr; gap: 20px; padding-top: 14px; }
   .foundation-heading h2 { font-size: clamp(40px, 12vw, 56px); }
   .foundation-archive { margin-top: 36px; }
-  .foundation-timeline { padding-left: 38px; }
-  .foundation-timeline::before { left: 10px; top: 26px; bottom: 26px; }
+  .foundation-timeline { padding-left: 52px; }
+  .foundation-timeline::before { left: 20px; top: 26px; bottom: 26px; }
   .foundation-timeline-node,
   .foundation-feature {
     grid-template-columns: 1fr;
@@ -952,15 +953,16 @@ svg { display: block; }
     margin-right: 0;
     padding: 22px 0 26px;
   }
-  .foundation-timeline-marker { top: 21px; left: -36px; width: 18px; height: 18px; }
-  .foundation-stage-index { top: 24px; left: -52px; right: auto; width: 48px; text-align: left; }
-  .foundation-stage-copy { padding-right: 48px; }
+  .foundation-timeline-marker { top: 21px; left: -41px; width: 18px; height: 18px; }
+  .foundation-stage-index { top: 24px; left: -72px; right: auto; width: 25px; text-align: right; font-size: 8.5px; }
+  .foundation-stage-copy { padding-right: 48px; padding-left: 12px; }
   .foundation-stage-copy h3 { font-size: clamp(31px, 9vw, 42px); }
   .foundation-years { grid-template-columns: 1fr; margin-top: 4px; }
   .foundation-years li { display: grid; grid-template-columns: 1fr auto; min-height: 86px; }
   .foundation-years strong { margin: 0; align-self: end; text-align: right; }
   .foundation-feature { padding: 26px 18px; }
-  .foundation-feature .foundation-timeline-marker { left: -54px; }
+  .foundation-feature .foundation-timeline-marker { left: -41px; }
+  .foundation-feature .foundation-stage-copy { padding-left: 0; }
   .foundation-feature-award { margin-top: 18px !important; font-size: clamp(50px, 15vw, 70px) !important; }
   .foundation-feature-detail { align-self: start; gap: 24px; }
   .foundation-proof-stage { gap: 28px; }
