@@ -4,3 +4,6 @@ dist/
 output/
 .playwright-cli/
 *.log
+
+# Local Netlify folder
+.netlify
