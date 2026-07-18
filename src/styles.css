@@ -15,6 +15,11 @@
   --blue: #1548e8;
   --blue-dark: #0d36b8;
   --lime: #b8f34a;
+  --section-wash: rgba(245, 246, 242, .68);
+  --section-wash-strong: rgba(245, 246, 242, .7);
+  --section-label-wash: rgba(245, 246, 242, .8);
+  --section-label-shadow: rgba(245, 246, 242, .72);
+  --fixed-dark-panel: #111318;
   --mono: "IBM Plex Mono", Consolas, monospace;
 }
 
@@ -29,6 +34,10 @@
   --blue: #81a2ff;
   --blue-dark: #9ab4ff;
   --lime: #b8f34a;
+  --section-wash: rgba(16, 19, 24, .66);
+  --section-wash-strong: rgba(16, 19, 24, .74);
+  --section-label-wash: rgba(16, 19, 24, .84);
+  --section-label-shadow: rgba(16, 19, 24, .74);
 }
 
 * { box-sizing: border-box; }
@@ -260,7 +269,7 @@ svg { display: block; }
   padding-top: 54px;
   padding-bottom: 64px;
   border-bottom: 1px solid var(--rule-strong);
-  background: rgba(245, 246, 242, .68);
+  background: var(--section-wash);
 }
 .section-label { display: flex; align-items: center; gap: 14px; color: var(--muted); }
 .section-label span { color: var(--blue); font-weight: 500; }
@@ -270,8 +279,8 @@ svg { display: block; }
 .interests-section > .section-label {
   width: fit-content;
   padding: 4px 8px 4px 0;
-  background: rgba(245, 246, 242, .8);
-  box-shadow: 0 0 22px 12px rgba(245, 246, 242, .72);
+  background: var(--section-label-wash);
+  box-shadow: 0 0 22px 12px var(--section-label-shadow);
 }
 .trajectory-track {
   position: absolute;
@@ -310,7 +319,7 @@ svg { display: block; }
 .foundation-section {
   padding: 104px clamp(24px, 5.7vw, 92px) 112px;
   border-bottom: 1px solid var(--rule-strong);
-  background: rgba(245, 246, 242, .7);
+  background: var(--section-wash-strong);
 }
 .foundation-main { max-width: 1320px; margin: 0 auto; }
 .foundation-heading {
@@ -381,11 +390,11 @@ svg { display: block; }
   list-style: none;
   background: var(--rule);
 }
-.foundation-years li { min-height: 145px; padding: 19px; background: rgba(245, 246, 242, .8); }
+.foundation-years li { min-height: 145px; padding: 19px; background: var(--surface); }
 .foundation-years span,
 .foundation-years small { display: block; color: var(--muted); font: 10px var(--mono); letter-spacing: .045em; text-transform: uppercase; }
 .foundation-years strong { display: block; margin: 29px 0 8px; font-size: clamp(22px, 2.3vw, 31px); line-height: 1; letter-spacing: -.05em; }
-.foundation-feature { position: relative; overflow: hidden; min-height: 430px; color: #f5f6f2; background: var(--ink); }
+.foundation-feature { position: relative; overflow: hidden; min-height: 430px; color: #f5f6f2; background: var(--fixed-dark-panel); }
 .foundation-feature::after { content: "C2"; position: absolute; right: -12px; bottom: -47px; color: rgba(56, 102, 255, .2); font-size: clamp(170px, 24vw, 330px); font-weight: 600; line-height: 1; letter-spacing: -.12em; pointer-events: none; }
 .foundation-feature > * { position: relative; z-index: 1; }
 .foundation-feature .foundation-card-topline { color: #9fb5ff; }
@@ -555,7 +564,7 @@ svg { display: block; }
   border: 0;
   overflow: visible;
   color: #f5f6f2;
-  background: var(--ink);
+  background: var(--fixed-dark-panel);
 }
 .foundation-feature .foundation-timeline-marker { background: #d9ff42; box-shadow: 0 0 0 7px var(--paper); }
 .foundation-feature::after { right: 0; bottom: -4px; font-size: 230px; overflow: hidden; }
@@ -597,7 +606,7 @@ svg { display: block; }
   gap: 52px;
   padding: 104px clamp(24px, 5.7vw, 92px) 112px;
   border-bottom: 1px solid var(--rule-strong);
-  background: rgba(245, 246, 242, .68);
+  background: var(--section-wash);
 }
 .competition-story {
   display: grid;
@@ -901,7 +910,7 @@ svg { display: block; }
   display: grid;
   grid-template-columns: minmax(170px, .3fr) 1fr;
   gap: 52px;
-  background: var(--ink);
+  background: var(--fixed-dark-panel);
   color: #f5f6f2;
 }
 .contact-panel .section-label { color: #aeb5b5; }
