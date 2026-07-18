@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
-import app from "./index";
+import app from "../api/index";
 
 describe("Vercel deployment entrypoint", () => {
   it("serves the existing Express API through the serverless entrypoint", async () => {
