@@ -25,6 +25,19 @@ The portfolio intentionally avoids unsupported claims about employment, publicat
 - Fixed Canvas constellation field with a static technical-blueprint overlay
 - Deterministic visual field, capped DPR/FPS, and lifecycle-aware animation cleanup
 - English-only visitor-facing content with links to CV, GitHub, Codeforces, and selected work
+- Persistent dark/light mode using React state, effects, and `localStorage`
+- Searchable project evidence and a controlled contact form with validation
+- Node.js/Express REST API with CRUD and query-parameter filtering
+- API-backed React gallery with loading, empty, and failure states
+
+## UIT Web Development with AI submission
+
+This branch adapts the existing public portfolio for the Mùa hè xanh UIT 2026 course assignments:
+
+- **Buổi 2 — Frontend & ReactJS:** component-based React/Vite portfolio, responsive layout, dark mode, searchable projects, and controlled contact form.
+- **Buổi 3 — Backend & NodeJS:** RESTful projects API, input validation, CRUD, search/filter query parameters, CORS, and frontend integration.
+
+The AI assistance record is in [`AI_PROMPTS.md`](./AI_PROMPTS.md). API demo commands are in [`docs/api-demo.md`](./docs/api-demo.md).
 
 ## Tech stack
 
@@ -44,10 +57,32 @@ npm run dev
 
 Open the local URL printed by Vite.
 
+Start the API in a second terminal:
+
+```bash
+npm run start:api
+```
+
+Vite proxies `/api` requests to `http://localhost:3001` during development.
+
+> The existing Netlify URL hosts the original frontend deployment only. The course API is verified locally and is **not** presented as a deployed bonus. This in-memory CRUD service is intentionally unauthenticated for coursework/Postman practice; add authentication and persistent storage before exposing write routes publicly.
+
+## REST API
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/projects` | List projects; supports `q` and `technology` |
+| `GET` | `/api/projects/:id` | Get one project |
+| `POST` | `/api/projects` | Create a project |
+| `PUT` | `/api/projects/:id` | Replace a project |
+| `PATCH` | `/api/projects/:id` | Update selected fields |
+| `DELETE` | `/api/projects/:id` | Delete a project |
+
 ## Quality checks
 
 ```bash
 npm test
+npm run test:coverage
 npm run lint
 npx tsc --noEmit
 npm run build

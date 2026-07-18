@@ -6,12 +6,19 @@ import { z } from "zod";
 import { createProjectStore, type ProjectStore } from "./projectStore";
 import { seedProjects } from "./projects";
 
+class CorsOriginError extends Error {}
+
+const httpUrlSchema = z.url().refine((value) => {
+  const protocol = new URL(value).protocol;
+  return protocol === "http:" || protocol === "https:";
+});
+
 const projectSchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().min(1).max(1_000),
   image: z.string().trim().min(1).max(500),
   technologies: z.array(z.string().trim().min(1).max(40)).min(1).max(12),
-  link: z.url(),
+  link: httpUrlSchema,
 });
 
 const projectUpdateSchema = projectSchema.partial().refine((value) => Object.keys(value).length > 0);
@@ -30,7 +37,11 @@ export function createApp(store: ProjectStore = createProjectStore(seedProjects)
   app.use(
     cors({
       origin(origin, callback) {
-        callback(isAllowedOrigin(origin) ? null : new Error("Origin is not allowed"), isAllowedOrigin(origin));
+        if (isAllowedOrigin(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(new CorsOriginError("Origin is not allowed"), false);
       },
     }),
   );
@@ -116,11 +127,15 @@ export function createApp(store: ProjectStore = createProjectStore(seedProjects)
 
   app.use(
     (
-      _error: unknown,
+      error: unknown,
       _request: express.Request,
       response: express.Response,
       _next: express.NextFunction,
     ) => {
+      if (error instanceof CorsOriginError) {
+        response.status(403).json({ error: "Origin is not allowed" });
+        return;
+      }
       response.status(500).json({ error: "Internal server error" });
     },
   );

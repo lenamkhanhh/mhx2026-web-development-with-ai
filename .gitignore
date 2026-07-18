@@ -1,6 +1,8 @@
 node_modules/
 .npm-cache/
 dist/
+coverage/
+submission-evidence/
 output/
 .playwright-cli/
 *.log

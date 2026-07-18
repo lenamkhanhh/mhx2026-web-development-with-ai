@@ -22,8 +22,6 @@ export function ApiProjectGallery() {
       ? `/api/projects?q=${encodeURIComponent(query.trim())}`
       : "/api/projects";
 
-    setLoading(true);
-    setError("");
     fetch(endpoint)
       .then((response) => {
         if (!response.ok) throw new Error("Request failed");
@@ -65,7 +63,11 @@ export function ApiProjectGallery() {
         <input
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setLoading(true);
+            setError("");
+            setQuery(event.target.value);
+          }}
           placeholder="Try ReactJS, Express, FFT…"
         />
       </label>
