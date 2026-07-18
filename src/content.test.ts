@@ -12,12 +12,12 @@ import {
 } from "./content";
 
 describe("portfolio evidence contract", () => {
-  it("keeps the verified academic identity and public contact details", () => {
+  it("keeps the verified academic identity without exposing a phone number", () => {
     expect(profile.name).toBe("LÊ NAM KHÁNH");
     expect(profile.school).toBe("University of Science, VNU-HCM (HCMUS)");
     expect(profile.degree).toContain("First-year");
     expect(contact.email.value).toBe("lenamkhanh07082007@gmail.com");
-    expect(contact.phone.value).toBe("0914061230");
+    expect(contact).not.toHaveProperty("phone");
   });
 
   it("surfaces only the three verified headline facts", () => {
