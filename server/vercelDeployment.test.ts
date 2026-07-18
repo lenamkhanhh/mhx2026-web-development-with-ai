@@ -18,4 +18,17 @@ describe("Vercel deployment entrypoint", () => {
       { source: "/(.*)", destination: "/index.html" },
     ]);
   });
+
+  it("uses Node ESM-compatible extensions in production server imports", () => {
+    const runtimeFiles = ["api/index.ts", "server/app.ts", "server/index.ts", "server/projects.ts"];
+
+    for (const file of runtimeFiles) {
+      const source = readFileSync(file, "utf8");
+      const relativeImports = [...source.matchAll(/from\s+["'](\.[^"']+)["']/g)];
+
+      for (const [, specifier] of relativeImports) {
+        expect(specifier, `${file}: ${specifier}`).toMatch(/\.js$/);
+      }
+    }
+  });
 });
