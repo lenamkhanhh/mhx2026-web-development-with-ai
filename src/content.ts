@@ -51,11 +51,6 @@ export const contact = {
     value: "lenamkhanh07082007@gmail.com",
     href: "mailto:lenamkhanh07082007@gmail.com",
   },
-  phone: {
-    label: "Phone",
-    value: "0914061230",
-    href: "tel:0914061230",
-  },
   github: {
     label: "GitHub",
     value: "lenamkhanhh",

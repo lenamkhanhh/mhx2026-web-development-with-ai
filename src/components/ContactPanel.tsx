@@ -34,7 +34,6 @@ export function ContactPanel() {
       <ContactForm />
       <div className="contact-meta">
         <a href={contact.email.href}>{contact.email.value}</a>
-        <a href={contact.phone.href}>{contact.phone.value}</a>
         <a href={contact.codeforces.href} target="_blank" rel="noreferrer">
           Codeforces · {contact.codeforces.value}
         </a>
