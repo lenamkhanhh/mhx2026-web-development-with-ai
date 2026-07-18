@@ -89,7 +89,7 @@ svg { display: block; }
 .blueprint-overlay pattern path { stroke: rgba(21, 72, 232, .105); stroke-width: 1; }
 .blueprint-contours path { fill: none; stroke: rgba(55, 91, 174, .13); stroke-width: 1.1; }
 .blueprint-marks { fill: rgba(20, 68, 189, .46); stroke: rgba(20, 68, 189, .42); stroke-width: 1; font: 500 10px var(--mono); letter-spacing: .08em; }
-.portfolio-shell > :not(.research-atlas) { position: relative; z-index: 1; }
+.portfolio-shell > :not(.research-atlas):not(.site-header) { position: relative; z-index: 1; }
 
 .site-header {
   min-height: 72px;
