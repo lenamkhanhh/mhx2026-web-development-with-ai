@@ -3,8 +3,8 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { z } from "zod";
-import { createProjectStore, type ProjectStore } from "./projectStore";
-import { seedProjects } from "./projects";
+import { createProjectStore, type ProjectStore } from "./projectStore.js";
+import { seedProjects } from "./projects.js";
 
 class CorsOriginError extends Error {}
 

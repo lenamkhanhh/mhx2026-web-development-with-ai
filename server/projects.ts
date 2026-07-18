@@ -1,4 +1,4 @@
-import type { Project } from "./projectStore";
+import type { Project } from "./projectStore.js";
 
 export const seedProjects: Project[] = [
   {
