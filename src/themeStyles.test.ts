@@ -9,6 +9,7 @@ describe("portfolio theme surfaces", () => {
     const headerRule = styles.match(/\.site-header\s*{([^}]*)}/)?.[1] ?? "";
 
     expect(shellRule).not.toMatch(/overflow:\s*(?:clip|hidden|auto|scroll)/);
+    expect(styles).toMatch(/\.portfolio-shell\s*>\s*:not\(\.research-atlas\):not\(\.site-header\)/);
     expect(headerRule).toMatch(/position:\s*sticky/);
     expect(headerRule).toMatch(/top:\s*0/);
   });
