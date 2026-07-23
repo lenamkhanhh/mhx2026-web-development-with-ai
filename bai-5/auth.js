@@ -25,3 +25,7 @@ export function validateRegistration({ email, password, confirmPassword }) {
   if (password !== confirmPassword) return 'Mật khẩu xác nhận không trùng khớp.'
   return ''
 }
+
+export function resolveSubmitForm(event) {
+  return event.target
+}

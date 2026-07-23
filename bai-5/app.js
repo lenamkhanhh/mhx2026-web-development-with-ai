@@ -1,4 +1,9 @@
-import { validateEmail, validatePassword, validateRegistration } from './auth.js'
+import {
+  resolveSubmitForm,
+  validateEmail,
+  validatePassword,
+  validateRegistration,
+} from './auth.js'
 import {
   configureFirebase,
   isFirebaseReady,
@@ -123,7 +128,7 @@ function formValues(form) {
 
 async function handleSubmit(event) {
   event.preventDefault()
-  const form = event.currentTarget
+  const form = resolveSubmitForm(event)
   const values = formValues(form)
   notice('')
   try {
