@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { validateEmail, validatePassword, validateRegistration } from './auth.js'
+import {
+  resolveSubmitForm,
+  validateEmail,
+  validatePassword,
+  validateRegistration,
+} from './auth.js'
 
 describe('Buổi 5 auth validation', () => {
   it('accepts a valid email and rejects malformed addresses', () => {
@@ -39,5 +44,17 @@ describe('Buổi 5 auth validation', () => {
         confirmPassword: 'Strong!9',
       }),
     ).toBe('')
+  })
+
+  it('uses the submitted form instead of the delegated listener target', () => {
+    const submittedForm = { dataset: { form: 'register' } }
+    const delegatedListener = { nodeName: '#document' }
+
+    expect(
+      resolveSubmitForm({
+        target: submittedForm,
+        currentTarget: delegatedListener,
+      }),
+    ).toBe(submittedForm)
   })
 })
