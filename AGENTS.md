@@ -1,6 +1,6 @@
 # Prototype Instructions
 
-- Buổi 5 auth UI direction (2026-07-23): the initial red/yellow brutalist split layout was rejected as visually heavy. Use the revised Japanese culture-magazine system instead: a horizontal masthead, ivory paper, cobalt and acid-lime accents, compact metadata, a centered editorial grid, and a separate clean form sheet. Keep Vietnamese content readable and do not turn the interface into decorative faux-Japanese pastiche.
+- Buổi 5 auth UI direction (2026-07-23): the user selected Figma frame `B — Tokyo Neo-pop` (`2:3`) as source of truth. Use a pale-blue field, electric-blue and hot-pink circles, acid-lime badge/action, oversized black headline, and a rounded white auth card with a hard blue shadow. Preserve readable Vietnamese content, responsive behavior, and all auth/profile functionality.
 
 Run the local server yourself and open the preview in the browser available to this environment. Do not give the user server-start instructions when you can run it.
 

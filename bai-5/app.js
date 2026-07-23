@@ -47,8 +47,15 @@ function notice(message = '', kind = 'info') {
   node.hidden = !message
 }
 
-function inputField({ id, label, type = 'text', value = '', autocomplete = '' }) {
-  return `<label class="field" for="${id}"><span>${label}</span><input id="${id}" name="${id}" type="${type}" value="${escapeHtml(value)}" autocomplete="${autocomplete}" required /></label>`
+function inputField({ id, label, type = 'text', value = '', autocomplete = '', required = true }) {
+  const placeholders = {
+    confirmPassword: '••••••••••',
+    displayName: 'Your name',
+    email: 'name@example.com',
+    password: '••••••••••',
+    phone: '090 000 0000',
+  }
+  return `<label class="field" for="${id}"><span>${label}</span><input id="${id}" name="${id}" type="${type}" value="${escapeHtml(value)}" placeholder="${placeholders[id] || ''}" autocomplete="${autocomplete}"${required ? ' required' : ''} /></label>`
 }
 
 function renderShell(content) {
@@ -56,10 +63,10 @@ function renderShell(content) {
     <div class="app-shell">
       <aside class="brand-panel">
         <div class="brand-mark">WD<span>5</span></div>
-        <p class="eyebrow">WEB DEVELOPMENT WITH AI</p>
-        <h1>Build a safer way into the web.</h1>
-        <p class="brand-copy">Một flow xác thực rõ ràng: đăng ký, đăng nhập và quản lý hồ sơ người dùng.</p>
-        <div class="proof-list"><span>01 / AUTH</span><span>02 / PROFILE</span><span>03 / FIREBASE</span></div>
+        <p class="eyebrow"><strong>05</strong><span>認証</span></p>
+        <h1>Hello,<br />web person!</h1>
+        <p class="brand-copy">Đăng nhập để tiếp tục xây dựng những thứ thú vị trên web.</p>
+        <div class="proof-list"><span>AUTH / PROFILE</span><span>UIT 2026</span><span>MENU ＋</span></div>
       </aside>
       <main class="auth-panel">
         <header class="topbar">
@@ -79,8 +86,8 @@ function renderShell(content) {
 
 function renderLogin() {
   renderShell(`
-    <div class="section-label">01 / WELCOME BACK</div>
-    <h2>Đăng nhập vào<br /><em>workspace của bạn.</em></h2>
+    <h2>WELCOME BACK!</h2>
+    <div class="section-label">ログイン / LOGIN / 001</div>
     <p class="lede">Tiếp tục từ nơi bạn đã dừng lại.</p>
     <form data-form="login" class="auth-form">
       ${inputField({ id: 'email', label: 'Email', type: 'email', autocomplete: 'email' })}
@@ -93,8 +100,8 @@ function renderLogin() {
 
 function renderRegister() {
   renderShell(`
-    <div class="section-label">02 / CREATE ACCOUNT</div>
-    <h2>Tạo một tài khoản<br /><em>để bắt đầu.</em></h2>
+    <h2>CREATE ACCOUNT!</h2>
+    <div class="section-label">登録 / REGISTER / 002</div>
     <p class="lede">Mật khẩu cần có 8 ký tự, chữ hoa, chữ thường và ký tự đặc biệt.</p>
     <form data-form="register" class="auth-form">
       ${inputField({ id: 'displayName', label: 'Tên hiển thị', autocomplete: 'name' })}
@@ -110,12 +117,12 @@ function renderRegister() {
 function renderProfile(user) {
   const profile = user.profile || user
   renderShell(`
-    <div class="section-label">03 / PROFILE</div>
+    <div class="section-label">プロフィール / PROFILE / 003</div>
     <div class="profile-head"><div class="avatar">${escapeHtml((profile.displayName || profile.email || 'U').slice(0, 1).toUpperCase())}</div><div><p class="eyebrow">SIGNED IN</p><h2>${escapeHtml(profile.displayName || 'Your profile')}</h2></div></div>
     <p class="lede">Cập nhật thông tin cá nhân và đồng bộ lên Firebase.</p>
     <form data-form="profile" class="auth-form">
       ${inputField({ id: 'displayName', label: 'Tên hiển thị', value: profile.displayName || '', autocomplete: 'name' })}
-      ${inputField({ id: 'phone', label: 'Số điện thoại (không bắt buộc)', value: profile.phone || '', type: 'tel', autocomplete: 'tel' })}
+      ${inputField({ id: 'phone', label: 'Số điện thoại (không bắt buộc)', value: profile.phone || '', type: 'tel', autocomplete: 'tel', required: false })}
       <button class="primary-button" type="submit">Lưu thay đổi <span>↗</span></button>
     </form>
     <button class="text-button" data-action="logout">Đăng xuất</button>
