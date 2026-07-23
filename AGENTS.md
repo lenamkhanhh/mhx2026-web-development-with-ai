@@ -1,6 +1,6 @@
 # Prototype Instructions
 
-- Buổi 5 auth UI direction (2026-07-23): use a Japanese information-dense editorial system inspired by urban magazine websites—warm paper, black rules, vermilion signals, compact metadata, asymmetric typography, and square form controls. Keep Vietnamese content readable and do not turn the interface into decorative faux-Japanese pastiche.
+- Buổi 5 auth UI direction (2026-07-23): the initial red/yellow brutalist split layout was rejected as visually heavy. Use the revised Japanese culture-magazine system instead: a horizontal masthead, ivory paper, cobalt and acid-lime accents, compact metadata, a centered editorial grid, and a separate clean form sheet. Keep Vietnamese content readable and do not turn the interface into decorative faux-Japanese pastiche.
 
 Run the local server yourself and open the preview in the browser available to this environment. Do not give the user server-start instructions when you can run it.
 
