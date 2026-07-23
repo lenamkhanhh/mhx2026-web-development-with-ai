@@ -12,7 +12,7 @@ export async function configureFirebase(config) {
   ])
   const app = initializeApp(config)
   firebaseAuth = auth.getAuth(app)
-  firebaseModules = { auth, firestore }
+  firebaseModules = { auth, firestore, db: firestore.getFirestore(app) }
   return true
 }
 
@@ -25,7 +25,7 @@ export async function registerUser({ email, password, displayName }) {
   const credential = await firebaseModules.auth.createUserWithEmailAndPassword(firebaseAuth, email, password)
   await firebaseModules.auth.updateProfile(credential.user, { displayName })
   await firebaseModules.firestore.setDoc(
-    firebaseModules.firestore.doc(firebaseModules.firestore.getFirestore(credential.user.app), 'users', credential.user.uid),
+    firebaseModules.firestore.doc(firebaseModules.db, 'users', credential.user.uid),
     { displayName, email, updatedAt: new Date().toISOString() },
   )
   return credential.user
@@ -41,7 +41,7 @@ export async function updateUserProfile(user, profile) {
   if (!isFirebaseReady()) throw new Error('Firebase chưa được cấu hình.')
   await firebaseModules.auth.updateProfile(user, { displayName: profile.displayName })
   await firebaseModules.firestore.setDoc(
-    firebaseModules.firestore.doc(firebaseModules.firestore.getFirestore(user.app), 'users', user.uid),
+    firebaseModules.firestore.doc(firebaseModules.db, 'users', user.uid),
     { ...profile, email: user.email, updatedAt: new Date().toISOString() },
     { merge: true },
   )
