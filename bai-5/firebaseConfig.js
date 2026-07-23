@@ -1,6 +1,6 @@
 // Firebase Web config is a public client identifier. Never put service-account
 // JSON, private keys, or Admin SDK credentials in this file.
-window.BUOI5_FIREBASE_CONFIG = {
+export const firebaseConfig = {
   apiKey: 'AIzaSyD__7ZnD04-r3JUxmANiiE3mJAcgtVUWyk',
   authDomain: 'mhx2026-web-buoi-5.firebaseapp.com',
   projectId: 'mhx2026-web-buoi-5',

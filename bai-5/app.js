@@ -14,10 +14,10 @@ import {
   registerUser,
   updateUserProfile,
 } from './firebaseClient.js'
+import { firebaseConfig } from './firebaseConfig.js'
 
 const storageKey = 'buoi5-demo-user'
 const app = document.querySelector('#app')
-const firebaseConfig = window.BUOI5_FIREBASE_CONFIG
 let currentUser = null
 
 const demoStore = {
@@ -191,17 +191,23 @@ document.addEventListener('click', async (event) => {
 
 document.addEventListener('submit', handleSubmit)
 
-try {
-  if (firebaseConfig) await configureFirebase(firebaseConfig)
-} catch {
-  notice('Không thể kết nối Firebase, đang dùng local demo mode.', 'error')
+async function initializeApp() {
+  try {
+    await configureFirebase(firebaseConfig)
+  } catch {
+    renderLogin()
+    notice('Không thể kết nối Firebase, đang dùng local demo mode.', 'error')
+    return
+  }
+
+  observeUser((user) => {
+    if (user) {
+      currentUser = user
+      renderProfile(user)
+    }
+  })
+
+  renderLogin()
 }
 
-observeUser((user) => {
-  if (user) {
-    currentUser = user
-    renderProfile(user)
-  }
-})
-
-renderLogin()
+initializeApp()
