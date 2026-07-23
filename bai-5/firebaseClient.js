@@ -16,6 +16,14 @@ export function buildProfileDocument(user, profile = {}) {
   }
 }
 
+export function mergeUserProfile(user, storedProfile = {}) {
+  return {
+    displayName: storedProfile.displayName || user?.displayName || '',
+    email: user?.email || storedProfile.email || '',
+    phone: storedProfile.phone || '',
+  }
+}
+
 export function mapFirebaseError(error) {
   const messages = {
     'auth/invalid-credential': 'Email hoặc mật khẩu không chính xác.',
@@ -70,6 +78,14 @@ export async function updateUserProfile(user, profile) {
     { ...buildProfileDocument(user, profile), updatedAt: new Date().toISOString() },
     { merge: true },
   )
+}
+
+export async function getUserProfile(user) {
+  if (!isFirebaseReady()) throw new Error('Firebase chưa được cấu hình.')
+  const snapshot = await firebaseModules.firestore.getDoc(
+    firebaseModules.firestore.doc(firebaseModules.db, 'users', user.uid),
+  )
+  return mergeUserProfile(user, snapshot.exists() ? snapshot.data() : {})
 }
 
 export function observeUser(callback) {

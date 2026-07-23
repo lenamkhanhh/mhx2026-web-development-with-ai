@@ -6,6 +6,7 @@ import {
 } from './auth.js'
 import {
   configureFirebase,
+  getUserProfile,
   isFirebaseReady,
   loginUser,
   mapFirebaseError,
@@ -19,6 +20,7 @@ import { firebaseConfig } from './firebaseConfig.js'
 const storageKey = 'buoi5-demo-user'
 const app = document.querySelector('#app')
 let currentUser = null
+let currentProfile = null
 
 const demoStore = {
   get() {
@@ -116,7 +118,7 @@ function renderRegister() {
 }
 
 function renderProfile(user) {
-  const profile = user.profile || user
+  const profile = user.profile || currentProfile || user
   renderShell(`
     <div class="section-label">プロフィール / PROFILE / 003</div>
     <div class="profile-head"><div class="avatar">${escapeHtml((profile.displayName || profile.email || 'U').slice(0, 1).toUpperCase())}</div><div><p class="eyebrow">SIGNED IN</p><h2>${escapeHtml(profile.displayName || 'Your profile')}</h2></div></div>
@@ -158,19 +160,25 @@ async function handleSubmit(event) {
       if (!validatePassword(values.password).valid) throw new Error('Mật khẩu chưa đạt chính sách bảo mật.')
       if (isFirebaseReady()) {
         currentUser = await loginUser(values)
+        currentProfile = await getUserProfile(currentUser)
       } else {
         const stored = demoStore.get()
         if (!stored || stored.email !== values.email) throw new Error('Email hoặc mật khẩu không chính xác.')
         currentUser = stored
+        currentProfile = stored.profile
       }
       renderProfile(currentUser)
       return
     }
     if (form.dataset.form === 'profile') {
       if (!values.displayName.trim()) throw new Error('Tên hiển thị không được để trống.')
-      if (isFirebaseReady()) await updateUserProfile(currentUser, values)
-      currentUser = { ...currentUser, profile: { ...currentUser.profile, ...values } }
-      demoStore.set(currentUser)
+      if (isFirebaseReady()) {
+        await updateUserProfile(currentUser, values)
+        currentProfile = { ...currentProfile, ...values }
+      } else {
+        currentUser = { ...currentUser, profile: { ...currentUser.profile, ...values } }
+        demoStore.set(currentUser)
+      }
       notice('Đã lưu thay đổi hồ sơ.', 'success')
     }
   } catch (error) {
@@ -184,6 +192,7 @@ document.addEventListener('click', async (event) => {
   if (event.target.closest('[data-action="logout"]')) {
     await logoutUser()
     currentUser = null
+    currentProfile = null
     demoStore.clear()
     renderLogin()
   }
@@ -200,9 +209,10 @@ async function initializeApp() {
     return
   }
 
-  observeUser((user) => {
+  observeUser(async (user) => {
     if (user) {
       currentUser = user
+      currentProfile = await getUserProfile(user)
       renderProfile(user)
     }
   })
