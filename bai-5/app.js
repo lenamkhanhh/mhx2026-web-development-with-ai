@@ -8,6 +8,7 @@ import {
   configureFirebase,
   isFirebaseReady,
   loginUser,
+  mapFirebaseError,
   logoutUser,
   observeUser,
   registerUser,
@@ -173,7 +174,7 @@ async function handleSubmit(event) {
       notice('Đã lưu thay đổi hồ sơ.', 'success')
     }
   } catch (error) {
-    notice(error.message || 'Có lỗi xảy ra, vui lòng thử lại.', 'error')
+    notice(error.code ? mapFirebaseError(error) : (error.message || 'Có lỗi xảy ra, vui lòng thử lại.'), 'error')
   }
 }
 
