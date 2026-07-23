@@ -3,6 +3,7 @@ import {
   buildProfileDocument,
   mapFirebaseError,
   isValidFirebaseConfig,
+  mergeUserProfile,
 } from './firebaseClient.js'
 
 describe('Firebase client helpers', () => {
@@ -30,5 +31,16 @@ describe('Firebase client helpers', () => {
 
   it('maps Firebase auth errors without exposing provider internals', () => {
     expect(mapFirebaseError({ code: 'auth/invalid-credential' })).toBe('Email hoặc mật khẩu không chính xác.')
+  })
+
+  it('merges Firestore fields over the authenticated user profile', () => {
+    expect(mergeUserProfile(
+      { displayName: 'Auth Name', email: 'user@example.com' },
+      { displayName: 'Saved Name', phone: '0900000000' },
+    )).toEqual({
+      displayName: 'Saved Name',
+      email: 'user@example.com',
+      phone: '0900000000',
+    })
   })
 })
