@@ -2,6 +2,8 @@
 
 Website bài tập Buổi 5 gồm ba flow: Register, Login và Profile.
 
+Live demo: https://mhx2026-web-development-with-ai.vercel.app/bai-5/
+
 ## Chạy thử
 
 Từ root repo:
