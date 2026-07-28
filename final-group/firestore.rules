@@ -1,0 +1,161 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function trip(tripId) {
+      return get(/databases/$(database)/documents/trips/$(tripId));
+    }
+
+    function member(tripId, uid) {
+      return get(/databases/$(database)/documents/trips/$(tripId)/members/$(uid));
+    }
+
+    function isMember(tripId) {
+      return signedIn() && member(tripId, request.auth.uid).exists();
+    }
+
+    function isLead(tripId) {
+      return isMember(tripId) && trip(tripId).data.leadId == request.auth.uid
+        && member(tripId, request.auth.uid).data.role == "lead";
+    }
+
+    function hasOnlyKeys(data, keys) {
+      return data.keys().hasOnly(keys) && data.keys().hasAll(keys);
+    }
+
+    function validUser(data) {
+      return hasOnlyKeys(data, ["displayName", "email", "tripIds", "updatedAt"])
+        && data.displayName is string
+        && data.email is string
+        && data.tripIds is list
+        && data.updatedAt is timestamp;
+    }
+
+    function validTrip(data) {
+      return hasOnlyKeys(data, ["name", "destination", "startDate", "endDate", "leadId", "joinCode", "createdAt", "updatedAt"])
+        && data.name is string
+        && data.destination is string
+        && data.startDate is string
+        && data.endDate is string
+        && data.leadId is string
+        && data.joinCode is string
+        && data.joinCode.matches("^[A-Z0-9]{6,16}$")
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validMember(data) {
+      return hasOnlyKeys(data, ["displayName", "email", "role", "responsibility", "isDemo", "joinedAt"])
+        && data.displayName is string
+        && data.email is string
+        && (data.role == "lead" || data.role == "member")
+        && data.responsibility is string
+        && data.isDemo is bool
+        && data.joinedAt is timestamp;
+    }
+
+    function validEvent(data) {
+      return hasOnlyKeys(data, ["title", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "createdAt", "updatedAt"])
+        && data.title is string
+        && (data.category == "transport" || data.category == "stay" || data.category == "food" || data.category == "activity" || data.category == "other")
+        && data.startAt is string
+        && data.endAt is string
+        && (data.status == "pending" || data.status == "approved" || data.status == "happening" || data.status == "completed" || data.status == "cancelled")
+        && data.participantIds is list
+        && data.createdBy is string
+        && (data.approvedBy == null || data.approvedBy is string)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validExpense(data) {
+      return hasOnlyKeys(data, ["title", "amount", "paidBy", "splitAmong", "status", "createdBy", "createdAt", "updatedAt"])
+        && data.title is string
+        && data.amount is int
+        && data.amount >= 0
+        && data.paidBy is string
+        && data.splitAmong is list
+        && (data.status == "pending" || data.status == "settled")
+        && data.createdBy is string
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list: if false;
+      // tripIds is an untrusted, user-owned convenience index only. Every
+      // authorization decision below uses the membership document instead.
+      allow create, update: if signedIn() && request.auth.uid == uid && validUser(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /trips/{tripId} {
+      allow get, list: if isMember(tripId);
+      allow create: if signedIn() && validTrip(request.resource.data)
+        && request.resource.data.leadId == request.auth.uid;
+      allow update: if isLead(tripId) && validTrip(request.resource.data)
+        && request.resource.data.leadId == resource.data.leadId
+        && request.resource.data.joinCode == resource.data.joinCode
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isLead(tripId);
+
+      match /members/{uid} {
+        allow get, list: if isMember(tripId);
+        // A lead can create the initial lead membership in the same batch as
+        // trip creation, or add a member later. Clients cannot self-join.
+        allow create: if signedIn() && validMember(request.resource.data) && (
+          (request.auth.uid == uid && request.resource.data.role == "lead"
+            && getAfter(/databases/$(database)/documents/trips/$(tripId)).data.leadId == uid)
+          || isLead(tripId)
+        );
+        allow update: if validMember(request.resource.data) && (
+          isLead(tripId)
+          || (request.auth.uid == uid && resource.data.role == "member"
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.displayName == resource.data.displayName
+            && request.resource.data.email == resource.data.email
+            && request.resource.data.isDemo == resource.data.isDemo
+            && request.resource.data.joinedAt == resource.data.joinedAt
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["responsibility"]))
+        );
+        allow delete: if isLead(tripId) && request.auth.uid != uid;
+      }
+
+      match /events/{eventId} {
+        allow get, list: if isMember(tripId);
+        allow create: if isMember(tripId) && validEvent(request.resource.data) && request.resource.data.createdBy == request.auth.uid && (
+          (isLead(tripId) && request.resource.data.status == "approved" && request.resource.data.approvedBy == request.auth.uid)
+          || (!isLead(tripId) && request.resource.data.status == "pending" && request.resource.data.approvedBy == null)
+        );
+        allow update: if validEvent(request.resource.data) && (
+          (isLead(tripId)
+            && request.resource.data.createdBy == resource.data.createdBy
+            && request.resource.data.createdAt == resource.data.createdAt)
+          || (isMember(tripId) && !isLead(tripId) && request.auth.uid == resource.data.createdBy
+            && resource.data.status == "pending"
+            && request.resource.data.status == "pending"
+            && request.resource.data.createdBy == resource.data.createdBy
+            && request.resource.data.approvedBy == null
+            && request.resource.data.createdAt == resource.data.createdAt
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["title", "category", "startAt", "endAt", "participantIds", "updatedAt"]))
+        );
+        allow delete: if isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy && resource.data.status == "pending");
+      }
+
+      match /expenses/{expenseId} {
+        allow get, list: if isMember(tripId);
+        allow create: if isMember(tripId) && validExpense(request.resource.data)
+          && request.resource.data.createdBy == request.auth.uid;
+        allow update: if validExpense(request.resource.data)
+          && (isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy))
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy);
+      }
+    }
+  }
+}

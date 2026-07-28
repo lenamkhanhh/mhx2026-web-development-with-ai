@@ -1,0 +1,135 @@
+/**
+ * Firestore-facing contract. These types deliberately mirror
+ * references/data-model.md instead of the temporary UI/domain vocabulary.
+ */
+export type FirestoreMemberRole = "lead" | "member";
+export type FirestoreEventCategory =
+  | "transport"
+  | "stay"
+  | "food"
+  | "activity"
+  | "other";
+export type FirestoreEventStatus =
+  | "pending"
+  | "approved"
+  | "happening"
+  | "completed"
+  | "cancelled";
+export type ExpenseStatus = "pending" | "settled";
+
+export interface AuthenticatedUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+}
+
+export interface UserRecord {
+  uid: string;
+  displayName: string;
+  email: string;
+  tripIds: string[];
+}
+
+export interface TripRecord {
+  id: string;
+  name: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  leadId: string;
+  joinCode: string;
+}
+
+export interface MemberRecord {
+  uid: string;
+  displayName: string;
+  email: string;
+  role: FirestoreMemberRole;
+  responsibility: string;
+  isDemo: boolean;
+}
+
+export interface EventRecord {
+  id: string;
+  title: string;
+  category: FirestoreEventCategory;
+  startAt: string;
+  endAt: string;
+  status: FirestoreEventStatus;
+  participantIds: string[];
+  createdBy: string;
+  approvedBy: string | null;
+}
+
+export interface ExpenseRecord {
+  id: string;
+  title: string;
+  /** Integer VND. */
+  amount: number;
+  paidBy: string;
+  splitAmong: string[];
+  status: ExpenseStatus;
+  createdBy: string;
+}
+
+export interface TripSnapshot {
+  trip: TripRecord;
+  members: MemberRecord[];
+  events: EventRecord[];
+  expenses: ExpenseRecord[];
+}
+
+export interface CreateTripInput {
+  name: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface CreateEventInput {
+  title: string;
+  category: FirestoreEventCategory;
+  startAt: string;
+  endAt: string;
+  participantIds: string[];
+}
+
+export interface CreateExpenseInput {
+  title: string;
+  amount: number;
+  paidBy: string;
+  splitAmong: string[];
+}
+
+export interface TripBackend {
+  observeSession(listener: (user: AuthenticatedUser | null) => void): () => void;
+  register(email: string, password: string, displayName: string): Promise<AuthenticatedUser>;
+  login(email: string, password: string): Promise<AuthenticatedUser>;
+  logout(): Promise<void>;
+  upsertProfile(user: AuthenticatedUser): Promise<void>;
+  getProfile(uid: string): Promise<UserRecord | null>;
+  subscribeTrips(uid: string, listener: (trips: TripRecord[]) => void): () => void;
+  subscribeTrip(
+    tripId: string,
+    listener: (snapshot: TripSnapshot) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
+  createTrip(input: CreateTripInput, actor: AuthenticatedUser): Promise<TripRecord>;
+  /**
+   * Intentionally fails closed until the schema supplies a server-verified
+   * join proof (see the handoff). A client must never be allowed to self-add
+   * to a trip merely by knowing its id.
+   */
+  joinTrip(joinCode: string, actor: AuthenticatedUser): Promise<never>;
+  updateResponsibility(tripId: string, uid: string, responsibility: string): Promise<void>;
+  removeMember(tripId: string, uid: string): Promise<void>;
+  createEvent(tripId: string, input: CreateEventInput, actor: AuthenticatedUser): Promise<EventRecord>;
+  updateEvent(tripId: string, eventId: string, patch: Partial<CreateEventInput>): Promise<void>;
+  approveEvent(tripId: string, eventId: string, status: Exclude<FirestoreEventStatus, "pending">): Promise<void>;
+  deleteEvent(tripId: string, eventId: string): Promise<void>;
+  /** Fails closed because the agreed event document has no order field. */
+  reorderEvents(tripId: string, eventIds: string[]): Promise<never>;
+  createExpense(tripId: string, input: CreateExpenseInput, actor: AuthenticatedUser): Promise<ExpenseRecord>;
+  updateExpense(tripId: string, expenseId: string, patch: Partial<CreateExpenseInput>): Promise<void>;
+  deleteExpense(tripId: string, expenseId: string): Promise<void>;
+}
