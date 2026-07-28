@@ -131,12 +131,19 @@ export function AuthFlow({
   }
 
   return (
-    <section aria-labelledby="auth-title">
-      <p>TripFlow</p>
+    <section aria-labelledby="auth-title" className="auth-card">
+      <p className="eyebrow">TripFlow · Group itinerary</p>
       <h1 id="auth-title">
         {mode === "login" ? "Chào mừng trở lại" : "Tạo tài khoản"}
       </h1>
-      <div aria-label="Chọn hình thức xác thực" role="tablist">
+      <p className="auth-intro">
+        Lịch trình, thành viên và chi phí của cả nhóm trong một nơi.
+      </p>
+      <div
+        aria-label="Chọn hình thức xác thực"
+        className="auth-tabs"
+        role="tablist"
+      >
         <button
           aria-selected={mode === "login"}
           onClick={() => switchMode("login")}
@@ -155,7 +162,7 @@ export function AuthFlow({
         </button>
       </div>
 
-      <form onSubmit={onSubmit} noValidate>
+      <form className="auth-form" onSubmit={onSubmit} noValidate>
         {mode === "register" ? (
           <label>
             Tên hiển thị
@@ -171,7 +178,7 @@ export function AuthFlow({
               value={input.displayName}
             />
             {errors.displayName ? (
-              <span id="display-name-error" role="alert">
+              <span className="field-error" id="display-name-error" role="alert">
                 {errors.displayName}
               </span>
             ) : null}
@@ -190,7 +197,7 @@ export function AuthFlow({
             value={input.email}
           />
           {errors.email ? (
-            <span id="email-error" role="alert">
+            <span className="field-error" id="email-error" role="alert">
               {errors.email}
             </span>
           ) : null}
@@ -211,7 +218,7 @@ export function AuthFlow({
             value={input.password}
           />
           {errors.password ? (
-            <span id="password-error" role="alert">
+            <span className="field-error" id="password-error" role="alert">
               {errors.password}
             </span>
           ) : null}
@@ -235,16 +242,16 @@ export function AuthFlow({
               value={input.confirmPassword}
             />
             {errors.confirmPassword ? (
-              <span id="confirm-password-error" role="alert">
+              <span className="field-error" id="confirm-password-error" role="alert">
                 {errors.confirmPassword}
               </span>
             ) : null}
           </label>
         ) : null}
 
-        {requestError ? <p role="alert">{requestError}</p> : null}
-        {success ? <p role="status">{success}</p> : null}
-        <button disabled={submitting} type="submit">
+        {requestError ? <p className="auth-message error" role="alert">{requestError}</p> : null}
+        {success ? <p className="auth-message success" role="status">{success}</p> : null}
+        <button className="primary-button" disabled={submitting} type="submit">
           {submitting
             ? "Đang xử lý…"
             : mode === "login"

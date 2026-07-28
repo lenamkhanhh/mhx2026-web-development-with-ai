@@ -93,6 +93,23 @@ describe("logout", () => {
 });
 
 describe("AuthFlow", () => {
+  it("exposes the auth layout hooks used by the final-group stylesheet", () => {
+    const backend = createBackend();
+    render(<AuthFlow backend={backend} onAuthenticated={vi.fn()} />);
+
+    expect(
+      screen
+        .getByRole("region", { name: "Chào mừng trở lại" })
+        .classList.contains("auth-card"),
+    ).toBe(true);
+    expect(screen.getByRole("tablist").classList.contains("auth-tabs")).toBe(true);
+    expect(
+      screen
+        .getByRole("button", { name: "Đăng nhập" })
+        .classList.contains("primary-button"),
+    ).toBe(true);
+  });
+
   it("shows validation errors and does not submit an invalid registration", async () => {
     const backend = createBackend();
     const actor = userEvent.setup();
