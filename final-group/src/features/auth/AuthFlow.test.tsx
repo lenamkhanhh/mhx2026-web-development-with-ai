@@ -3,12 +3,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { UserProfile } from "../../types";
+import type { TripBackend } from "../../firebase/contracts";
 import {
   AuthFlow,
   authenticate,
   hydrateProfile,
-  type AuthBackend,
+  logout,
 } from "./AuthFlow";
 
 const user = {
@@ -17,15 +17,18 @@ const user = {
   displayName: "Khánh",
 };
 
+type AuthBackend = Pick<
+  TripBackend,
+  "login" | "register" | "logout" | "getProfile" | "upsertProfile"
+>;
+
 function createBackend(overrides: Partial<AuthBackend> = {}): AuthBackend {
   return {
-    signIn: vi.fn().mockResolvedValue(user),
+    login: vi.fn().mockResolvedValue(user),
     register: vi.fn().mockResolvedValue(user),
-    signOut: vi.fn().mockResolvedValue(undefined),
+    logout: vi.fn().mockResolvedValue(undefined),
     getProfile: vi.fn().mockResolvedValue(null),
-    saveProfile: vi.fn().mockImplementation(
-      async (profile: UserProfile) => profile,
-    ),
+    upsertProfile: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -38,7 +41,7 @@ describe("hydrateProfile", () => {
     const backend = createBackend({ getProfile: vi.fn().mockResolvedValue(persisted) });
 
     await expect(hydrateProfile(backend, user)).resolves.toEqual(persisted);
-    expect(backend.saveProfile).not.toHaveBeenCalled();
+    expect(backend.upsertProfile).not.toHaveBeenCalled();
   });
 
   it("creates a profile with an empty trip list for a first session", async () => {
@@ -48,7 +51,7 @@ describe("hydrateProfile", () => {
       ...user,
       tripIds: [],
     });
-    expect(backend.saveProfile).toHaveBeenCalledWith({ ...user, tripIds: [] });
+    expect(backend.upsertProfile).toHaveBeenCalledWith(user);
   });
 });
 
@@ -66,7 +69,7 @@ describe("authenticate", () => {
     ).resolves.toEqual({ user, profile: { ...user, tripIds: [] } });
 
     expect(backend.register).toHaveBeenCalledOnce();
-    expect(backend.saveProfile).toHaveBeenCalledOnce();
+    expect(backend.upsertProfile).toHaveBeenCalledOnce();
   });
 
   it("rejects invalid credentials before calling the backend", async () => {
@@ -75,7 +78,17 @@ describe("authenticate", () => {
     await expect(
       authenticate(backend, "login", { email: "not-an-email", password: "" }),
     ).rejects.toMatchObject({ errors: expect.any(Object) });
-    expect(backend.signIn).not.toHaveBeenCalled();
+    expect(backend.login).not.toHaveBeenCalled();
+  });
+});
+
+describe("logout", () => {
+  it("delegates logout to the injected TripBackend", async () => {
+    const backend = createBackend();
+
+    await logout(backend);
+
+    expect(backend.logout).toHaveBeenCalledOnce();
   });
 });
 
@@ -85,7 +98,7 @@ describe("AuthFlow", () => {
     const actor = userEvent.setup();
     render(<AuthFlow backend={backend} onAuthenticated={vi.fn()} />);
 
-    await actor.click(screen.getByRole("button", { name: "Đăng ký" }));
+    await actor.click(screen.getByRole("tab", { name: "Đăng ký" }));
     await actor.click(screen.getByRole("button", { name: "Tạo tài khoản" }));
 
     expect(screen.getByText("Vui lòng nhập tên hiển thị.")).toBeTruthy();

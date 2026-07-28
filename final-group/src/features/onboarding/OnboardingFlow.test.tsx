@@ -3,7 +3,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Trip, UserProfile } from "../../types";
+import type { TripBackend, TripRecord, UserRecord } from "../../firebase/contracts";
 import {
   joinTrip,
   normalizeJoinCode,
@@ -12,14 +12,14 @@ import {
   type OnboardingBackend,
 } from "./OnboardingFlow";
 
-const profile: UserProfile = {
+const profile: UserRecord = {
   uid: "user-1",
   displayName: "Khánh",
   email: "khanh@example.com",
   tripIds: [],
 };
 
-const trip: Trip = {
+const trip: TripRecord = {
   id: "trip-1",
   name: "Đà Lạt cuối hạ",
   destination: "Đà Lạt",
@@ -29,10 +29,16 @@ const trip: Trip = {
   joinCode: "DALAT26",
 };
 
-function createBackend(overrides: Partial<OnboardingBackend> = {}): OnboardingBackend {
+type OnboardingBackend = Pick<TripBackend, "createTrip" | "joinTrip">;
+
+function createBackend(
+  overrides: Partial<OnboardingBackend> = {},
+): OnboardingBackend {
   return {
     createTrip: vi.fn().mockResolvedValue(trip),
-    joinTrip: vi.fn().mockResolvedValue(trip),
+    joinTrip: vi.fn().mockRejectedValue(
+      new Error("Joining by code is disabled until an approved join proof exists."),
+    ),
     ...overrides,
   };
 }
@@ -40,7 +46,7 @@ function createBackend(overrides: Partial<OnboardingBackend> = {}): OnboardingBa
 afterEach(cleanup);
 
 describe("onboarding actions", () => {
-  it("creates a lead membership using the authenticated profile", async () => {
+  it("creates a trip with the backend-authenticated actor", async () => {
     const backend = createBackend();
 
     await expect(
@@ -53,41 +59,22 @@ describe("onboarding actions", () => {
     ).resolves.toEqual(trip);
 
     expect(backend.createTrip).toHaveBeenCalledWith({
-      trip: {
-        name: "Đà Lạt cuối hạ",
-        destination: "Đà Lạt",
-        startDate: "2026-07-30",
-        endDate: "2026-08-01",
-        leadId: profile.uid,
-      },
-      member: {
-        uid: profile.uid,
-        displayName: profile.displayName,
-        email: profile.email,
-        role: "lead",
-        responsibility: "",
-        isDemo: false,
-      },
-    });
+      name: "Đà Lạt cuối hạ",
+      destination: "Đà Lạt",
+      startDate: "2026-07-30",
+      endDate: "2026-08-01",
+    }, profile);
   });
 
-  it("normalizes a join code and always creates a member role request", async () => {
+  it("normalizes a join code but preserves the backend's fail-closed join boundary", async () => {
     const backend = createBackend();
 
     expect(normalizeJoinCode(" da lat-26 ")).toBe("DA LAT-26");
-    await joinTrip(backend, profile, " dalat26 ");
+    await expect(joinTrip(backend, profile, " dalat26 ")).rejects.toThrow(
+      "Joining by code is disabled",
+    );
 
-    expect(backend.joinTrip).toHaveBeenCalledWith({
-      joinCode: "DALAT26",
-      member: {
-        uid: profile.uid,
-        displayName: profile.displayName,
-        email: profile.email,
-        role: "member",
-        responsibility: "",
-        isDemo: false,
-      },
-    });
+    expect(backend.joinTrip).toHaveBeenCalledWith("DALAT26", profile);
   });
 
   it("rejects an invalid trip date range without writing", async () => {
@@ -111,7 +98,7 @@ describe("OnboardingFlow", () => {
     const actor = userEvent.setup();
     render(<OnboardingFlow backend={backend} profile={profile} onTripReady={vi.fn()} />);
 
-    await actor.click(screen.getByRole("button", { name: "Tham gia chuyến đi" }));
+    await actor.click(screen.getByRole("tab", { name: "Tham gia chuyến đi" }));
     await actor.click(screen.getByRole("button", { name: "Tham gia bằng mã" }));
 
     expect(screen.getByText("Vui lòng nhập mã tham gia.")).toBeTruthy();
