@@ -1,6 +1,6 @@
 export default {
   test: {
-    environment: "node",
-    include: ["final-group/src/App.test.ts"],
+    environment: "jsdom",
+    include: ["final-group/src/App.test.tsx"],
   },
 };
