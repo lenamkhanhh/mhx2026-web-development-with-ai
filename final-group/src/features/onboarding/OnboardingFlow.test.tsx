@@ -3,7 +3,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { TripBackend, TripRecord, UserRecord } from "../../firebase/contracts";
+import type { TripRecord, UserRecord } from "../../firebase/contracts";
 import {
   joinTrip,
   normalizeJoinCode,
@@ -28,8 +28,6 @@ const trip: TripRecord = {
   leadId: profile.uid,
   joinCode: "DALAT26",
 };
-
-type OnboardingBackend = Pick<TripBackend, "createTrip" | "joinTrip">;
 
 function createBackend(
   overrides: Partial<OnboardingBackend> = {},

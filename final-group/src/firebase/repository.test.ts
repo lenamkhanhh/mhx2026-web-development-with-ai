@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assertApprovalStatus,
   FirestoreDataError,
   createTripRecord,
   decodeEventRecord,
@@ -79,5 +80,11 @@ describe("TripFlow Firestore record contract", () => {
         VITE_FIREBASE_APP_ID: "1:123:web:abc",
       }),
     ).toMatchObject({ projectId: "tripflow" });
+  });
+
+  it("rejects pending and unknown values at the approval boundary", () => {
+    expect(assertApprovalStatus("approved")).toBe("approved");
+    expect(() => assertApprovalStatus("pending")).toThrow(FirestoreDataError);
+    expect(() => assertApprovalStatus("unknown")).toThrow(FirestoreDataError);
   });
 });
