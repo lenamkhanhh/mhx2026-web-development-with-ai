@@ -6,6 +6,10 @@ submission-evidence/
 output/
 .playwright-cli/
 *.log
+.env
+.env.*
+!.env.example
+!**/.env.example
 
 # Local Netlify folder
 .netlify

@@ -6,15 +6,21 @@ hoặc các bài Buổi 4–5 đã nộp.
 
 ## Trạng thái hiện tại
 
-- Domain rules: đã có test và implementation.
-- Dashboard UI: đã có các view tổng quan, lịch trình, chi phí và thành viên.
-- Auth validation: đã có test và implementation.
-- Firebase Auth/Firestore, onboarding, security rules và deployment: chưa nối.
+- App `/final-group/`: đã nối Auth, onboarding tạo chuyến đi, dashboard,
+  lịch trình, thành viên, chi phí và thống kê.
+- Firebase Auth/Firestore: đã có adapter typed và cấu hình bằng
+  `VITE_FIREBASE_*`.
+- Firestore Security Rules: đã kiểm tra bằng Emulator với các ca Lead, Member
+  và người ngoài nhóm.
+- Build production và toàn bộ test thông thường: đang xanh.
+- Chưa deploy. Join bằng mã, sắp xếp lại sự kiện và chốt thanh toán vẫn bị
+  vô hiệu hóa an toàn cho đến khi có thiết kế server/schema xác minh được.
 
 ## Phạm vi MVP
 
 - Đăng ký/đăng nhập bằng Firebase Auth.
-- Tạo hoặc tham gia một chuyến đi bằng mã.
+- Tạo chuyến đi. Tham gia bằng mã là phạm vi tiếp theo, chưa bật trong bản hiện
+  tại vì client không được tự cấp membership chỉ bằng một mã bí mật.
 - Lead/Member và phân quyền.
 - CRUD sự kiện, duyệt sự kiện và phát hiện trùng lịch.
 - Theo dõi trạng thái sự kiện.
@@ -39,15 +45,27 @@ cho đến khi chat tích hợp xác nhận build/test.
 - [`scripts/verify-final-group.ps1`](./scripts/verify-final-group.ps1): kiểm tra
   boundary, required files và secret pattern.
 
-## Chạy kiểm thử hiện tại
+## Cấu hình local
+
+Sao chép các khóa Firebase Web công khai trong
+[`final-group/.env.example`](./.env.example) vào `.env.local` ở thư mục gốc.
+Không đưa service-account, private key hoặc Admin SDK credential vào frontend.
+
+## Chạy và kiểm thử
 
 Từ thư mục gốc:
 
 ```bash
-npm.cmd test -- final-group/src/domain.test.ts
-npm.cmd test -- final-group/src/auth.test.ts
-npm.cmd test -- final-group/src/components/TripDashboard.test.tsx
+npm.cmd run dev -- --host 127.0.0.1 --port 4173
+npm.cmd test -- final-group
+npm.cmd run build
 ```
 
-Luồng `App` hiện đang là checkpoint RED có chủ đích: test đã định nghĩa nhưng
-`App.tsx` và Firebase adapter chưa được triển khai.
+Mở `http://127.0.0.1:4173/final-group/`.
+
+Rules test cần JDK 11+ và chạy hoàn toàn với project demo của Emulator, không
+đụng dữ liệu Firebase thật:
+
+```bash
+npm.cmd run test:final-group:rules
+```
