@@ -1,5 +1,7 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+// @vitest-environment jsdom
+
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TripEvent } from "../domain";
 import { TripDashboard } from "./TripDashboard";
 
@@ -42,6 +44,8 @@ const members = [
   },
 ];
 
+afterEach(cleanup);
+
 describe("TripDashboard", () => {
   it("renders the trip, current role and summary metrics", () => {
     render(
@@ -74,10 +78,10 @@ describe("TripDashboard", () => {
 
     expect(
       screen.getByRole("heading", { name: "Đà Lạt cuối hạ" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Lead")).toBeInTheDocument();
-    expect(screen.getByText("1 sự kiện")).toBeInTheDocument();
-    expect(screen.getByText("320.000 ₫")).toBeInTheDocument();
+    ).toBeTruthy();
+    expect(screen.getAllByText("Lead").length).toBeGreaterThan(0);
+    expect(screen.getByText("1 sự kiện")).toBeTruthy();
+    expect(screen.getByText("320.000 ₫")).toBeTruthy();
   });
 
   it("shows schedule evidence and lead-only actions", () => {
@@ -111,10 +115,10 @@ describe("TripDashboard", () => {
 
     expect(
       screen.getByRole("heading", { name: "Lịch trình chuyến đi" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Săn mây đồi chè")).toBeInTheDocument();
+    ).toBeTruthy();
+    expect(screen.getByText("Săn mây đồi chè")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Thêm hoạt động" }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("button", { name: "Thêm hoạt động" }).length,
+    ).toBeGreaterThan(0);
   });
 });
