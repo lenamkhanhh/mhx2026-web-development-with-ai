@@ -25,12 +25,27 @@ export const EVENT_CATEGORIES = new Set<FirestoreEventCategory>([
 export const EVENT_STATUSES = new Set<FirestoreEventStatus>([
   "pending", "approved", "happening", "completed", "cancelled",
 ]);
+const APPROVAL_STATUSES = new Set<Exclude<FirestoreEventStatus, "pending">>([
+  "approved", "happening", "completed", "cancelled",
+]);
 
 export class FirestoreDataError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "FirestoreDataError";
   }
+}
+
+export function assertApprovalStatus(
+  value: unknown,
+): Exclude<FirestoreEventStatus, "pending"> {
+  if (
+    typeof value !== "string" ||
+    !APPROVAL_STATUSES.has(value as Exclude<FirestoreEventStatus, "pending">)
+  ) {
+    throw new FirestoreDataError("Invalid approval status.");
+  }
+  return value as Exclude<FirestoreEventStatus, "pending">;
 }
 
 function value(data: DocumentData, key: string): unknown { return data[key]; }

@@ -23,6 +23,7 @@ import {
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { assertApprovalStatus } from "./codec";
 
 import type {
   AuthenticatedUser,
@@ -347,7 +348,11 @@ export class FirebaseTripBackend implements TripBackend {
   }
 
   approveEvent(tripId: string, eventId: string, status: Exclude<FirestoreEventStatus, "pending">): Promise<void> {
-    if (!EVENT_STATUSES.has(status) || status === "pending") throw new FirestoreDataError("Invalid approval status.");
+    try {
+      assertApprovalStatus(status);
+    } catch {
+      throw new FirestoreDataError("Invalid approval status.");
+    }
     const actor = this.auth.currentUser;
     if (!actor) return Promise.reject(new FirestoreDataError("Authentication is required."));
     return updateDoc(doc(this.firestore, "trips", tripId, "events", eventId), {
