@@ -4,6 +4,8 @@
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/bai-5", "destination": "/bai-5/index.html" },
     { "source": "/bai-5/", "destination": "/bai-5/index.html" },
+    { "source": "/final-group", "destination": "/final-group/index.html" },
+    { "source": "/final-group/", "destination": "/final-group/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

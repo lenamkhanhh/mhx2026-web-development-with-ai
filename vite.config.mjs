@@ -28,6 +28,7 @@ export default defineConfig({
       input: {
         main: resolve(import.meta.dirname, "index.html"),
         bai5: resolve(import.meta.dirname, "bai-5/index.html"),
+        finalGroup: resolve(import.meta.dirname, "final-group/index.html"),
       },
     },
   },
