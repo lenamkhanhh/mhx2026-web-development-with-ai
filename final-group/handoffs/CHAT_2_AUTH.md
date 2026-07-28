@@ -41,6 +41,12 @@ Tests: 12/12 passed
   final-group/src/features/auth/AuthFlow.test.tsx
   final-group/src/features/onboarding/OnboardingFlow.test.tsx
 
+Module-wide attempt: 32 tests passed across 5 suites. The existing
+`final-group/src/components/TripDashboard.test.tsx` could not start because
+this worktree's incomplete local dependency tree cannot resolve
+`react/jsx-dev-runtime` from that sibling component path. This is separate
+from the Auth/Onboarding tests, which run against the available runner.
+
 TypeScript: passed for auth/onboarding plus the consumed Firebase contract
   using a targeted no-emit tsc invocation with the available dependency types.
 
@@ -57,6 +63,8 @@ Build: not run; `final-group/App.tsx` and route/build composition are owned by
 - Existing UI `types.ts` is structurally compatible for trip/profile rendering,
   but the integration chat must retain explicit event category/status mapping
   noted in the Firebase handoff.
+- The full `final-group` test target is not green until the worktree has a
+  consistent local dependency resolution path for the existing dashboard test.
 
 ## Next safe action
 
