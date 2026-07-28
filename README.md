@@ -103,15 +103,18 @@ npx vercel deploy --prod
 ## Project structure
 
 ```text
-src/
-  components/   # portfolio sections and visual field
-  content.ts    # verified visitor-facing content
-  constellation.ts # deterministic canvas-field logic
-api/            # Vercel serverless entrypoint
-server/         # Express app, routes, validation, and in-memory store
-public/         # CV and static assets
-docs/           # design rationale and research notes
+src/              # main React portfolio
+api/              # Vercel serverless API entrypoint
+server/           # local Express API, routes, and tests
+bai-4/            # Buổi 4 standalone HTML/CSS submission
+bai-5/            # Buổi 5 Auth/profile submission
+final-group/      # separate final group-project app (TripFlow)
+public/           # portfolio CV and static assets
+docs/             # repository map, API notes, and design research
 ```
+
+See [`docs/REPO_MAP.md`](./docs/REPO_MAP.md) for the ownership boundary
+between the portfolio, course submissions, and the final group project.
 
 ## Links
 
