@@ -26,6 +26,19 @@ hoặc các bài Buổi 4–5 đã nộp.
 riêng, không đưa service-account key hoặc secret vào frontend, và không deploy
 cho đến khi chat tích hợp xác nhận build/test.
 
+## Handoff cho các chat
+
+- [`references/architecture.md`](./references/architecture.md): kiến trúc và
+  boundary.
+- [`references/data-model.md`](./references/data-model.md): schema Firestore.
+- [`references/permissions.md`](./references/permissions.md): ma trận quyền.
+- [`handoffs/TASK_PROMPTS.md`](./handoffs/TASK_PROMPTS.md): prompt và ownership
+  cho từng chat.
+- [`handoffs/HANDOFF_TEMPLATE.md`](./handoffs/HANDOFF_TEMPLATE.md): mẫu bàn
+  giao bắt buộc.
+- [`scripts/verify-final-group.ps1`](./scripts/verify-final-group.ps1): kiểm tra
+  boundary, required files và secret pattern.
+
 ## Chạy kiểm thử hiện tại
 
 Từ thư mục gốc:

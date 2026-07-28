@@ -1,38 +1,49 @@
-# Final group project working contract
+---
+name: mhx-final-group
+description: Shared working contract for the UIT final group-project app in final-group/. Use when implementing, reviewing, testing, documenting, or handing off any TripFlow module.
+---
 
-## Source of truth
+# MHX final group project skill
 
-`final-group/` is a separate course application. Do not mix its feature code
-with the portfolio in `src/`, the Buổi 4 artifact in `bai-4/`, or the Buổi 5
-artifact in `bai-5/`.
+Read this file before changing anything in `final-group/`. Then load only the
+references listed for the assigned module in
+[`handoffs/TASK_PROMPTS.md`](./handoffs/TASK_PROMPTS.md).
 
-## Module ownership
+## First five minutes
 
-- `src/domain.ts`: pure business rules and shared domain types.
-- `src/auth.ts`: pure authentication input validation and safe error mapping.
-- `src/components/`: presentational dashboard components.
-- `src/firebase/`: Firebase Auth/Firestore adapter (when implemented).
-- `src/features/auth/`: auth and onboarding screens (when implemented).
-- `src/features/events/`: event CRUD, approval, conflicts, and statuses.
-- `src/features/members/`: trip membership and Lead/Member actions.
-- `src/features/expenses/`: expenses, balances, and statistics.
+1. Confirm the current branch and `git status`.
+2. Read `references/architecture.md`.
+3. Read the module-specific references before editing.
+4. Inspect the real execution path and existing tests.
+5. Keep changes inside the module ownership boundary.
 
-## Safety rules
+## Non-negotiable rules
 
-1. Keep Firebase web configuration public-only; never commit service-account
-   credentials, private keys, or `.env` secrets.
-2. Enforce authorization in Firestore Security Rules, not only in React UI.
-3. Use synthetic demo members only for local seed data and label them as demo.
-4. Preserve the existing `/bai-5/` route and portfolio behavior.
-5. Run targeted tests before changing shared configuration.
-6. Do not push `main` or deploy until the integration/release review is done.
+- Keep the final app self-contained under `final-group/`.
+- Preserve the portfolio (`src/`), Buổi 4 (`bai-4/`), and Buổi 5 (`bai-5/`).
+- Treat `references/data-model.md` and `references/permissions.md` as the
+  source of truth; do not silently invent fields or authorization behavior.
+- Keep business rules pure and testable. Do not hide permission checks only in
+  React UI; Firestore rules must enforce them too.
+- Firebase web configuration may be public client configuration. Never commit
+  service-account JSON, private keys, tokens, passwords, or `.env` secrets.
+- Use synthetic demo members only for local seed data and label them as demo.
+- Do not deploy, push `main`, or submit a form from a feature chat.
 
-## Required verification
+## Verification and handoff
 
-```bash
+Run the narrowest relevant tests while working. Before handing off, run:
+
+```powershell
 npm.cmd test -- final-group
-npm.cmd run build
+powershell -ExecutionPolicy Bypass -File .\final-group\scripts\verify-final-group.ps1
 ```
 
-The final handoff must include changed files, tests executed, build result,
-known limitations, and whether Firebase/Vercel behavior was verified live.
+Use `-Full` only after the App/Firebase implementation exists:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\final-group\scripts\verify-final-group.ps1 -Full
+```
+
+Record changed files, tests, build result, known limitations, and the next
+safe action using [`handoffs/HANDOFF_TEMPLATE.md`](./handoffs/HANDOFF_TEMPLATE.md).
