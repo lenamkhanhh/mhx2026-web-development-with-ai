@@ -1,10 +1,15 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "node:path";
+import { configDefaults } from "vitest/config";
 
 export default defineConfig({
   test: {
     setupFiles: ["./src/test/setup.ts"],
+    exclude: [
+      ...configDefaults.exclude,
+      "final-group/src/firebase/firestore.rules.test.ts",
+    ],
     environmentOptions: {
       jsdom: { url: "http://localhost/" },
     },

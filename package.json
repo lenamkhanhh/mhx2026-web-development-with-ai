@@ -10,7 +10,7 @@
     "build": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit && vite build",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:final-group:rules": "firebase emulators:exec --only firestore --config final-group/firebase.json \"vitest run final-group/src/firebase/firestore.rules.test.ts\"",
+    "test:final-group:rules": "firebase emulators:exec --only firestore --config final-group/firebase.json \"vitest run --config final-group/src/firebase/vitest.rules.config.mjs\"",
     "test:coverage": "vitest run --coverage",
     "preview": "vite preview"
   },

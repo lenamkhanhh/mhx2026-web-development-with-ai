@@ -14,7 +14,8 @@ service cloud.firestore {
     }
 
     function isMember(tripId) {
-      return signedIn() && member(tripId, request.auth.uid).exists();
+      return signedIn()
+        && exists(/databases/$(database)/documents/trips/$(tripId)/members/$(request.auth.uid));
     }
 
     function isLead(tripId) {
@@ -151,7 +152,19 @@ service cloud.firestore {
         allow create: if isMember(tripId) && validExpense(request.resource.data)
           && request.resource.data.createdBy == request.auth.uid;
         allow update: if validExpense(request.resource.data)
-          && (isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy))
+          && (
+            isLead(tripId)
+            || (isMember(tripId)
+              && request.auth.uid == resource.data.createdBy
+              && request.resource.data.status == resource.data.status
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                "title",
+                "amount",
+                "paidBy",
+                "splitAmong",
+                "updatedAt"
+              ]))
+          )
           && request.resource.data.createdBy == resource.data.createdBy
           && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy);
