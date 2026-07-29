@@ -43,12 +43,14 @@ describe("TripFlow Firestore record contract", () => {
         participantIds: ["lead-1", "member-1"],
         createdBy: "lead-1",
         approvedBy: "lead-1",
+        order: 3,
       }),
     ).toMatchObject({
       id: "event-1",
       category: "transport",
       status: "approved",
       approvedBy: "lead-1",
+      order: 3,
     });
   });
 
