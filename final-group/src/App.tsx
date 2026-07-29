@@ -8,8 +8,6 @@ import { WorkbenchShell, type WorkbenchView } from "./components/WorkbenchShell"
 import { WorkbenchOverview } from "./components/WorkbenchOverview";
 import { submitNewTrip, type TripDraft } from "./features/onboarding/OnboardingFlow";
 import { StatisticsPanel } from "./features/statistics";
-import { WorkbenchOverview } from "./components/WorkbenchOverview";
-import { WorkbenchShell, type WorkbenchView } from "./components/WorkbenchShell";
 import type {
   AuthenticatedUser,
   EventRecord,
@@ -65,7 +63,6 @@ export function App({ backend }: AppProps) {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-  const [activeView, setActiveView] = useState<WorkbenchView>("overview");
 
   useEffect(() => {
     let active = true;
@@ -357,7 +354,6 @@ export function App({ backend }: AppProps) {
       </div>
     </WorkbenchShell>
   );
-*/
 }
 function OnboardingGate({ email, onCreate }: { email: string; onCreate: (draft: TripDraft) => void }) {
   const [draft, setDraft] = useState<TripDraft>({ name: "", destination: "", startDate: "", endDate: "" });
