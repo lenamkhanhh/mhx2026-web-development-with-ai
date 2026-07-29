@@ -98,6 +98,7 @@ describe("AuthFlow", () => {
     render(<AuthFlow backend={backend} onAuthenticated={vi.fn()} />);
 
     expect(screen.getByTestId("auth-workbench").getAttribute("data-motion")).toBe("calm");
+    expect(screen.getByTestId("auth-workbench").getAttribute("data-ui-system")).toBe("light-workbench");
     expect(screen.getByText("TRIPFLOW WORKBENCH")).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Đăng nhập" }).getAttribute("aria-selected")).toBe("true");
   });

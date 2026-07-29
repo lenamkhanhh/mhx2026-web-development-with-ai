@@ -97,6 +97,7 @@ describe("OnboardingFlow", () => {
     render(<OnboardingFlow backend={backend} profile={profile} onTripReady={vi.fn()} />);
 
     expect(screen.getByTestId("onboarding-workbench").getAttribute("data-motion")).toBe("calm");
+    expect(screen.getByTestId("onboarding-workbench").getAttribute("data-ui-system")).toBe("light-workbench");
     expect(screen.getByRole("button", { name: "Tạo chuyến đi mới" })).toBeTruthy();
 
     await actor.click(screen.getByRole("tab", { name: "Tham gia chuyến đi" }));
