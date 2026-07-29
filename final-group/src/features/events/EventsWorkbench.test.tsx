@@ -106,6 +106,38 @@ describe("EventsWorkbench", () => {
     expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
   });
 
+  it("locks every composer control while an event save is pending", async () => {
+    const user = userEvent.setup();
+    const save = deferred<void>();
+    const { container } = renderWorkbench({ onCreate: vi.fn(() => save.promise) });
+    const dateInputs = [
+      ...container.querySelectorAll<HTMLInputElement>(
+        'input[type="datetime-local"]',
+      ),
+    ];
+    const title = screen.getByLabelText("Tên hoạt động");
+    const category = screen.getByRole("combobox", { name: "Loại" });
+    const participant = screen.getAllByRole("checkbox")[0];
+    const submit = container.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    )!;
+
+    await user.type(title, "Locked draft");
+    await user.type(dateInputs[0], "2026-07-30T06:00");
+    await user.type(dateInputs[1], "2026-07-30T07:00");
+    await user.click(participant);
+    await user.click(submit);
+
+    expect((title as HTMLInputElement).disabled).toBe(true);
+    expect((category as HTMLSelectElement).disabled).toBe(true);
+    expect(dateInputs.every((input) => input.disabled)).toBe(true);
+    expect((participant as HTMLInputElement).disabled).toBe(true);
+    expect(submit.disabled).toBe(true);
+
+    save.resolve();
+    await waitFor(() => expect(submit.disabled).toBe(false));
+  });
+
   it("keeps the composer draft and announces rollback feedback when saving fails", async () => {
     const user = userEvent.setup(); const { container, props } = renderWorkbench({ onCreate: vi.fn().mockRejectedValue(new Error("offline")) });
     const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
