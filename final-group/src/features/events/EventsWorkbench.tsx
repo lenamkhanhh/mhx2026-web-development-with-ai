@@ -38,13 +38,16 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   const [saving, setSaving] = useState(false);
   const [runningAction, setRunningAction] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
-  const [optimisticOrder, setOptimisticOrder] = useState<string[] | null>(null);
+  const [optimisticState, setOptimisticState] = useState<{
+    order: string[];
+    source: EventRecord[];
+  } | null>(null);
   const reducedMotion = useReducedMotion();
   const isLead = role === "lead";
+  const optimisticOrder =
+    optimisticState?.source === events ? optimisticState.order : null;
   const timeline = useMemo(() => orderEvents(events, optimisticOrder), [events, optimisticOrder]);
   const reorderPending = optimisticOrder !== null;
-
-  useEffect(() => setOptimisticOrder(null), [events]);
 
   function toggleParticipant(uid: string) {
     setDraft((current) => ({ ...current, participantIds: current.participantIds.includes(uid) ? current.participantIds.filter((id) => id !== uid) : [...current.participantIds, uid] }));
@@ -80,10 +83,11 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
     if (reorderPending) return;
     const nextOrder = moveEvent(timeline.map((event) => event.id), eventId, direction);
     if (!nextOrder) return;
-    setMovingId(eventId); setOptimisticOrder(nextOrder);
+    setMovingId(eventId);
+    setOptimisticState({ order: nextOrder, source: events });
     setFeedback({ kind: "saving", message: "Đang cập nhật vị trí trong timeline…" });
     try { await onMove(eventId, direction); setFeedback({ kind: "success", message: "Đã gửi yêu cầu sắp xếp. Chờ bản cập nhật thời gian thực." }); }
-    catch (error) { setOptimisticOrder(null); setFeedback({ kind: "error", message: rollbackMessage(error, "Không thể đổi thứ tự.") }); }
+    catch (error) { setOptimisticState(null); setFeedback({ kind: "error", message: rollbackMessage(error, "Không thể đổi thứ tự.") }); }
     finally { setMovingId(null); }
   }
 

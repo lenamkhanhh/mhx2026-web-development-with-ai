@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { MemberRecord, TripRecord } from "../../firebase/contracts";
 import { canEditResponsibility, canRemoveMember } from "./authorization";
 import "./MembersPanel.css";
@@ -22,12 +22,11 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<Record<string, Feedback>>({});
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const [copyStateCode, setCopyStateCode] = useState<string | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<MemberRecord | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCopyState("idle");
-  }, [trip.joinCode]);
+  const displayedCopyState =
+    copyStateCode === trip.joinCode ? copyState : "idle";
 
   const updateResponsibility = async (member: MemberRecord) => {
     if (!canEditResponsibility(currentUserId, member)) return;
@@ -46,8 +45,10 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
       await navigator.clipboard.writeText(trip.joinCode);
+      setCopyStateCode(trip.joinCode);
       setCopyState("copied");
     } catch {
+      setCopyStateCode(trip.joinCode);
       setCopyState("error");
     }
   };
@@ -83,8 +84,8 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
           <span>Trip ID</span><strong>{trip.id}</strong>
           <span>Mã gia nhập</span><code>{trip.joinCode}</code>
           <button aria-label="Copy join code" className="members-panel__copy" onClick={() => void copyJoinCode()} type="button">Sao chép mã</button>
-          <p data-state={copyState} data-testid="join-code-status" role="status">
-            {copyState === "copied" ? "Đã sao chép mã tham gia" : copyState === "error" ? "Không thể sao chép mã" : "Chỉ chia sẻ với người bạn tin cậy"}
+           <p data-state={displayedCopyState} data-testid="join-code-status" role="status">
+             {displayedCopyState === "copied" ? "Đã sao chép mã tham gia" : displayedCopyState === "error" ? "Không thể sao chép mã" : "Chỉ chia sẻ với người bạn tin cậy"}
           </p>
         </aside>
       </header>

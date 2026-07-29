@@ -118,7 +118,6 @@ export function App({ backend }: AppProps) {
 
   useEffect(() => {
     if (!tripId) return;
-    setSnapshot(null);
     return backend.subscribeTrip(
       tripId,
       setSnapshot,
@@ -370,5 +369,4 @@ export function App({ backend }: AppProps) {
   );
 }
 function ScreenMessage({ title }: { title: string }) { return <main className="screen-message"><p role="status">{title}</p></main>; }
-function formatDateTime(value: string) { return new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(new Date(value)); }
 function toMessage(cause: unknown, fallback: string) { return cause instanceof Error && cause.message ? cause.message : fallback; }

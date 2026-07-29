@@ -61,10 +61,36 @@ Write-Host "Boundary and secret checks passed."
 if ($Full) {
   Push-Location $repo
   try {
-    & npm.cmd test -- final-group
+    $vitestShim = Join-Path $repo "node_modules\.bin\vitest.cmd"
+    if (Test-Path -LiteralPath $vitestShim) {
+      & npm.cmd test -- final-group
+    }
+    else {
+      $vitestModule = Join-Path $repo "node_modules\vitest\vitest.mjs"
+      if (-not (Test-Path -LiteralPath $vitestModule)) {
+        throw "Vitest is unavailable in node_modules."
+      }
+      & node $vitestModule run final-group
+    }
     if ($LASTEXITCODE -ne 0) { throw "Final-group tests failed." }
 
-    & npm.cmd run build
+    $tscShim = Join-Path $repo "node_modules\.bin\tsc.cmd"
+    $viteShim = Join-Path $repo "node_modules\.bin\vite.cmd"
+    if ((Test-Path -LiteralPath $tscShim) -and (Test-Path -LiteralPath $viteShim)) {
+      & npm.cmd run build
+    }
+    else {
+      $tscModule = Join-Path $repo "node_modules\typescript\bin\tsc"
+      $viteModule = Join-Path $repo "node_modules\vite\bin\vite.js"
+      if (-not (Test-Path -LiteralPath $tscModule) -or -not (Test-Path -LiteralPath $viteModule)) {
+        throw "TypeScript or Vite is unavailable in node_modules."
+      }
+      & node $tscModule --noEmit
+      if ($LASTEXITCODE -ne 0) { throw "Frontend type-check failed." }
+      & node $tscModule -p tsconfig.server.json --noEmit
+      if ($LASTEXITCODE -ne 0) { throw "Server type-check failed." }
+      & node $viteModule build
+    }
     if ($LASTEXITCODE -ne 0) { throw "Production build failed." }
   }
   finally {
