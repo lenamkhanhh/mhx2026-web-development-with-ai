@@ -49,7 +49,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   const timeline = useMemo(() => orderEvents(events, optimisticOrder), [events, optimisticOrder]);
   const reorderPending = optimisticOrder !== null;
   const selectedEvent = useMemo(
-    () => timeline.find((item) => item.id === selectedEventId) ?? timeline[0] ?? null,
+    () => timeline.find((item) => item.id === selectedEventId) ?? null,
     [selectedEventId, timeline],
   );
 

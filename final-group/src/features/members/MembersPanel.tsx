@@ -132,8 +132,8 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
 function PermissionMatrix() {
   const rows = [
     ["Duyệt / hủy activity", "Lead only", "Không cho phép"],
-    ["Sắp xếp timeline", "Lead", "Không cho phép"],
-    ["Chốt khoản chi", "Lead", "Không cho phép"],
+    ["Sắp xếp timeline", "Trưởng nhóm", "Không cho phép"],
+    ["Chốt khoản chi", "Trưởng nhóm", "Không cho phép"],
     ["Sửa trách nhiệm cá nhân", "Bản thân", "Bản thân"],
     ["Sửa / xoá khoản chi", "Mọi khoản", "Khoản do mình tạo"],
   ] as const;
@@ -141,7 +141,7 @@ function PermissionMatrix() {
   return <section className="members-panel__permissions">
     <div className="members-panel__permissions-heading"><div><span className="members-panel__eyebrow">Quyền thao tác</span><h3>Ma trận quyền trong workspace</h3></div><p>Firebase Security Rules là lớp quyết định cuối cùng; bảng này chỉ mô tả luồng giao diện.</p></div>
     <div aria-label="Permission matrix" className="members-panel__permission-table" role="table">
-      <div className="members-panel__permission-row members-panel__permission-row--head" role="row"><span role="columnheader">Hành động</span><span role="columnheader">Lead</span><span role="columnheader">Member</span></div>
+      <div className="members-panel__permission-row members-panel__permission-row--head" role="row"><span role="columnheader">Hành động</span><span role="columnheader">Trưởng nhóm</span><span role="columnheader">Member</span></div>
       {rows.map(([action, lead, member]) => <div className="members-panel__permission-row" key={action} role="row"><span role="cell">{action}</span><span role="cell">{lead}</span><span role="cell">{member}</span></div>)}
     </div>
   </section>;
