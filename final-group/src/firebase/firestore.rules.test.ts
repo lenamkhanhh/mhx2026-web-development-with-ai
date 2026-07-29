@@ -55,6 +55,7 @@ function memberData(role: "lead" | "member", displayName: string) {
 function eventData(createdBy: string, status: "pending" | "approved") {
   return {
     title: "Nhận phòng",
+    order: 0,
     category: "stay",
     startAt: "2026-08-08T14:00:00.000Z",
     endAt: "2026-08-08T15:00:00.000Z",
@@ -215,6 +216,31 @@ describe("event boundaries", () => {
       updateDoc(doc(memberDb, "trips", TRIP_ID, "events", "pending"), {
         status: "approved",
         approvedBy: MEMBER_ID,
+        updatedAt: now(),
+      }),
+    );
+  });
+
+  it("allows only the lead to persist event order", async () => {
+    await testEnvironment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), "trips", TRIP_ID, "events", "pending"),
+        eventData(MEMBER_ID, "pending"),
+      );
+    });
+    const memberDb = testEnvironment.authenticatedContext(MEMBER_ID).firestore();
+    const leadDb = testEnvironment.authenticatedContext(LEAD_ID).firestore();
+    const eventPath = ["trips", TRIP_ID, "events", "pending"] as const;
+
+    await assertFails(
+      updateDoc(doc(memberDb, ...eventPath), {
+        order: 1,
+        updatedAt: now(),
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(leadDb, ...eventPath), {
+        order: 1,
         updatedAt: now(),
       }),
     );

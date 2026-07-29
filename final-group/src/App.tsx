@@ -241,6 +241,17 @@ export function App({ backend }: AppProps) {
     }
   }
 
+  async function reorderEvent(eventId: string, direction: "up" | "down") {
+    if (!eventFeature) return;
+    try {
+      await eventFeature.reorder(eventId, direction);
+      setNotice("Đã cập nhật thứ tự lịch trình.");
+      setError("");
+    } catch (cause) {
+      setError(toMessage(cause, "Không thể đổi thứ tự lịch trình."));
+    }
+  }
+
   async function createExpense(input: Parameters<ExpenseFeature["create"]>[0]) {
     if (!expenseFeature) return;
     try {
@@ -312,13 +323,9 @@ export function App({ backend }: AppProps) {
             onApprove={approveEvent}
             onCancel={cancelEvent}
             onDelete={deleteEvent}
+            onMove={reorderEvent}
             onSync={syncEventStatuses}
           />
-          <div className="fail-closed-card" role="note">
-            <strong>Đổi thứ tự lịch trình đang tắt</strong>
-            <span>Schema chưa có trường thứ tự được Rules bảo vệ, nên App không gửi yêu cầu reorder.</span>
-            <button disabled type="button">Đổi thứ tự (chưa hỗ trợ an toàn)</button>
-          </div>
         </div>
         <aside className="dashboard-side">
           <MembersPanel
@@ -415,8 +422,8 @@ function EventComposer({ members, onCreate }: { members: MemberRecord[]; onCreat
   );
 }
 
-function EventsPanel({ events, isLead, onApprove, onCancel, onDelete, onSync }: { events: EventRecord[]; isLead: boolean; onApprove: (id: string) => Promise<void>; onCancel: (id: string) => Promise<void>; onDelete: (id: string) => Promise<void>; onSync: () => Promise<void> }) {
-  return <section aria-labelledby="events-heading" className="events-panel panel-card"><div className="section-heading"><div><p className="eyebrow">Đồng bộ thời gian thực</p><h2 id="events-heading">Hoạt động</h2></div>{isLead ? <button className="secondary-button" onClick={() => void onSync()} type="button">Đồng bộ trạng thái</button> : null}</div>{events.length ? <ul>{events.map((event) => <li key={event.id}><article><div><span className={`status status-${event.status}`}>{statusLabel(event.status)}</span><h3>{event.title}</h3><p>{categoryLabel(event.category)} · {formatDateTime(event.startAt)} — {formatDateTime(event.endAt)}</p></div><div className="event-actions">{isLead && event.status === "pending" ? <button onClick={() => void onApprove(event.id)} type="button">Duyệt</button> : null}{isLead && event.status !== "cancelled" ? <button onClick={() => void onCancel(event.id)} type="button">Huỷ</button> : null}{(isLead || event.status === "pending") ? <button onClick={() => void onDelete(event.id)} type="button">Xoá</button> : null}</div></article></li>)}</ul> : <p>Chưa có hoạt động nào.</p>}</section>;
+function EventsPanel({ events, isLead, onApprove, onCancel, onDelete, onMove, onSync }: { events: EventRecord[]; isLead: boolean; onApprove: (id: string) => Promise<void>; onCancel: (id: string) => Promise<void>; onDelete: (id: string) => Promise<void>; onMove: (id: string, direction: "up" | "down") => Promise<void>; onSync: () => Promise<void> }) {
+  return <section aria-labelledby="events-heading" className="events-panel panel-card"><div className="section-heading"><div><p className="eyebrow">Đồng bộ thời gian thực</p><h2 id="events-heading">Hoạt động</h2></div>{isLead ? <button className="secondary-button" onClick={() => void onSync()} type="button">Đồng bộ trạng thái</button> : null}</div>{events.length ? <ul>{events.map((event, index) => <li key={event.id}><article><div><span className={`status status-${event.status}`}>{statusLabel(event.status)}</span><h3>{event.title}</h3><p>{categoryLabel(event.category)} · {formatDateTime(event.startAt)} — {formatDateTime(event.endAt)}</p></div><div className="event-actions">{isLead ? <><button aria-label={`Chuyển ${event.title} lên`} disabled={index === 0} onClick={() => void onMove(event.id, "up")} type="button">↑</button><button aria-label={`Chuyển ${event.title} xuống`} disabled={index === events.length - 1} onClick={() => void onMove(event.id, "down")} type="button">↓</button></> : null}{isLead && event.status === "pending" ? <button onClick={() => void onApprove(event.id)} type="button">Duyệt</button> : null}{isLead && event.status !== "cancelled" ? <button onClick={() => void onCancel(event.id)} type="button">Huỷ</button> : null}{(isLead || event.status === "pending") ? <button onClick={() => void onDelete(event.id)} type="button">Xoá</button> : null}</div></article></li>)}</ul> : <p>Chưa có hoạt động nào.</p>}</section>;
 }
 
 function ScreenMessage({ title }: { title: string }) { return <main className="screen-message"><p role="status">{title}</p></main>; }

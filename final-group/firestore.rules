@@ -59,8 +59,10 @@ service cloud.firestore {
     }
 
     function validEvent(data) {
-      return hasOnlyKeys(data, ["title", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "createdAt", "updatedAt"])
+      return data.keys().hasOnly(["title", "order", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "createdAt", "updatedAt"])
+        && data.keys().hasAll(["title", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "createdAt", "updatedAt"])
         && data.title is string
+        && (!("order" in data) || (data.order is int && data.order >= 0))
         && (data.category == "transport" || data.category == "stay" || data.category == "food" || data.category == "activity" || data.category == "other")
         && data.startAt is string
         && data.endAt is string

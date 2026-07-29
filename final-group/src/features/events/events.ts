@@ -77,7 +77,13 @@ export class EventFeature {
   }
 
   replaceEvents(events: EventRecord[]): void {
-    this.events = events.map(cloneEvent);
+    this.events = events
+      .map(cloneEvent)
+      .sort((left, right) =>
+        left.order - right.order ||
+        Date.parse(left.startAt) - Date.parse(right.startAt) ||
+        left.id.localeCompare(right.id),
+      );
     this.notify();
   }
 
@@ -86,6 +92,7 @@ export class EventFeature {
     if (this.options.role === "lead") {
       this.assertNoConflict({
         id: "",
+        order: this.events.length,
         ...input,
         status: "approved",
         createdBy: this.options.actor.uid,
@@ -143,12 +150,7 @@ export class EventFeature {
     );
   }
 
-  /**
-   * The port deliberately rejects this until an approved persistent ordering
-   * strategy exists. Forwarding the intended order preserves that fail-closed
-   * boundary instead of inventing an `order` field in the event document.
-   */
-  async reorder(eventId: string, direction: "up" | "down"): Promise<never> {
+  async reorder(eventId: string, direction: "up" | "down"): Promise<void> {
     this.assertLead();
     const currentIndex = this.events.findIndex((event) => event.id === eventId);
     if (currentIndex === -1) this.notFound();
@@ -157,7 +159,8 @@ export class EventFeature {
     if (targetIndex >= 0 && targetIndex < ids.length) {
       [ids[currentIndex], ids[targetIndex]] = [ids[targetIndex], ids[currentIndex]];
     }
-    return this.options.backend.reorderEvents(this.options.tripId, ids);
+    if (targetIndex < 0 || targetIndex >= ids.length) return;
+    await this.options.backend.reorderEvents(this.options.tripId, ids);
   }
 
   async syncStatuses(now = new Date()): Promise<void> {

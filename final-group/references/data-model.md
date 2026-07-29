@@ -51,6 +51,7 @@ joinedAt: server timestamp
 
 ```text
 title: string
+order: non-negative integer
 category: "transport" | "stay" | "food" | "activity" | "other"
 startAt: ISO datetime
 endAt: ISO datetime

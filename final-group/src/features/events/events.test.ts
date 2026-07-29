@@ -30,6 +30,7 @@ const input: CreateEventInput = {
 function event(overrides: Partial<EventRecord> = {}): EventRecord {
   return {
     id: "event-1",
+    order: 0,
     ...input,
     status: "approved",
     createdBy: "lead-1",
@@ -86,9 +87,7 @@ function createBackend(): TripBackend & {
     updateEvent: vi.fn(async () => undefined),
     approveEvent: vi.fn(async () => undefined),
     deleteEvent: vi.fn(async () => undefined),
-    reorderEvents: vi.fn(async (): Promise<never> => {
-      throw new Error("persistent event ordering is not approved");
-    }),
+    reorderEvents: vi.fn(async () => undefined),
     createExpense: vi.fn(),
     updateExpense: vi.fn(),
     deleteExpense: vi.fn(),
@@ -202,14 +201,12 @@ describe("EventFeature", () => {
     expect(backend.approveEvent).toHaveBeenCalledTimes(1);
   });
 
-  it("forwards reorder through the backend without inventing an order field", async () => {
+  it("persists a lead reorder through the backend", async () => {
     const backend = createBackend();
     const feature = new EventFeature({ backend, tripId: "trip-1", actor: lead, role: "lead" });
     feature.replaceEvents([event({ id: "first" }), event({ id: "second" })]);
 
-    await expect(feature.reorder("second", "up")).rejects.toThrow(
-      "persistent event ordering is not approved",
-    );
+    await feature.reorder("second", "up");
     expect(backend.reorderEvents).toHaveBeenCalledWith("trip-1", ["second", "first"]);
   });
 });

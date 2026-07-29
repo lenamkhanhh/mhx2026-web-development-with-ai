@@ -12,11 +12,14 @@ hoặc các bài Buổi 4–5 đã nộp.
   `VITE_FIREBASE_*`.
 - Firebase project riêng: `tripflow-mhx2026-khanh`; Firestore Standard đặt tại
   `asia-southeast1`, bật delete protection và Email/Password Authentication.
-- Firestore Security Rules: đã kiểm tra bằng Emulator với các ca Lead, Member
-  và người ngoài nhóm, sau đó deploy lên project riêng.
+- Firestore Security Rules: bản hiện tại đã kiểm tra bằng Emulator với các ca
+  Lead, Member và người ngoài nhóm. Bản production cần deploy lại sau khi khóa
+  phạm vi lõi.
 - Build production và toàn bộ test thông thường: đang xanh.
-- Chưa deploy. Join bằng mã, sắp xếp lại sự kiện và chốt thanh toán vẫn bị
-  vô hiệu hóa an toàn cho đến khi có thiết kế server/schema xác minh được.
+- Chưa deploy frontend. Sắp xếp lịch trình đã có thứ tự bền vững và chỉ Lead
+  được đổi; khoản chi đã có luồng tạo và Lead-only settlement.
+- Join bằng mã vẫn bị vô hiệu hóa an toàn cho đến khi có callable function hoặc
+  join-proof được server xác minh.
 
 ## Phạm vi MVP
 
@@ -24,9 +27,9 @@ hoặc các bài Buổi 4–5 đã nộp.
 - Tạo chuyến đi. Tham gia bằng mã là phạm vi tiếp theo, chưa bật trong bản hiện
   tại vì client không được tự cấp membership chỉ bằng một mã bí mật.
 - Lead/Member và phân quyền.
-- CRUD sự kiện, duyệt sự kiện và phát hiện trùng lịch.
+- CRUD sự kiện, duyệt sự kiện, phát hiện trùng lịch và sắp xếp bền vững.
 - Theo dõi trạng thái sự kiện.
-- Chi phí, số tiền đã trả và công nợ.
+- Tạo/chốt khoản chi, số tiền đã trả và công nợ.
 
 ## Quy tắc làm việc
 

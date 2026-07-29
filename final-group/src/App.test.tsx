@@ -73,7 +73,9 @@ async function render(node: ReactNode) {
 
 function button(prefix: string): HTMLButtonElement {
   const candidate = [...(container?.querySelectorAll("button") ?? [])].find(
-    (element) => element.textContent?.startsWith(prefix),
+    (element) =>
+      element.textContent?.startsWith(prefix) ||
+      element.getAttribute("aria-label")?.startsWith(prefix),
   );
   if (!(candidate instanceof HTMLButtonElement)) throw new Error(`Missing button: ${prefix}`);
   return candidate;

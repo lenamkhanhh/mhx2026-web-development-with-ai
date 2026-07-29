@@ -118,8 +118,14 @@ export function decodeEventRecord(id: string, data: DocumentData): EventRecord {
   if (approvedBy !== null && typeof approvedBy !== "string") {
     throw new FirestoreDataError("Expected approvedBy to be a uid or null.");
   }
+  const rawOrder = value(data, "order");
+  const order = rawOrder === undefined ? Number.MAX_SAFE_INTEGER : rawOrder;
+  if (typeof order !== "number" || !Number.isSafeInteger(order) || order < 0) {
+    throw new FirestoreDataError("Expected order to be a non-negative integer.");
+  }
   return {
     id,
+    order,
     title: stringValue(data, "title"),
     category: enumValue(data, "category", EVENT_CATEGORIES),
     startAt: isoDateTime(data, "startAt"),
@@ -267,7 +273,13 @@ export class FirebaseTripBackend implements TripBackend {
         publish();
       }, fail),
       onSnapshot(collection(this.firestore, "trips", tripId, "events"), (snapshot) => {
-        events = snapshot.docs.map((event) => decodeEventRecord(event.id, event.data()));
+        events = snapshot.docs
+          .map((event) => decodeEventRecord(event.id, event.data()))
+          .sort((left, right) =>
+            left.order - right.order ||
+            Date.parse(left.startAt) - Date.parse(right.startAt) ||
+            left.id.localeCompare(right.id),
+          );
         publish();
       }, fail),
       onSnapshot(collection(this.firestore, "trips", tripId, "expenses"), (snapshot) => {
@@ -322,6 +334,7 @@ export class FirebaseTripBackend implements TripBackend {
     const eventRef = doc(collection(this.firestore, "trips", tripId, "events"));
     const event: EventRecord = {
       id: eventRef.id,
+      order: Date.now(),
       ...input,
       status: member.role === "lead" ? "approved" : "pending",
       createdBy: actor.uid,
@@ -366,8 +379,18 @@ export class FirebaseTripBackend implements TripBackend {
     return deleteDoc(doc(this.firestore, "trips", tripId, "events", eventId));
   }
 
-  async reorderEvents(_tripId: string, _eventIds: string[]): Promise<never> {
-    throw new UnsupportedTripOperationError("Reordering is disabled because events have no approved persistent order field.");
+  async reorderEvents(tripId: string, eventIds: string[]): Promise<void> {
+    if (new Set(eventIds).size !== eventIds.length) {
+      throw new FirestoreDataError("Event order cannot contain duplicate ids.");
+    }
+    const batch = writeBatch(this.firestore);
+    eventIds.forEach((eventId, order) => {
+      batch.update(doc(this.firestore, "trips", tripId, "events", eventId), {
+        order,
+        updatedAt: serverTimestamp(),
+      });
+    });
+    await batch.commit();
   }
 
   async createExpense(tripId: string, input: CreateExpenseInput, actor: AuthenticatedUser): Promise<ExpenseRecord> {

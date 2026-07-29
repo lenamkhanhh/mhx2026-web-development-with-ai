@@ -51,6 +51,8 @@ export interface MemberRecord {
 
 export interface EventRecord {
   id: string;
+  /** Stable, lead-controlled position in the trip itinerary. */
+  order: number;
   title: string;
   category: FirestoreEventCategory;
   startAt: string;
@@ -127,8 +129,7 @@ export interface TripBackend {
   updateEvent(tripId: string, eventId: string, patch: Partial<CreateEventInput>): Promise<void>;
   approveEvent(tripId: string, eventId: string, status: Exclude<FirestoreEventStatus, "pending">): Promise<void>;
   deleteEvent(tripId: string, eventId: string): Promise<void>;
-  /** Fails closed because the agreed event document has no order field. */
-  reorderEvents(tripId: string, eventIds: string[]): Promise<never>;
+  reorderEvents(tripId: string, eventIds: string[]): Promise<void>;
   createExpense(tripId: string, input: CreateExpenseInput, actor: AuthenticatedUser): Promise<ExpenseRecord>;
   updateExpense(tripId: string, expenseId: string, patch: Partial<CreateExpenseInput>): Promise<void>;
   deleteExpense(tripId: string, expenseId: string): Promise<void>;

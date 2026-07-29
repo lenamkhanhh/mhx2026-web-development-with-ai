@@ -82,7 +82,12 @@ export function createTripRecord(input: CreateTripInput, leadId: string, joinCod
 export function decodeEventRecord(id: string, data: DocumentData): EventRecord {
   const approvedBy = value(data, "approvedBy");
   if (approvedBy !== null && typeof approvedBy !== "string") throw new FirestoreDataError("Expected approvedBy to be a uid or null.");
-  return { id, title: stringValue(data, "title"), category: enumValue(data, "category", EVENT_CATEGORIES), startAt: isoDateTime(data, "startAt"), endAt: isoDateTime(data, "endAt"), status: enumValue(data, "status", EVENT_STATUSES), participantIds: stringList(data, "participantIds"), createdBy: stringValue(data, "createdBy"), approvedBy };
+  const rawOrder = value(data, "order");
+  const order = rawOrder === undefined ? Number.MAX_SAFE_INTEGER : rawOrder;
+  if (typeof order !== "number" || !Number.isSafeInteger(order) || order < 0) {
+    throw new FirestoreDataError("Expected order to be a non-negative integer.");
+  }
+  return { id, order, title: stringValue(data, "title"), category: enumValue(data, "category", EVENT_CATEGORIES), startAt: isoDateTime(data, "startAt"), endAt: isoDateTime(data, "endAt"), status: enumValue(data, "status", EVENT_STATUSES), participantIds: stringList(data, "participantIds"), createdBy: stringValue(data, "createdBy"), approvedBy };
 }
 
 export function decodeExpenseRecord(id: string, data: DocumentData): ExpenseRecord {
