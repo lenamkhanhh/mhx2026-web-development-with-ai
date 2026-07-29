@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ExpensesPanel } from "./ExpensesPanel";
@@ -82,6 +82,46 @@ describe("ExpensesPanel", () => {
     expect(onSettle).not.toHaveBeenCalled();
     await actor.click(screen.getByRole("button", { name: "Xác nhận chốt" }));
     expect(onSettle).toHaveBeenCalledWith("expense-1");
+  });
+
+  it("opens details, lets the expense owner update, and confirms deletion", async () => {
+    const actor = userEvent.setup();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    const onDelete = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <ExpensesPanel
+        currentUserId="lead-1"
+        members={[
+          { uid: "lead-1", displayName: "Khánh" },
+          { uid: "member-1", displayName: "Minh" },
+        ]}
+        expenses={[{
+          id: "expense-1", title: "Xe di chuyển", amount: 200_000, paidBy: "lead-1",
+          splitAmong: ["lead-1", "member-1"], status: "pending", createdBy: "lead-1",
+        }]}
+        onDelete={onDelete}
+        onUpdate={onUpdate}
+      />,
+    );
+
+    await actor.click(screen.getByRole("button", { name: "Open Xe di chuyển details" }));
+    const details = screen.getByRole("complementary", { name: "Expense details" });
+    expect(within(details).getByText("Xe di chuyển")).toBeTruthy();
+
+    await actor.click(within(details).getByRole("button", { name: "Edit expense" }));
+    const title = within(details).getByRole("textbox", { name: "Expense title" });
+    await actor.clear(title);
+    await actor.type(title, "Xe sân bay");
+    await actor.click(within(details).getByRole("button", { name: "Save expense changes" }));
+    await waitFor(() => expect(onUpdate).toHaveBeenCalledWith("expense-1", {
+      title: "Xe sân bay", amount: 200_000, paidBy: "lead-1", splitAmong: ["lead-1", "member-1"],
+    }));
+
+    await actor.click(within(details).getByRole("button", { name: "Delete expense" }));
+    expect(screen.getByRole("dialog", { name: "Confirm delete expense" })).toBeTruthy();
+    await actor.click(screen.getByRole("button", { name: "Confirm delete" }));
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith("expense-1"));
   });
 
   it("shows loading and retry states without changing the ledger", async () => {
