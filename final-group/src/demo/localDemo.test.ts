@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { TripSnapshot } from "../firebase/contracts";
+import type {
+  AuthenticatedUser,
+  TripRecord,
+  TripSnapshot,
+} from "../firebase/contracts";
 import {
   createLocalDemoTripBackend,
   shouldUseLocalDemoPreview,
@@ -15,70 +19,74 @@ describe("local rich TripFlow demo", () => {
 
   it("starts with a rich synthetic trip board and keeps join-by-code fail-closed", async () => {
     const backend = createLocalDemoTripBackend();
-    let currentUser = null;
-    let trips = [];
-    let snapshot: TripSnapshot | undefined;
+    const observed: {
+      user: AuthenticatedUser | null;
+      trips: TripRecord[];
+      snapshot: TripSnapshot | undefined;
+    } = { user: null, trips: [], snapshot: undefined };
 
     backend.observeSession((user) => {
-      currentUser = user;
+      observed.user = user;
     });
-    expect(currentUser?.uid).toBe("demo-lead");
+    expect(observed.user?.uid).toBe("demo-lead");
 
     backend.subscribeTrips("demo-lead", (nextTrips) => {
-      trips = nextTrips;
+      observed.trips = nextTrips;
     });
-    expect(trips.length).toBeGreaterThanOrEqual(3);
+    expect(observed.trips.length).toBeGreaterThanOrEqual(3);
 
-    backend.subscribeTrip(trips[0]!.id, (nextSnapshot) => {
-      snapshot = nextSnapshot;
+    backend.subscribeTrip(observed.trips[0]!.id, (nextSnapshot) => {
+      observed.snapshot = nextSnapshot;
     });
-    expect(snapshot).toBeDefined();
-    expect(snapshot!.members.length).toBeGreaterThanOrEqual(5);
-    expect(snapshot!.members.every((member) => member.isDemo)).toBe(true);
-    expect(snapshot!.events.length).toBeGreaterThanOrEqual(9);
-    expect(new Set(snapshot!.events.map((event) => event.status))).toEqual(
+    expect(observed.snapshot).toBeDefined();
+    expect(observed.snapshot!.members.length).toBeGreaterThanOrEqual(5);
+    expect(observed.snapshot!.members.every((member) => member.isDemo)).toBe(true);
+    expect(observed.snapshot!.events.length).toBeGreaterThanOrEqual(9);
+    expect(new Set(observed.snapshot!.events.map((event) => event.status))).toEqual(
       new Set(["pending", "approved", "happening", "completed", "cancelled"]),
     );
-    expect(snapshot!.expenses.length).toBeGreaterThanOrEqual(7);
-    expect(new Set(snapshot!.expenses.map((expense) => expense.status))).toEqual(
+    expect(observed.snapshot!.expenses.length).toBeGreaterThanOrEqual(7);
+    expect(new Set(observed.snapshot!.expenses.map((expense) => expense.status))).toEqual(
       new Set(["pending", "settled"]),
     );
 
-    await expect(backend.joinTrip("BANGKOK26", currentUser!)).rejects.toThrow(
+    await expect(backend.joinTrip("BANGKOK26", observed.user!)).rejects.toThrow(
       /xác minh từ server/i,
     );
   });
 
   it("broadcasts local mutations to preview subscribers without persistence", async () => {
     const backend = createLocalDemoTripBackend();
-    let user = null;
-    let trips = [];
-    let latest: TripSnapshot | undefined;
+    const observed: {
+      user: AuthenticatedUser | null;
+      trips: TripRecord[];
+      latest: TripSnapshot | undefined;
+    } = { user: null, trips: [], latest: undefined };
 
     backend.observeSession((nextUser) => {
-      user = nextUser;
+      observed.user = nextUser;
     });
     backend.subscribeTrips("demo-lead", (nextTrips) => {
-      trips = nextTrips;
+      observed.trips = nextTrips;
     });
-    backend.subscribeTrip(trips[0]!.id, (snapshot) => {
-      latest = snapshot;
+    backend.subscribeTrip(observed.trips[0]!.id, (snapshot) => {
+      observed.latest = snapshot;
     });
 
-    const before = latest!.expenses.length;
+    const before = observed.latest!.expenses.length;
     await backend.createExpense(
-      trips[0]!.id,
+      observed.trips[0]!.id,
       {
         title: "Vé tàu demo mới",
         amount: 250_000,
         paidBy: "demo-lead",
         splitAmong: ["demo-lead", "demo-minh"],
       },
-      user!,
+      observed.user!,
     );
 
-    expect(latest!.expenses).toHaveLength(before + 1);
-    expect(latest!.expenses.at(-1)).toMatchObject({
+    expect(observed.latest!.expenses).toHaveLength(before + 1);
+    expect(observed.latest!.expenses.at(-1)).toMatchObject({
       title: "Vé tàu demo mới",
       status: "pending",
     });
