@@ -85,6 +85,27 @@ button:disabled { cursor: not-allowed; opacity: .62; }
   gap: 20px;
 }
 
+.local-demo-notice {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #b9cbea;
+  border-left: 3px solid #155eef;
+  border-radius: 6px;
+  color: #38537e;
+  background: #f6f9ff;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.local-demo-notice strong {
+  color: #13294f;
+  font-weight: 800;
+}
+
 .workbench-trip-switcher {
   display: flex;
   align-items: center;

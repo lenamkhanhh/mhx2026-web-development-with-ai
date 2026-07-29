@@ -45,6 +45,8 @@ export function statusLabel(status: FirestoreEventStatus): string {
 
 export interface AppProps {
   backend: TripBackend;
+  /** Makes the local, synthetic preview explicit without changing feature contracts. */
+  demoMode?: boolean;
 }
 
 /**
@@ -52,7 +54,7 @@ export interface AppProps {
  * category/status is rendered directly from the approved vocabulary; this App
  * deliberately does not coerce records into the older dashboard domain.
  */
-export function App({ backend }: AppProps) {
+export function App({ backend, demoMode = false }: AppProps) {
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [profile, setProfile] = useState<UserRecord | null>(null);
   const [trips, setTrips] = useState<TripRecord[]>([]);
@@ -397,6 +399,12 @@ export function App({ backend }: AppProps) {
       trip={selectedSnapshot.trip}
     >
       <div className="workbench-screen-stack">
+        {demoMode ? (
+          <p className="local-demo-notice" data-testid="local-demo-notice" role="status">
+            <strong>Dữ liệu minh họa local</strong>
+            <span> Chỉ dùng để trải nghiệm; mọi thay đổi sẽ reset khi tải lại.</span>
+          </p>
+        ) : null}
         <label className="workbench-trip-switcher">
           <span>Chuyến đi đang mở</span>
           <select value={tripId} onChange={(event) => handleTripChange(event.target.value)}>

@@ -1,13 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { createLocalDemoTripBackend, shouldUseLocalDemoPreview } from "./demo/localDemo";
 import { createFirebaseTripBackend } from "./firebase";
 import "./styles.css";
 
 const root = createRoot(document.getElementById("root")!);
+const demoMode = shouldUseLocalDemoPreview(window.location.search, import.meta.env.DEV);
 
 try {
-  root.render(<StrictMode><App backend={createFirebaseTripBackend()} /></StrictMode>);
+  const backend = demoMode ? createLocalDemoTripBackend() : createFirebaseTripBackend();
+  root.render(<StrictMode><App backend={backend} demoMode={demoMode} /></StrictMode>);
 } catch (error) {
   root.render(
     <main className="screen-message" role="alert">
