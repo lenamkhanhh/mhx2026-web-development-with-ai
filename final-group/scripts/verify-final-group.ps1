@@ -92,10 +92,16 @@ if ($Full) {
       & node $viteModule build
     }
     if ($LASTEXITCODE -ne 0) { throw "Production build failed." }
+
+    & npm.cmd run test:final-group:rules
+    if ($LASTEXITCODE -ne 0) { throw "Firestore Rules tests failed." }
+
+    & npm.cmd run test:final-group:e2e
+    if ($LASTEXITCODE -ne 0) { throw "Firebase Emulator browser tests failed." }
   }
   finally {
     Pop-Location
   }
 
-  Write-Host "Full final-group verification passed."
+  Write-Host "Full final-group verification passed (unit, build, Rules, and browser E2E)."
 }

@@ -18,6 +18,8 @@ export type OnboardingBackend = Pick<TripBackend, "createTrip" | "joinTrip">;
 type OnboardingMode = "create" | "join";
 type FieldErrors = Partial<Record<keyof TripDraft | "joinCode", string>>;
 
+// Kept beside the form so its tested validation contract stays local.
+// eslint-disable-next-line react-refresh/only-export-components
 export class OnboardingInputError extends Error {
   constructor(readonly errors: FieldErrors) {
     super("Invalid onboarding input.");

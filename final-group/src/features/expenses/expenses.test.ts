@@ -53,11 +53,9 @@ function snapshot(expenses: ExpenseRecord[]): TripSnapshot {
 }
 
 function createBackend(): TripBackend & {
-  // eslint-disable-next-line no-unused-vars -- Type-only callback parameter.
   emit(expenses: ExpenseRecord[]): void;
   unsubscribe: ReturnType<typeof vi.fn>;
 } {
-  // eslint-disable-next-line no-unused-vars -- Type-only callback parameter.
   let tripListener: ((value: TripSnapshot) => void) | undefined;
   const unsubscribe = vi.fn();
 

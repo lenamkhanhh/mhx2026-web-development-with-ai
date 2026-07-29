@@ -20,5 +20,42 @@ export default [
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }]
     }
+  },
+  {
+    files: ["final-group/**/*.{ts,tsx}"],
+    rules: {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true
+        }
+      ],
+      "react-refresh/only-export-components": [
+        "warn",
+        {
+          allowConstantExport: true,
+          allowExportNames: [
+            "AuthInputError",
+            "OnboardingInputError",
+            "authenticate",
+            "categoryLabel",
+            "hydrateProfile",
+            "joinTrip",
+            "logout",
+            "normalizeJoinCode",
+            "statusLabel",
+            "submitNewTrip",
+            "validateTripDraft"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    files: ["final-group/playwright.config.ts"],
+    languageOptions: { globals: globals.node }
   }
 ];

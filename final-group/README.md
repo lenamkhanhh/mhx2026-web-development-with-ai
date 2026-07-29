@@ -68,11 +68,32 @@ npm.cmd run build
 
 Mở `http://127.0.0.1:4173/final-group/`.
 
-Rules test cần JDK 11+ và chạy hoàn toàn với project demo của Emulator, không
+Rules test cần JDK 21+ và chạy hoàn toàn với project demo của Emulator, không
 đụng dữ liệu Firebase thật:
 
 ```bash
 npm.cmd run test:final-group:rules
+```
+
+E2E browser test cần Google Chrome cài trên máy và JDK 21. Lệnh dưới đây tự
+khởi động Auth Emulator, Firestore Emulator và Vite trên các cổng local riêng,
+dùng project `demo-tripflow-e2e`, rồi tự tắt sau khi test:
+
+```bash
+npm.cmd run test:final-group:e2e
+```
+
+Hai hành trình E2E bao phủ đăng ký/đăng nhập, tạo chuyến đi, join-by-code
+fail-closed, CRUD và sắp xếp lịch trình, khoản chi/chốt sổ, cập nhật trách nhiệm,
+phân quyền Lead/Member, realtime và thu hồi quyền thành viên. Cấu hình E2E ghi đè
+toàn bộ Firebase Web values bằng dữ liệu giả và làm test thất bại nếu browser có
+bất kỳ HTTP(S) request nào đi ra ngoài loopback.
+
+Để chạy một vòng đầy đủ gồm kiểm tra biên/secret, unit/integration test, build,
+Firestore Rules và browser E2E:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\final-group\scripts\verify-final-group.ps1 -Full
 ```
 
 Smoke test Auth thật tạo một tài khoản tổng hợp rồi xóa ngay:

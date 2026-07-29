@@ -33,8 +33,8 @@ test("lead and member permissions stay consistent across realtime updates", asyn
   const tripName = `Role Trip ${runId}`;
   const memberEvent = `Member proposal ${runId}`;
   const memberExpense = `Member expense ${runId}`;
-  const productionRequests: string[] = [];
-  guardProductionFirebase(leadPage, productionRequests);
+  const externalRequests: string[] = [];
+  guardExternalRequests(leadPage, externalRequests);
 
   await register(leadPage, lead);
   await createTrip(leadPage, tripName);
@@ -44,7 +44,7 @@ test("lead and member permissions stay consistent across realtime updates", asyn
 
   const memberContext = await browser.newContext();
   const memberPage = await memberContext.newPage();
-  guardProductionFirebase(memberPage, productionRequests);
+  guardExternalRequests(memberPage, externalRequests);
   try {
     await register(memberPage, member);
     await seedMember(tripId, member);
@@ -136,7 +136,7 @@ test("lead and member permissions stay consistent across realtime updates", asyn
       leadPage.getByText(member.displayName, { exact: true }),
     ).toHaveCount(0);
     await expect(memberPage.getByTestId("onboarding-workbench")).toBeVisible();
-    expect(productionRequests).toEqual([]);
+    expect(externalRequests).toEqual([]);
   } finally {
     await memberContext.close();
   }
@@ -205,12 +205,12 @@ async function seedMember(
   }
 }
 
-function guardProductionFirebase(page: Page, requests: string[]): void {
+function guardExternalRequests(page: Page, requests: string[]): void {
   page.on("request", (request) => {
-    const hostname = new URL(request.url()).hostname;
+    const url = new URL(request.url());
     if (
-      hostname === "identitytoolkit.googleapis.com" ||
-      hostname === "firestore.googleapis.com"
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      !["127.0.0.1", "localhost", "::1"].includes(url.hostname)
     ) {
       requests.push(request.url());
     }

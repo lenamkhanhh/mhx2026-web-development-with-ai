@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:final-group:auth-live": "node --env-file=.env.local final-group/scripts/live-auth-smoke.mjs",
-    "test:final-group:rules": "firebase emulators:exec --only firestore --config final-group/firebase.json \"vitest run --config final-group/src/firebase/vitest.rules.config.mjs\"",
+    "test:final-group:rules": "node ./node_modules/firebase-tools/lib/bin/firebase.js emulators:exec --only firestore --config final-group/firebase.json \"node ./node_modules/vitest/vitest.mjs run --config final-group/src/firebase/vitest.rules.config.mjs\"",
     "test:final-group:e2e": "node ./node_modules/@playwright/test/cli.js test --config final-group/playwright.config.ts",
     "test:coverage": "vitest run --coverage",
     "preview": "vite preview"

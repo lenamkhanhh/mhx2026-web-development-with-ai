@@ -24,7 +24,6 @@ export interface WorkbenchShellProps {
   activeView: WorkbenchView;
   children: ReactNode;
   displayName: string;
-  // eslint-disable-next-line no-unused-vars
   onChangeView: (view: WorkbenchView) => void;
   onLogout: () => void | Promise<void>;
   pendingCount: number;

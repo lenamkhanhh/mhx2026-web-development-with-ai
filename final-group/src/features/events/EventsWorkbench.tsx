@@ -23,15 +23,10 @@ export interface EventsWorkbenchProps {
   events: EventRecord[];
   members: MemberRecord[];
   role: FirestoreMemberRole;
-  // eslint-disable-next-line no-unused-vars
   onCreate: (input: CreateEventInput) => Promise<void>;
-  // eslint-disable-next-line no-unused-vars
   onApprove: (eventId: string) => Promise<void>;
-  // eslint-disable-next-line no-unused-vars
   onCancel: (eventId: string) => Promise<void>;
-  // eslint-disable-next-line no-unused-vars
   onDelete: (eventId: string) => Promise<void>;
-  // eslint-disable-next-line no-unused-vars
   onMove: (eventId: string, direction: "up" | "down") => Promise<void>;
   onSync: () => Promise<void>;
 }

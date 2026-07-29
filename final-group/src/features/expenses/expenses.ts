@@ -44,7 +44,6 @@ export class ExpenseFeature {
   private readonly actor: AuthenticatedUser;
   private readonly role: FirestoreMemberRole;
   private expenses: ExpenseRecord[] = [];
-  // eslint-disable-next-line no-unused-vars -- Type-only callback parameter.
   private listener: ((expenses: ExpenseRecord[]) => void) | undefined;
   private unsubscribe: (() => void) | undefined;
 
@@ -60,7 +59,6 @@ export class ExpenseFeature {
     this.listener?.([...this.expenses]);
   }
 
-  // eslint-disable-next-line no-unused-vars -- Type-only callback parameter.
   subscribe(listener: (expenses: ExpenseRecord[]) => void): void {
     this.listener = listener;
     listener([...this.expenses]);

@@ -1,5 +1,6 @@
 import { ArrowRight, CalendarBlank, Clock, CurrencyCircleDollar, Plus, UsersThree } from "@phosphor-icons/react";
 import { motion } from "motion/react";
+import type { ReactNode } from "react";
 import type { TripSnapshot } from "../firebase/contracts";
 import { formatVnd } from "../features/expenses/expense-calculations";
 
@@ -101,7 +102,7 @@ export function WorkbenchOverview({
   );
 }
 
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <motion.article className="workbench-metric-card" layout>
       <span className="workbench-metric-icon">{icon}</span>

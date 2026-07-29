@@ -29,6 +29,8 @@ type AuthMode = "login" | "register";
 type AuthInput = LoginInput | RegistrationInput;
 type AuthFieldErrors = Partial<Record<keyof RegistrationInput, string>>;
 
+// Kept beside the form so its tested validation contract stays local.
+// eslint-disable-next-line react-refresh/only-export-components
 export class AuthInputError extends Error {
   constructor(readonly errors: AuthFieldErrors) {
     super("Invalid authentication form input.");

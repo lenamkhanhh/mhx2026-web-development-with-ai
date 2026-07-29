@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -523,7 +523,7 @@ function MetricCard({
   value,
 }: {
   accent: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   note: string;
   value: string;

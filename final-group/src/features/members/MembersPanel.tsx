@@ -11,9 +11,7 @@ export interface MembersPanelProps {
   currentUserId: string;
   state?: MembersPanelState;
   errorMessage?: string;
-  // eslint-disable-next-line no-unused-vars
   onUpdateResponsibility: (memberId: string, responsibility: string) => void | Promise<void>;
-  // eslint-disable-next-line no-unused-vars
   onRemoveMember: (memberId: string) => void | Promise<void>;
 }
 

@@ -5,14 +5,14 @@ const AUTH_EMULATOR_ORIGIN = "http://127.0.0.1:9099";
 test("a new traveller can create a trip, open Workbench, and log out", async ({
   page,
 }, testInfo) => {
-  const productionFirebaseRequests: string[] = [];
+  const externalRequests: string[] = [];
   page.on("request", (request) => {
-    const hostname = new URL(request.url()).hostname;
+    const url = new URL(request.url());
     if (
-      hostname === "identitytoolkit.googleapis.com" ||
-      hostname === "firestore.googleapis.com"
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      !["127.0.0.1", "localhost", "::1"].includes(url.hostname)
     ) {
-      productionFirebaseRequests.push(request.url());
+      externalRequests.push(request.url());
     }
   });
 
@@ -144,5 +144,5 @@ test("a new traveller can create a trip, open Workbench, and log out", async ({
     page.getByRole("navigation", { name: "Điều hướng TripFlow" }),
   ).toBeVisible();
   await expect(page.getByLabel("Chuyến đi đang mở")).toContainText(tripName);
-  expect(productionFirebaseRequests).toEqual([]);
+  expect(externalRequests).toEqual([]);
 });

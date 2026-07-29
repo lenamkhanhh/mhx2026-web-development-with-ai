@@ -15,9 +15,7 @@ function event(overrides: Partial<EventRecord> = {}): EventRecord {
   return { id: "event-1", title: "Breakfast", category: "food", startAt: "2026-07-30T08:00:00.000Z", endAt: "2026-07-30T09:00:00.000Z", status: "approved", participantIds: ["lead-1", "member-1"], createdBy: "lead-1", approvedBy: "lead-1", order: 0, ...overrides };
 }
 function deferred<T>() {
-  // eslint-disable-next-line no-unused-vars
   let resolve!: (value: T) => void;
-  // eslint-disable-next-line no-unused-vars
   let reject!: (reason?: unknown) => void;
   const promise = new Promise<T>((ok, fail) => {
     resolve = ok;

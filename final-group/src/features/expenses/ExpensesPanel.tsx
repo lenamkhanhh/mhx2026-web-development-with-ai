@@ -13,9 +13,7 @@ interface ExpensesPanelProps {
   expenses: TripExpense[];
   currentUserId?: string;
   canSettle?: boolean;
-  // eslint-disable-next-line no-unused-vars
   onCreate?: (input: CreateExpenseInput) => Promise<void>;
-  // eslint-disable-next-line no-unused-vars
   onSettle?: (expenseId: string) => Promise<void>;
   isLoading?: boolean;
   loadError?: string;

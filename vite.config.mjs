@@ -8,6 +8,7 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     exclude: [
       ...configDefaults.exclude,
+      "final-group/e2e/**",
       "final-group/src/firebase/firestore.rules.test.ts",
     ],
     environmentOptions: {
