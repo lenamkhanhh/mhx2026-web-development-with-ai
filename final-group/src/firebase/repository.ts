@@ -1,6 +1,7 @@
 import { getApp, getApps, initializeApp, type FirebaseOptions } from "firebase/app";
 import {
   type Auth,
+  connectAuthEmulator,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -10,6 +11,7 @@ import {
 import {
   arrayUnion,
   collection,
+  connectFirestoreEmulator,
   type DocumentData,
   deleteDoc,
   doc,
@@ -24,6 +26,7 @@ import {
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { assertApprovalStatus } from "./codec";
+import { resolveFirebaseEmulatorTarget } from "./runtime";
 
 import type {
   AuthenticatedUser,
@@ -42,6 +45,9 @@ import type {
 } from "./contracts";
 
 type Environment = Record<string, string | undefined>;
+
+const emulatorConnectedAuth = new WeakSet<Auth>();
+const emulatorConnectedFirestore = new WeakSet<Firestore>();
 
 const EVENT_CATEGORIES = new Set<FirestoreEventCategory>([
   "transport",
@@ -180,7 +186,28 @@ export function resolveFirebaseConfig(environment: Environment): FirebaseOptions
 export function createFirebaseTripBackend(environment: Environment = import.meta.env): TripBackend {
   const config = resolveFirebaseConfig(environment);
   const app = getApps().length === 0 ? initializeApp(config) : getApp();
-  return new FirebaseTripBackend(getAuth(app), getFirestore(app));
+  const auth = getAuth(app);
+  const firestore = getFirestore(app);
+  const emulatorTarget = resolveFirebaseEmulatorTarget(environment);
+
+  if (emulatorTarget && !emulatorConnectedAuth.has(auth)) {
+    connectAuthEmulator(
+      auth,
+      `http://${emulatorTarget.host}:${emulatorTarget.authPort}`,
+      { disableWarnings: true },
+    );
+    emulatorConnectedAuth.add(auth);
+  }
+  if (emulatorTarget && !emulatorConnectedFirestore.has(firestore)) {
+    connectFirestoreEmulator(
+      firestore,
+      emulatorTarget.host,
+      emulatorTarget.firestorePort,
+    );
+    emulatorConnectedFirestore.add(firestore);
+  }
+
+  return new FirebaseTripBackend(auth, firestore);
 }
 
 export class FirebaseTripBackend implements TripBackend {
