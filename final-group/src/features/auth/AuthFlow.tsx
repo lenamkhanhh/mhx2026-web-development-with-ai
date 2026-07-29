@@ -156,6 +156,7 @@ export function AuthFlow({
       aria-labelledby="auth-title"
       className={styles.workbench}
       data-motion="calm"
+      data-ui-system="light-workbench"
       data-testid="auth-workbench"
     >
       <div aria-hidden="true" className={styles.grid} />

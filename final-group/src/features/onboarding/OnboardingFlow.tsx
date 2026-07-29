@@ -148,7 +148,7 @@ export function OnboardingFlow({
 
   const isCreate = mode === "create";
   return (
-    <section aria-labelledby="onboarding-title" className={styles.workbench} data-motion="calm" data-testid="onboarding-workbench">
+    <section aria-labelledby="onboarding-title" className={styles.workbench} data-motion="calm" data-testid="onboarding-workbench" data-ui-system="light-workbench">
       <div aria-hidden="true" className={styles.grid} />
       <article className={styles.card}>
         <header className={styles.header}>
