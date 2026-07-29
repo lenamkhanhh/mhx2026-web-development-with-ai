@@ -10,8 +10,10 @@ hoặc các bài Buổi 4–5 đã nộp.
   lịch trình, thành viên, chi phí và thống kê.
 - Firebase Auth/Firestore: đã có adapter typed và cấu hình bằng
   `VITE_FIREBASE_*`.
+- Firebase project riêng: `tripflow-mhx2026-khanh`; Firestore Standard đặt tại
+  `asia-southeast1`, bật delete protection và Email/Password Authentication.
 - Firestore Security Rules: đã kiểm tra bằng Emulator với các ca Lead, Member
-  và người ngoài nhóm.
+  và người ngoài nhóm, sau đó deploy lên project riêng.
 - Build production và toàn bộ test thông thường: đang xanh.
 - Chưa deploy. Join bằng mã, sắp xếp lại sự kiện và chốt thanh toán vẫn bị
   vô hiệu hóa an toàn cho đến khi có thiết kế server/schema xác minh được.
@@ -68,4 +70,10 @@ Rules test cần JDK 11+ và chạy hoàn toàn với project demo của Emulato
 
 ```bash
 npm.cmd run test:final-group:rules
+```
+
+Smoke test Auth thật tạo một tài khoản tổng hợp rồi xóa ngay:
+
+```bash
+npm.cmd run test:final-group:auth-live
 ```
