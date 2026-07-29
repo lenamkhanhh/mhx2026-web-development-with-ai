@@ -3,7 +3,6 @@ import {
   mapAuthError,
   validateLogin,
   validateRegistration,
-  type FormErrors,
   type LoginInput,
   type RegistrationInput,
 } from "../../auth";
@@ -12,6 +11,7 @@ import type {
   TripBackend,
   UserRecord,
 } from "../../firebase/contracts";
+import styles from "./AuthFlow.module.css";
 
 export type { AuthenticatedUser } from "../../firebase/contracts";
 
@@ -102,14 +102,24 @@ export function AuthFlow({
   const [submitting, setSubmitting] = useState(false);
 
   function switchMode(nextMode: AuthMode) {
+    if (submitting) return;
     setMode(nextMode);
     setErrors({});
     setRequestError("");
     setSuccess("");
   }
 
+  function fieldProps(error: string | undefined, errorId: string) {
+    return {
+      "aria-describedby": error ? errorId : undefined,
+      "aria-invalid": Boolean(error),
+    };
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting) return;
+
     setErrors({});
     setRequestError("");
     setSuccess("");
@@ -130,135 +140,144 @@ export function AuthFlow({
     }
   }
 
-  return (
-    <section aria-labelledby="auth-title" className="auth-card">
-      <p className="eyebrow">TripFlow · Group itinerary</p>
-      <h1 id="auth-title">
-        {mode === "login" ? "Chào mừng trở lại" : "Tạo tài khoản"}
-      </h1>
-      <p className="auth-intro">
-        Lịch trình, thành viên và chi phí của cả nhóm trong một nơi.
-      </p>
-      <div
-        aria-label="Chọn hình thức xác thực"
-        className="auth-tabs"
-        role="tablist"
-      >
-        <button
-          aria-selected={mode === "login"}
-          onClick={() => switchMode("login")}
-          role="tab"
-          type="button"
-        >
-          Đăng nhập
-        </button>
-        <button
-          aria-selected={mode === "register"}
-          onClick={() => switchMode("register")}
-          role="tab"
-          type="button"
-        >
-          Đăng ký
-        </button>
-      </div>
+  const isLogin = mode === "login";
+  const submitLabel = submitting
+    ? isLogin
+      ? "Đang đăng nhập…"
+      : "Đang tạo tài khoản…"
+    : isLogin
+      ? "Đăng nhập"
+      : "Tạo tài khoản";
 
-      <form className="auth-form" onSubmit={onSubmit} noValidate>
-        {mode === "register" ? (
-          <label>
-            Tên hiển thị
+  return (
+    <section
+      aria-labelledby="auth-title"
+      className={styles.workbench}
+      data-motion="calm"
+      data-testid="auth-workbench"
+    >
+      <div aria-hidden="true" className={styles.grid} />
+      <article className={styles.card}>
+        <header className={styles.header}>
+          <p className={styles.kicker}>TRIPFLOW WORKBENCH</p>
+          <h1 id="auth-title">
+            {isLogin ? "Chào mừng trở lại" : "Tạo không gian chuyến đi"}
+          </h1>
+          <p className={styles.intro}>
+            Một nhịp làm việc bình tĩnh để cả nhóm lên lịch, phân công và theo dõi chi phí.
+          </p>
+        </header>
+
+        <div aria-label="Chọn hình thức xác thực" className={styles.tabs} role="tablist">
+          <button
+            aria-selected={isLogin}
+            className={isLogin ? styles.activeTab : undefined}
+            disabled={submitting}
+            onClick={() => switchMode("login")}
+            role="tab"
+            type="button"
+          >
+            Đăng nhập
+          </button>
+          <button
+            aria-selected={!isLogin}
+            className={!isLogin ? styles.activeTab : undefined}
+            disabled={submitting}
+            onClick={() => switchMode("register")}
+            role="tab"
+            type="button"
+          >
+            Đăng ký
+          </button>
+        </div>
+
+        <form aria-busy={submitting} className={styles.form} noValidate onSubmit={onSubmit}>
+          {!isLogin ? (
+            <label className={styles.field}>
+              <span>Tên hiển thị</span>
+              <input
+                {...fieldProps(errors.displayName, "display-name-error")}
+                aria-label="Tên hiển thị" autoComplete="name"
+                disabled={submitting}
+                onChange={(event) =>
+                  setInput((current) => ({ ...current, displayName: event.target.value }))
+                }
+                value={input.displayName}
+              />
+              {errors.displayName ? (
+                <span className={styles.fieldError} id="display-name-error" role="alert">
+                  {errors.displayName}
+                </span>
+              ) : null}
+            </label>
+          ) : null}
+
+          <label className={styles.field}>
+            <span>Email</span>
             <input
-              aria-describedby={errors.displayName ? "display-name-error" : undefined}
-              autoComplete="name"
+              {...fieldProps(errors.email, "email-error")}
+              autoComplete="email"
+              disabled={submitting}
               onChange={(event) =>
-                setInput((current) => ({
-                  ...current,
-                  displayName: event.target.value,
-                }))
+                setInput((current) => ({ ...current, email: event.target.value }))
               }
-              value={input.displayName}
+              type="email"
+              value={input.email}
             />
-            {errors.displayName ? (
-              <span className="field-error" id="display-name-error" role="alert">
-                {errors.displayName}
+            {errors.email ? (
+              <span className={styles.fieldError} id="email-error" role="alert">
+                {errors.email}
               </span>
             ) : null}
           </label>
-        ) : null}
 
-        <label>
-          Email
-          <input
-            aria-describedby={errors.email ? "email-error" : undefined}
-            autoComplete="email"
-            onChange={(event) =>
-              setInput((current) => ({ ...current, email: event.target.value }))
-            }
-            type="email"
-            value={input.email}
-          />
-          {errors.email ? (
-            <span className="field-error" id="email-error" role="alert">
-              {errors.email}
-            </span>
-          ) : null}
-        </label>
-
-        <label>
-          Mật khẩu
-          <input
-            aria-describedby={errors.password ? "password-error" : undefined}
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
-            onChange={(event) =>
-              setInput((current) => ({
-                ...current,
-                password: event.target.value,
-              }))
-            }
-            type="password"
-            value={input.password}
-          />
-          {errors.password ? (
-            <span className="field-error" id="password-error" role="alert">
-              {errors.password}
-            </span>
-          ) : null}
-        </label>
-
-        {mode === "register" ? (
-          <label>
-            Xác nhận mật khẩu
+          <label className={styles.field}>
+            <span>Mật khẩu</span>
             <input
-              aria-describedby={
-                errors.confirmPassword ? "confirm-password-error" : undefined
-              }
-              autoComplete="new-password"
+              {...fieldProps(errors.password, "password-error")}
+              autoComplete={isLogin ? "current-password" : "new-password"}
+              disabled={submitting}
               onChange={(event) =>
-                setInput((current) => ({
-                  ...current,
-                  confirmPassword: event.target.value,
-                }))
+                setInput((current) => ({ ...current, password: event.target.value }))
               }
               type="password"
-              value={input.confirmPassword}
+              value={input.password}
             />
-            {errors.confirmPassword ? (
-              <span className="field-error" id="confirm-password-error" role="alert">
-                {errors.confirmPassword}
+            {errors.password ? (
+              <span className={styles.fieldError} id="password-error" role="alert">
+                {errors.password}
               </span>
             ) : null}
           </label>
-        ) : null}
 
-        {requestError ? <p className="auth-message error" role="alert">{requestError}</p> : null}
-        {success ? <p className="auth-message success" role="status">{success}</p> : null}
-        <button className="primary-button" disabled={submitting} type="submit">
-          {submitting
-            ? "Đang xử lý…"
-            : mode === "login"
-              ? "Đăng nhập"
-              : "Tạo tài khoản"}
-        </button>
-      </form>
+          {!isLogin ? (
+            <label className={styles.field}>
+              <span>Xác nhận mật khẩu</span>
+              <input
+                {...fieldProps(errors.confirmPassword, "confirm-password-error")}
+                autoComplete="new-password"
+                disabled={submitting}
+                onChange={(event) =>
+                  setInput((current) => ({ ...current, confirmPassword: event.target.value }))
+                }
+                type="password"
+                value={input.confirmPassword}
+              />
+              {errors.confirmPassword ? (
+                <span className={styles.fieldError} id="confirm-password-error" role="alert">
+                  {errors.confirmPassword}
+                </span>
+              ) : null}
+            </label>
+          ) : null}
+
+          {requestError ? <p className={styles.errorNotice} role="alert">{requestError}</p> : null}
+          {success ? <p className={styles.successNotice} role="status">{success}</p> : null}
+          <button className={styles.primaryAction} disabled={submitting} type="submit">
+            {submitLabel}
+          </button>
+        </form>
+      </article>
     </section>
   );
 }

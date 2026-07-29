@@ -93,21 +93,13 @@ describe("logout", () => {
 });
 
 describe("AuthFlow", () => {
-  it("exposes the auth layout hooks used by the final-group stylesheet", () => {
+  it("renders the calm workbench shell with accessible auth tabs", () => {
     const backend = createBackend();
     render(<AuthFlow backend={backend} onAuthenticated={vi.fn()} />);
 
-    expect(
-      screen
-        .getByRole("region", { name: "Chào mừng trở lại" })
-        .classList.contains("auth-card"),
-    ).toBe(true);
-    expect(screen.getByRole("tablist").classList.contains("auth-tabs")).toBe(true);
-    expect(
-      screen
-        .getByRole("button", { name: "Đăng nhập" })
-        .classList.contains("primary-button"),
-    ).toBe(true);
+    expect(screen.getByTestId("auth-workbench").getAttribute("data-motion")).toBe("calm");
+    expect(screen.getByText("TRIPFLOW WORKBENCH")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Đăng nhập" }).getAttribute("aria-selected")).toBe("true");
   });
 
   it("shows validation errors and does not submit an invalid registration", async () => {
@@ -119,7 +111,44 @@ describe("AuthFlow", () => {
     await actor.click(screen.getByRole("button", { name: "Tạo tài khoản" }));
 
     expect(screen.getByText("Vui lòng nhập tên hiển thị.")).toBeTruthy();
+    expect(screen.getByLabelText("Tên hiển thị").getAttribute("aria-invalid")).toBe("true");
     expect(backend.register).not.toHaveBeenCalled();
+  });
+
+  it("locks both tabs and exposes a pending label while authentication is in flight", async () => {
+    let resolveLogin: ((value: typeof user) => void) | undefined;
+    const backend = createBackend({
+      login: vi.fn().mockImplementation(
+        () => new Promise<typeof user>((resolve) => { resolveLogin = resolve; }),
+      ),
+    });
+    const actor = userEvent.setup();
+    render(<AuthFlow backend={backend} onAuthenticated={vi.fn()} />);
+
+    await actor.type(screen.getByLabelText("Email"), user.email);
+    await actor.type(screen.getByLabelText("Mật khẩu"), "TripFlow!2026");
+    await actor.click(screen.getByRole("button", { name: "Đăng nhập" }));
+
+    expect((screen.getByRole("button", { name: "Đang đăng nhập…" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("tab", { name: "Đăng ký" }) as HTMLButtonElement).disabled).toBe(true);
+
+    resolveLogin?.(user);
+  });
+
+  it("keeps backend details private while showing a mapped inline auth error", async () => {
+    const backend = createBackend({
+      login: vi.fn().mockRejectedValue({ code: "auth/network-request-failed" }),
+    });
+    const actor = userEvent.setup();
+    render(<AuthFlow backend={backend} onAuthenticated={vi.fn()} />);
+
+    await actor.type(screen.getByLabelText("Email"), user.email);
+    await actor.type(screen.getByLabelText("Mật khẩu"), "TripFlow!2026");
+    await actor.click(screen.getByRole("button", { name: "Đăng nhập" }));
+
+    expect(
+      await screen.findByText("Không thể kết nối Firebase. Vui lòng kiểm tra mạng."),
+    ).toBeTruthy();
   });
 
   it("logs in and exposes the hydrated profile to App composition", async () => {

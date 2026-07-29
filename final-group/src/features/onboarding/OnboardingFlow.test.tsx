@@ -91,16 +91,54 @@ describe("onboarding actions", () => {
 });
 
 describe("OnboardingFlow", () => {
-  it("keeps an invalid join code in the UI and does not call the backend", async () => {
+  it("renders a create-first calm workbench and keeps join fail-closed", async () => {
     const backend = createBackend();
     const actor = userEvent.setup();
     render(<OnboardingFlow backend={backend} profile={profile} onTripReady={vi.fn()} />);
 
-    await actor.click(screen.getByRole("tab", { name: "Tham gia chuyến đi" }));
-    await actor.click(screen.getByRole("button", { name: "Tham gia bằng mã" }));
+    expect(screen.getByTestId("onboarding-workbench").getAttribute("data-motion")).toBe("calm");
+    expect(screen.getByRole("button", { name: "Tạo chuyến đi mới" })).toBeTruthy();
 
-    expect(screen.getByText("Vui lòng nhập mã tham gia.")).toBeTruthy();
+    await actor.click(screen.getByRole("tab", { name: "Tham gia chuyến đi" }));
+
+    expect(
+      screen.getByText("Tham gia bằng mã chưa được mở vì chưa có cơ chế xác minh an toàn."),
+    ).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Chưa thể tham gia bằng mã" }) as HTMLButtonElement).disabled).toBe(true);
     expect(backend.joinTrip).not.toHaveBeenCalled();
+  });
+
+  it("shows inline validation for an incomplete create request without writing", async () => {
+    const backend = createBackend();
+    const actor = userEvent.setup();
+    render(<OnboardingFlow backend={backend} profile={profile} onTripReady={vi.fn()} />);
+
+    await actor.click(screen.getByRole("button", { name: "Tạo chuyến đi mới" }));
+
+    expect(screen.getByLabelText("Tên chuyến đi").getAttribute("aria-invalid")).toBe("true");
+    expect(backend.createTrip).not.toHaveBeenCalled();
+  });
+
+  it("locks the create action while a trip request is pending", async () => {
+    let resolveTrip: ((value: TripRecord) => void) | undefined;
+    const backend = createBackend({
+      createTrip: vi.fn().mockImplementation(
+        () => new Promise<TripRecord>((resolve) => { resolveTrip = resolve; }),
+      ),
+    });
+    const actor = userEvent.setup();
+    render(<OnboardingFlow backend={backend} profile={profile} onTripReady={vi.fn()} />);
+
+    await actor.type(screen.getByLabelText("Tên chuyến đi"), trip.name);
+    await actor.type(screen.getByLabelText("Điểm đến"), trip.destination);
+    await actor.type(screen.getByLabelText("Ngày bắt đầu"), trip.startDate);
+    await actor.type(screen.getByLabelText("Ngày kết thúc"), trip.endDate);
+    await actor.click(screen.getByRole("button", { name: "Tạo chuyến đi mới" }));
+
+    expect((screen.getByRole("button", { name: "Đang tạo chuyến đi…" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("tab", { name: "Tham gia chuyến đi" }) as HTMLButtonElement).disabled).toBe(true);
+
+    resolveTrip?.(trip);
   });
 
   it("creates a trip and hands it to App composition", async () => {
@@ -113,7 +151,7 @@ describe("OnboardingFlow", () => {
     await actor.type(screen.getByLabelText("Điểm đến"), trip.destination);
     await actor.type(screen.getByLabelText("Ngày bắt đầu"), trip.startDate);
     await actor.type(screen.getByLabelText("Ngày kết thúc"), trip.endDate);
-    await actor.click(screen.getByRole("button", { name: "Tạo chuyến đi" }));
+    await actor.click(screen.getByRole("button", { name: "Tạo chuyến đi mới" }));
 
     expect(await screen.findByText("Đã tạo chuyến đi.")).toBeTruthy();
     expect(onTripReady).toHaveBeenCalledWith(trip);

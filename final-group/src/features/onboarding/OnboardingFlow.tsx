@@ -4,6 +4,7 @@ import type {
   TripRecord,
   UserRecord,
 } from "../../firebase/contracts";
+import styles from "./OnboardingFlow.module.css";
 
 export interface TripDraft {
   name: string;
@@ -100,151 +101,104 @@ export function OnboardingFlow({
     startDate: "",
     endDate: "",
   });
-  const [joinCode, setJoinCode] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [requestError, setRequestError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   function switchMode(nextMode: OnboardingMode) {
+    if (submitting) return;
     setMode(nextMode);
     setErrors({});
     setRequestError("");
     setSuccess("");
   }
 
+  function fieldProps(error: string | undefined, errorId: string) {
+    return {
+      "aria-describedby": error ? errorId : undefined,
+      "aria-invalid": Boolean(error),
+    };
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting || mode !== "create") return;
     setErrors({});
     setRequestError("");
     setSuccess("");
     setSubmitting(true);
 
     try {
-      const trip =
-        mode === "create"
-          ? await submitNewTrip(backend, profile, draft)
-          : await joinTrip(backend, profile, joinCode);
-      setSuccess(mode === "create" ? "Đã tạo chuyến đi." : "Đã tham gia chuyến đi.");
+      const trip = await submitNewTrip(backend, profile, draft);
+      setSuccess("Đã tạo chuyến đi.");
       onTripReady(trip);
     } catch (error) {
       if (error instanceof OnboardingInputError) {
         setErrors(error.errors);
       } else {
-        setRequestError(
-          mode === "join"
-            ? "Tham gia bằng mã chưa khả dụng vì chưa có cơ chế xác minh an toàn."
-            : "Không thể lưu chuyến đi. Vui lòng thử lại.",
-        );
+        setRequestError("Không thể lưu chuyến đi. Vui lòng thử lại.");
       }
     } finally {
       setSubmitting(false);
     }
   }
 
+  const isCreate = mode === "create";
   return (
-    <section aria-labelledby="onboarding-title">
-      <p>Chào {profile.displayName}</p>
-      <h1 id="onboarding-title">Bắt đầu một chuyến đi</h1>
-      <div aria-label="Chọn thao tác chuyến đi" role="tablist">
-        <button
-          aria-selected={mode === "create"}
-          onClick={() => switchMode("create")}
-          role="tab"
-          type="button"
-        >
-          Tạo chuyến đi
-        </button>
-        <button
-          aria-selected={mode === "join"}
-          onClick={() => switchMode("join")}
-          role="tab"
-          type="button"
-        >
-          Tham gia chuyến đi
-        </button>
-      </div>
+    <section aria-labelledby="onboarding-title" className={styles.workbench} data-motion="calm" data-testid="onboarding-workbench">
+      <div aria-hidden="true" className={styles.grid} />
+      <article className={styles.card}>
+        <header className={styles.header}>
+          <p className={styles.kicker}>TRIP SETUP / 01</p>
+          <h1 id="onboarding-title">Bắt đầu một chuyến đi</h1>
+          <p className={styles.intro}>Chào {profile.displayName}. Tạo không gian chung trước, rồi thêm lịch trình và thành viên sau.</p>
+        </header>
 
-      <form onSubmit={onSubmit} noValidate>
-        {mode === "create" ? (
-          <>
-            <label>
-              Tên chuyến đi
-              <input
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, name: event.target.value }))
-                }
-                value={draft.name}
-              />
-              {errors.name ? <span role="alert">{errors.name}</span> : null}
+        <div aria-label="Chọn thao tác chuyến đi" className={styles.tabs} role="tablist">
+          <button aria-selected={isCreate} className={isCreate ? styles.activeTab : undefined} disabled={submitting} onClick={() => switchMode("create")} role="tab" type="button">Tạo chuyến đi</button>
+          <button aria-selected={!isCreate} className={!isCreate ? styles.activeTab : undefined} disabled={submitting} onClick={() => switchMode("join")} role="tab" type="button">Tham gia chuyến đi</button>
+        </div>
+
+        {isCreate ? (
+          <form aria-busy={submitting} className={styles.form} noValidate onSubmit={onSubmit}>
+            <div className={styles.formHeading}><p>CHUYẾN ĐI MỚI</p><span>Thông tin này sẽ là điểm bắt đầu của workbench.</span></div>
+            <label className={styles.field}>
+              <span>Tên chuyến đi</span>
+              <input aria-label="Tên chuyến đi" {...fieldProps(errors.name, "trip-name-error")} disabled={submitting} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} value={draft.name} />
+              {errors.name ? <span className={styles.fieldError} id="trip-name-error" role="alert">{errors.name}</span> : null}
             </label>
-            <label>
-              Điểm đến
-              <input
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    destination: event.target.value,
-                  }))
-                }
-                value={draft.destination}
-              />
-              {errors.destination ? (
-                <span role="alert">{errors.destination}</span>
-              ) : null}
+            <label className={styles.field}>
+              <span>Điểm đến</span>
+              <input aria-label="Điểm đến" {...fieldProps(errors.destination, "destination-error")} disabled={submitting} onChange={(event) => setDraft((current) => ({ ...current, destination: event.target.value }))} value={draft.destination} />
+              {errors.destination ? <span className={styles.fieldError} id="destination-error" role="alert">{errors.destination}</span> : null}
             </label>
-            <label>
-              Ngày bắt đầu
-              <input
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    startDate: event.target.value,
-                  }))
-                }
-                type="date"
-                value={draft.startDate}
-              />
-              {errors.startDate ? (
-                <span role="alert">{errors.startDate}</span>
-              ) : null}
-            </label>
-            <label>
-              Ngày kết thúc
-              <input
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    endDate: event.target.value,
-                  }))
-                }
-                type="date"
-                value={draft.endDate}
-              />
-              {errors.endDate ? <span role="alert">{errors.endDate}</span> : null}
-            </label>
-          </>
+            <div className={styles.dateGrid}>
+              <label className={styles.field}>
+                <span>Ngày bắt đầu</span>
+                <input aria-label="Ngày bắt đầu" {...fieldProps(errors.startDate, "start-date-error")} disabled={submitting} onChange={(event) => setDraft((current) => ({ ...current, startDate: event.target.value }))} type="date" value={draft.startDate} />
+                {errors.startDate ? <span className={styles.fieldError} id="start-date-error" role="alert">{errors.startDate}</span> : null}
+              </label>
+              <label className={styles.field}>
+                <span>Ngày kết thúc</span>
+                <input aria-label="Ngày kết thúc" {...fieldProps(errors.endDate, "end-date-error")} disabled={submitting} onChange={(event) => setDraft((current) => ({ ...current, endDate: event.target.value }))} type="date" value={draft.endDate} />
+                {errors.endDate ? <span className={styles.fieldError} id="end-date-error" role="alert">{errors.endDate}</span> : null}
+              </label>
+            </div>
+            {requestError ? <p className={styles.errorNotice} role="alert">{requestError}</p> : null}
+            {success ? <p className={styles.successNotice} role="status">{success}</p> : null}
+            <button className={styles.primaryAction} disabled={submitting} type="submit">{submitting ? "Đang tạo chuyến đi…" : "Tạo chuyến đi mới"}</button>
+          </form>
         ) : (
-          <label>
-            Mã tham gia
-            <input
-              onChange={(event) => setJoinCode(event.target.value)}
-              value={joinCode}
-            />
-            {errors.joinCode ? <span role="alert">{errors.joinCode}</span> : null}
-          </label>
+          <section aria-label="Trạng thái tham gia bằng mã" className={styles.lockedJoin}>
+            <p className={styles.lockedKicker}>JOIN BY CODE / LOCKED</p>
+            <h2>Chưa mở đường đi tắt</h2>
+            <p>Tham gia bằng mã chưa được mở vì chưa có cơ chế xác minh an toàn.</p>
+            <label className={styles.field}><span>Mã tham gia</span><input disabled placeholder="Sẽ khả dụng sau khi server-proof được phê duyệt" /></label>
+            <button className={styles.lockedAction} disabled type="button">Chưa thể tham gia bằng mã</button>
+          </section>
         )}
-
-        {requestError ? <p role="alert">{requestError}</p> : null}
-        {success ? <p role="status">{success}</p> : null}
-        <button disabled={submitting} type="submit">
-          {submitting
-            ? "Đang lưu…"
-            : mode === "create"
-              ? "Tạo chuyến đi"
-              : "Tham gia bằng mã"}
-        </button>
-      </form>
+      </article>
     </section>
   );
 }
