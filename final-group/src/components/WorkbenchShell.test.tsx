@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { WorkbenchShell, type WorkbenchView } from "./WorkbenchShell";
+
+afterEach(cleanup);
 
 const trip = {
   name: "Đà Lạt",
@@ -38,14 +40,14 @@ describe("WorkbenchShell", () => {
   it("renders only the real TripFlow work areas and marks the active view", () => {
     renderShell("schedule");
 
-    expect(screen.getByRole("navigation", { name: "Điều hướng TripFlow" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Tổng quan" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Lịch trình/ })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Chi phí" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Thành viên" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Files|Notes|Integrations/i })).not.toBeInTheDocument();
-    expect(screen.getByText("2 chờ duyệt")).toBeInTheDocument();
-    expect(screen.getByText("Nội dung hiện tại")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Điều hướng TripFlow" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Tổng quan" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Lịch trình/ }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: "Chi phí" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Thành viên" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: /Files|Notes|Integrations/i })).toBeNull();
+    expect(screen.getByRole("link", { name: /Lịch trình/ }).textContent).toContain("2");
+    expect(screen.getByText("Nội dung hiện tại")).toBeTruthy();
   });
 
   it("changes view from keyboard- and pointer-accessible navigation", async () => {
@@ -60,8 +62,8 @@ describe("WorkbenchShell", () => {
   it("exposes a stable status region and sign-out action", () => {
     renderShell();
 
-    expect(screen.getByRole("status", { name: "Trạng thái hệ thống" })).toHaveTextContent("Firebase");
-    expect(screen.getByRole("button", { name: "Đăng xuất" })).toBeInTheDocument();
-    expect(screen.getByText("Lan")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Trạng thái hệ thống" }).textContent).toContain("Firebase");
+    expect(screen.getByRole("button", { name: "Đăng xuất" })).toBeTruthy();
+    expect(screen.getByText("Lan")).toBeTruthy();
   });
 });

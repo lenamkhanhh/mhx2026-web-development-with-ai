@@ -1,0 +1,367 @@
+.workbench-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 244px minmax(0, 1fr);
+  color: #171a1f;
+  background: #f5f6f4;
+}
+
+.workbench-sidebar {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  gap: 22px;
+  padding: 22px 14px 16px;
+  color: #d9dee4;
+  background: #15191d;
+}
+
+.workbench-brand,
+.workbench-user,
+.workbench-system-status,
+.workbench-breadcrumb,
+.workbench-nav-item,
+.workbench-trip-state,
+.workbench-logout {
+  display: flex;
+  align-items: center;
+}
+
+.workbench-brand {
+  gap: 10px;
+  padding: 0 10px;
+}
+
+.workbench-brand-mark {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border: 1px solid #a9eb00;
+  border-radius: 8px;
+  color: #b7f500;
+  font-size: 22px;
+  font-weight: 900;
+  transform: rotate(-18deg);
+}
+
+.workbench-brand strong,
+.workbench-brand small,
+.workbench-user strong,
+.workbench-user small {
+  display: block;
+}
+
+.workbench-brand strong {
+  color: #f6f8fa;
+  font-size: 14px;
+}
+
+.workbench-brand small {
+  margin-top: 2px;
+  color: #8f99a4;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.workbench-sidebar-label {
+  padding: 0 10px;
+  color: #7e8994;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+}
+
+.workbench-trip-card {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #2d343c;
+  border-radius: 8px;
+  background: #1b2025;
+}
+
+.workbench-trip-card strong {
+  color: #f5f7fa;
+  font-size: 14px;
+}
+
+.workbench-trip-card small {
+  color: #8e9aa6;
+  font-size: 11px;
+}
+
+.workbench-trip-state {
+  gap: 6px;
+  color: #a9eb00;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.workbench-online-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #a9eb00;
+  box-shadow: 0 0 0 3px rgb(169 235 0 / 12%);
+}
+
+.workbench-nav {
+  display: grid;
+  gap: 4px;
+}
+
+.workbench-nav-item {
+  position: relative;
+  min-height: 42px;
+  gap: 10px;
+  padding: 0 10px;
+  border-radius: 7px;
+  color: #aeb7c1;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.workbench-nav-item:hover,
+.workbench-nav-item:focus-visible {
+  color: #f9fbfc;
+  background: #20262d;
+}
+
+.workbench-nav-item.active {
+  color: #f9fbfc;
+  background: #222a31;
+}
+
+.workbench-nav-active-rail {
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: -14px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #a9eb00;
+}
+
+.workbench-nav-badge {
+  min-width: 19px;
+  margin-left: auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #161b20;
+  background: #a9eb00;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.workbench-sidebar-footer {
+  display: grid;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #2d343c;
+}
+
+.workbench-user {
+  gap: 9px;
+  padding: 0 6px;
+}
+
+.workbench-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  color: #15191d;
+  background: #d2f66a;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.workbench-user strong {
+  color: #e9edf0;
+  font-size: 12px;
+}
+
+.workbench-user small {
+  margin-top: 2px;
+  color: #89949e;
+  font-size: 10px;
+}
+
+.workbench-logout {
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 6px;
+  border: 0;
+  color: #909ba5;
+  background: transparent;
+  font-size: 12px;
+}
+
+.workbench-logout:hover,
+.workbench-logout:focus-visible {
+  color: #fff;
+}
+
+.workbench-main {
+  display: grid;
+  min-width: 0;
+  min-height: 100vh;
+  grid-template-rows: auto 1fr auto;
+}
+
+.workbench-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 62px;
+  padding: 0 clamp(20px, 4vw, 48px);
+  border-bottom: 1px solid #e2e5e2;
+  background: rgb(255 255 255 / 88%);
+}
+
+.workbench-breadcrumb {
+  gap: 9px;
+  color: #9aa1a8;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .05em;
+}
+
+.workbench-breadcrumb strong {
+  color: #293039;
+  font-weight: 700;
+}
+
+.workbench-system-status {
+  gap: 8px;
+  color: #717a83;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.workbench-status-separator {
+  color: #c4c9ce;
+}
+
+.workbench-role-pill {
+  margin-left: 7px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.workbench-role-pill.lead {
+  color: #3f5700;
+  background: #e2f7a9;
+}
+
+.workbench-role-pill.member {
+  color: #1a5a7a;
+  background: #dceef6;
+}
+
+.workbench-content {
+  min-width: 0;
+  padding: clamp(22px, 4vw, 52px);
+}
+
+.workbench-view {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.workbench-footer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 clamp(20px, 4vw, 48px);
+  border-top: 1px solid #e2e5e2;
+  color: #8a929a;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+}
+
+@media (max-width: 760px) {
+  .workbench-shell {
+    display: block;
+  }
+
+  .workbench-sidebar {
+    min-height: auto;
+    padding: 14px;
+  }
+
+  .workbench-sidebar-label,
+  .workbench-trip-card,
+  .workbench-sidebar-footer {
+    display: none;
+  }
+
+  .workbench-nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  .workbench-nav-item {
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 4px;
+    font-size: 11px;
+  }
+
+  .workbench-nav-item span:not(.workbench-nav-active-rail):not(.workbench-nav-badge) {
+    display: none;
+  }
+
+  .workbench-nav-active-rail {
+    top: auto;
+    right: 8px;
+    bottom: -14px;
+    left: 8px;
+    width: auto;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .workbench-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 8px;
+    min-width: 16px;
+    padding: 1px 4px;
+    font-size: 9px;
+  }
+
+  .workbench-topbar {
+    min-height: 52px;
+    padding: 0 14px;
+  }
+
+  .workbench-system-status span:not(.workbench-online-dot):not(.workbench-role-pill) {
+    display: none;
+  }
+
+  .workbench-content {
+    padding: 18px 14px 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workbench-nav-item {
+    transition: none;
+  }
+}
