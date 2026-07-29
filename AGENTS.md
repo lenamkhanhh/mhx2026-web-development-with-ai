@@ -35,6 +35,16 @@ When implementing from a selected generated mock, treat that image as the source
 
 ## TripFlow final-group decisions
 
+- UI reference captures (2026-07-29): the user approved the five TripFlow
+  Workbench renders stored under `final-group/references/ui/` as the visual
+  source of truth. Preserve their dense operations-workbench language: warm
+  light field, compact charcoal sidebar, oversized dark editorial headings,
+  thin cool-gray borders, electric-blue interaction states, acid-lime
+  status/primary-action accents, semantic status colors, dense tables/timelines,
+  and contextual right-side panels. Treat
+  `final-group/references/UI_STYLE_REFERENCE.md` as the implementation
+  contract; do not drift into a dark sci-fi dashboard, marketing landing page,
+  decorative/fake modules, heavy shadows, or excessive pill UI.
 - Workbench UI direction (2026-07-29): use the selected sample 2 as the source of truth for the authenticated app — a warm light field, dark compact sidebar, acid-lime status/action accent, dense information hierarchy, and four real screens only: Overview, Timeline, Expenses, and Members. Do not add decorative or fake modules.
 - Calm Workbench Motion (2026-07-29): use short press/micro/layout transitions and one-shot state feedback; preserve reading and navigation, and honor `prefers-reduced-motion`. Reorder is optimistic only until the realtime event snapshot confirms it; repeated reorder is locked while pending.
 - Safety UX (2026-07-29): auth/onboarding validation stays inline and pending actions lock their controls. Join-by-code remains visibly fail-closed until a server-verifiable callable/proof exists. Client role badges are affordances only; Firebase Security Rules remain authoritative for every mutation.

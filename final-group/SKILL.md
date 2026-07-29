@@ -13,9 +13,11 @@ references listed for the assigned module in
 
 1. Confirm the current branch and `git status`.
 2. Read `references/architecture.md`.
-3. Read the module-specific references before editing.
-4. Inspect the real execution path and existing tests.
-5. Keep changes inside the module ownership boundary.
+3. Read `references/UI_STYLE_REFERENCE.md` and inspect the captures in
+   `references/ui/` before making UI changes.
+4. Read the module-specific references before editing.
+5. Inspect the real execution path and existing tests.
+6. Keep changes inside the module ownership boundary.
 
 ## Non-negotiable rules
 
