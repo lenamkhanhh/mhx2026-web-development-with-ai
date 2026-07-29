@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MemberRecord } from "../../firebase/contracts";
@@ -40,6 +40,17 @@ describe("MembersPanel workbench", () => {
     rerender(panel({ trip: { id: "trip-hue", joinCode: "HUE27" } }));
     expect((screen.getByTestId("join-code-status") as HTMLElement).dataset.state).toBe("idle");
     expect(screen.getByTestId("join-code-status").textContent).toContain("Chỉ chia sẻ");
+  });
+
+  it("keeps join-by-code visibly fail-closed and renders the permission matrix", () => {
+    render(panel());
+    const verification = screen.getByTestId("join-code-verification");
+    expect(verification.dataset.state).toBe("required");
+    expect(verification.textContent).toContain("Server verification required");
+
+    const matrix = screen.getByRole("table", { name: "Permission matrix" });
+    expect(within(matrix).getByText("Duyệt / hủy activity")).toBeTruthy();
+    expect(within(matrix).getByText("Lead only")).toBeTruthy();
   });
 
   it("waits for a lead confirmation before removing a member", async () => {
