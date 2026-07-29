@@ -83,6 +83,7 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
         <aside aria-label="Thông tin gia nhập" className="members-panel__join-card">
           <span>Trip ID</span><strong>{trip.id}</strong>
           <span>Mã gia nhập</span><code>{trip.joinCode}</code>
+          <p className="members-panel__verification" data-state="required" data-testid="join-code-verification">Server verification required — mã này chưa tự chứng minh quyền tham gia.</p>
           <button aria-label="Sao chép mã gia nhập" className="members-panel__copy" onClick={() => void copyJoinCode()} type="button">Sao chép mã</button>
            <p data-state={displayedCopyState} data-testid="join-code-status" role="status">
              {displayedCopyState === "copied" ? "Đã sao chép mã tham gia" : displayedCopyState === "error" ? "Không thể sao chép mã" : "Chỉ chia sẻ với người bạn tin cậy"}
@@ -94,7 +95,9 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
       {state === "error" ? <div className="members-panel__state members-panel__state--error" data-state="error" data-testid="members-state" role="alert">{errorMessage || "Không thể tải nhóm. Hãy thử lại."}</div> : null}
       {state === "ready" && members.length === 0 ? <div className="members-panel__state" data-state="empty" data-testid="members-state">Chưa có thành viên nào khác trong chuyến đi.</div> : null}
 
-      {state === "ready" && members.length > 0 ? <ul aria-label="Danh sách thành viên" className="members-panel__list">
+      {state === "ready" && members.length > 0 ? <div className="members-panel__table-wrap" role="region" aria-label="Danh sách thành viên">
+        <div className="members-panel__table-head" aria-hidden="true"><span>Thành viên</span><span>Trách nhiệm</span><span>Thao tác</span></div>
+        <ul aria-label="Danh sách thành viên" className="members-panel__list">
         {members.map((member) => {
           const mayEdit = canEditResponsibility(currentUserId, member);
           const mayRemove = canRemoveMember(currentUserId, currentMember?.role, member);
@@ -116,9 +119,30 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
             {memberFeedback !== "idle" ? <p className="members-panel__feedback" data-state={memberFeedback} data-testid={`responsibility-status-${member.uid}`} role="status">{memberFeedback === "saving" ? "Đang lưu trách nhiệm…" : memberFeedback === "saved" ? "Đã lưu trách nhiệm" : "Không thể lưu trách nhiệm. Thử lại nhé."}</p> : null}
           </li>;
         })}
-      </ul> : null}
+        </ul>
+      </div> : null}
+
+      {state === "ready" && members.length > 0 ? <PermissionMatrix /> : null}
 
       {pendingRemoval ? <div aria-label="Xác nhận xóa thành viên" aria-modal="true" className="members-panel__dialog-backdrop" role="dialog"><section className="members-panel__dialog"><h3>Xóa {pendingRemoval.displayName} khỏi chuyến đi?</h3><p>Người này sẽ mất quyền truy cập vào lịch trình và chi phí của chuyến đi.</p><div><button disabled={Boolean(removingMemberId)} onClick={() => setPendingRemoval(null)} type="button">Hủy</button><button aria-label="Xác nhận xóa" className="members-panel__remove" disabled={Boolean(removingMemberId)} onClick={() => void confirmRemoval()} type="button">Xác nhận xóa</button></div></section></div> : null}
     </section>
   );
+}
+
+function PermissionMatrix() {
+  const rows = [
+    ["Duyệt / hủy activity", "Lead only", "Không cho phép"],
+    ["Sắp xếp timeline", "Lead", "Không cho phép"],
+    ["Chốt khoản chi", "Lead", "Không cho phép"],
+    ["Sửa trách nhiệm cá nhân", "Bản thân", "Bản thân"],
+    ["Sửa / xoá khoản chi", "Mọi khoản", "Khoản do mình tạo"],
+  ] as const;
+
+  return <section className="members-panel__permissions">
+    <div className="members-panel__permissions-heading"><div><span className="members-panel__eyebrow">Quyền thao tác</span><h3>Ma trận quyền trong workspace</h3></div><p>Firebase Security Rules là lớp quyết định cuối cùng; bảng này chỉ mô tả luồng giao diện.</p></div>
+    <div aria-label="Permission matrix" className="members-panel__permission-table" role="table">
+      <div className="members-panel__permission-row members-panel__permission-row--head" role="row"><span role="columnheader">Hành động</span><span role="columnheader">Lead</span><span role="columnheader">Member</span></div>
+      {rows.map(([action, lead, member]) => <div className="members-panel__permission-row" key={action} role="row"><span role="cell">{action}</span><span role="cell">{lead}</span><span role="cell">{member}</span></div>)}
+    </div>
+  </section>;
 }
