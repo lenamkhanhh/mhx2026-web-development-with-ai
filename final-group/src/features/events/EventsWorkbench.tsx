@@ -110,11 +110,11 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
     {feedback ? <p className={`${styles.feedback} ${styles[feedback.kind]}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.message}</p> : null}
     <form className={styles.composer} onSubmit={(event) => void submit(event)}>
       <div className={styles.composerHeader}><span>01</span><div><strong>Thêm một điểm chạm</strong><small>{isLead ? "Tạo mới sẽ được duyệt ngay" : "Tạo mới sẽ vào hàng chờ duyệt"}</small></div></div>
-      <label>Tên hoạt động<input maxLength={120} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Ví dụ: Ngắm bình minh" required value={draft.title} /></label>
-      <label>Loại<select onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value as FirestoreEventCategory }))} value={draft.category}>{CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}</select></label>
-      <label>Bắt đầu<input onChange={(event) => setDraft((current) => ({ ...current, startAt: event.target.value }))} required type="datetime-local" value={draft.startAt} /></label>
-      <label>Kết thúc<input onChange={(event) => setDraft((current) => ({ ...current, endAt: event.target.value }))} required type="datetime-local" value={draft.endAt} /></label>
-      <fieldset className={styles.participants}><legend>Ai tham gia?</legend>{members.map((member) => <label key={member.uid}><input checked={draft.participantIds.includes(member.uid)} onChange={() => toggleParticipant(member.uid)} type="checkbox" />{member.displayName}</label>)}</fieldset>
+      <label>Tên hoạt động<input disabled={saving} maxLength={120} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Ví dụ: Ngắm bình minh" required value={draft.title} /></label>
+      <label>Loại<select disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value as FirestoreEventCategory }))} value={draft.category}>{CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}</select></label>
+      <label>Bắt đầu<input disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, startAt: event.target.value }))} required type="datetime-local" value={draft.startAt} /></label>
+      <label>Kết thúc<input disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, endAt: event.target.value }))} required type="datetime-local" value={draft.endAt} /></label>
+      <fieldset className={styles.participants} disabled={saving}><legend>Ai tham gia?</legend>{members.map((member) => <label key={member.uid}><input checked={draft.participantIds.includes(member.uid)} disabled={saving} onChange={() => toggleParticipant(member.uid)} type="checkbox" />{member.displayName}</label>)}</fieldset>
       <button className={styles.createButton} disabled={saving} type="submit">{saving ? "Đang lưu hoạt động…" : "Thêm vào lịch trình"}</button>
     </form>
     <div className={styles.timelineHeader}><span>02</span><strong>Timeline có thể hành động</strong><small>{timeline.length} hoạt động</small></div>
