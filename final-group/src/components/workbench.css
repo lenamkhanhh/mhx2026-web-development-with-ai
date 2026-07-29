@@ -295,6 +295,244 @@
   font-size: 10px;
 }
 
+.workbench-overview {
+  display: grid;
+  gap: 22px;
+}
+
+.workbench-page-heading,
+.workbench-card-heading,
+.workbench-quick-actions,
+.workbench-action-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.workbench-page-heading h1 {
+  margin: 7px 0 5px;
+  color: #171a1f;
+  font-size: clamp(32px, 5vw, 56px);
+  letter-spacing: -.06em;
+  line-height: .98;
+}
+
+.workbench-page-heading p,
+.workbench-overview-card p {
+  margin: 0;
+  color: #6e7780;
+  line-height: 1.55;
+}
+
+.workbench-eyebrow {
+  color: #7f8992;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.workbench-status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 4px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.workbench-status-chip.lead,
+.workbench-status-chip.approved {
+  color: #486200;
+  background: #e3f7a7;
+}
+
+.workbench-status-chip.member,
+.workbench-status-chip.completed {
+  color: #3a5768;
+  background: #e5eef2;
+}
+
+.workbench-status-chip.pending {
+  color: #815800;
+  background: #fff0bd;
+}
+
+.workbench-status-chip.happening {
+  color: #fff;
+  background: #1c6f9a;
+}
+
+.workbench-status-chip.cancelled {
+  color: #8a2732;
+  background: #ffe3e6;
+}
+
+.workbench-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.workbench-metric-card,
+.workbench-overview-card,
+.workbench-quick-actions {
+  border: 1px solid #dee2df;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.workbench-metric-card {
+  display: grid;
+  gap: 7px;
+  min-height: 126px;
+  padding: 17px;
+}
+
+.workbench-metric-card strong {
+  color: #20262c;
+  font-size: clamp(19px, 2.4vw, 27px);
+  letter-spacing: -.04em;
+}
+
+.workbench-metric-icon {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border-radius: 6px;
+  color: #526300;
+  background: #effbc8;
+}
+
+.workbench-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.workbench-overview-card {
+  display: grid;
+  min-height: 218px;
+  grid-template-rows: auto 1fr auto;
+  gap: 14px;
+  padding: 19px;
+}
+
+.workbench-overview-card h2,
+.workbench-quick-actions h2 {
+  margin: 6px 0;
+  color: #20262c;
+  font-size: 20px;
+  letter-spacing: -.035em;
+}
+
+.workbench-card-icon {
+  color: #91b900;
+}
+
+.workbench-pulse-dot {
+  width: 12px;
+  height: 12px;
+  margin: 5px 4px 0 0;
+  border: 2px solid #c8d0d3;
+  border-radius: 50%;
+}
+
+.workbench-pulse-dot.pending {
+  border-color: #a9eb00;
+  background: #a9eb00;
+  box-shadow: 0 0 0 4px rgb(169 235 0 / 15%);
+}
+
+.workbench-text-action,
+.workbench-primary-action,
+.workbench-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 37px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.workbench-text-action {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  color: #4d6500;
+  background: transparent;
+}
+
+.workbench-text-action:hover,
+.workbench-text-action:focus-visible {
+  color: #1c2a00;
+}
+
+.workbench-quick-actions {
+  align-items: center;
+  padding: 17px 19px;
+}
+
+.workbench-quick-actions h2 {
+  margin-bottom: 0;
+  font-size: 17px;
+}
+
+.workbench-primary-action,
+.workbench-secondary-action {
+  padding: 0 12px;
+}
+
+.workbench-primary-action {
+  border: 1px solid #a9eb00;
+  color: #1b2600;
+  background: #b5ee19;
+}
+
+.workbench-primary-action:hover,
+.workbench-primary-action:focus-visible {
+  background: #c8f54e;
+}
+
+.workbench-secondary-action {
+  border: 1px solid #cdd4d5;
+  color: #39464d;
+  background: #fff;
+}
+
+.workbench-secondary-action:hover,
+.workbench-secondary-action:focus-visible {
+  background: #f3f6f5;
+}
+
+@media (max-width: 760px) {
+  .workbench-page-heading,
+  .workbench-quick-actions {
+    flex-direction: column;
+  }
+
+  .workbench-metric-grid,
+  .workbench-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workbench-action-row {
+    width: 100%;
+  }
+
+  .workbench-action-row button {
+    flex: 1;
+  }
+}
+
 @media (max-width: 760px) {
   .workbench-shell {
     display: block;
