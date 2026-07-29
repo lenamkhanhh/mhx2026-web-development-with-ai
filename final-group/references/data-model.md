@@ -77,3 +77,5 @@ updatedAt: server timestamp
 ```
 
 Store money as integer VND, not floating-point fractions.
+The `settled` status is only an internal reconciliation marker. It does not
+represent or replace a transfer record, receipt, or payment-provider proof.

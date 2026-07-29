@@ -23,10 +23,15 @@ export interface EventsWorkbenchProps {
   events: EventRecord[];
   members: MemberRecord[];
   role: FirestoreMemberRole;
+  // eslint-disable-next-line no-unused-vars
   onCreate: (input: CreateEventInput) => Promise<void>;
+  // eslint-disable-next-line no-unused-vars
   onApprove: (eventId: string) => Promise<void>;
+  // eslint-disable-next-line no-unused-vars
   onCancel: (eventId: string) => Promise<void>;
+  // eslint-disable-next-line no-unused-vars
   onDelete: (eventId: string) => Promise<void>;
+  // eslint-disable-next-line no-unused-vars
   onMove: (eventId: string, direction: "up" | "down") => Promise<void>;
   onSync: () => Promise<void>;
 }
@@ -40,14 +45,20 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   const [movingId, setMovingId] = useState<string | null>(null);
   const [optimisticState, setOptimisticState] = useState<{
     order: string[];
-    source: EventRecord[];
   } | null>(null);
   const reducedMotion = useReducedMotion();
   const isLead = role === "lead";
-  const optimisticOrder =
-    optimisticState?.source === events ? optimisticState.order : null;
+  const optimisticOrder = optimisticState?.order ?? null;
   const timeline = useMemo(() => orderEvents(events, optimisticOrder), [events, optimisticOrder]);
   const reorderPending = optimisticOrder !== null;
+
+  useEffect(() => {
+    if (!optimisticOrder) return;
+    const canonicalOrder = orderEvents(events, null).map((event) => event.id);
+    // The events prop is the external realtime signal that confirms persistence.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (confirmsRequestedOrder(canonicalOrder, optimisticOrder)) setOptimisticState(null);
+  }, [events, optimisticOrder]);
 
   function toggleParticipant(uid: string) {
     setDraft((current) => ({ ...current, participantIds: current.participantIds.includes(uid) ? current.participantIds.filter((id) => id !== uid) : [...current.participantIds, uid] }));
@@ -84,7 +95,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
     const nextOrder = moveEvent(timeline.map((event) => event.id), eventId, direction);
     if (!nextOrder) return;
     setMovingId(eventId);
-    setOptimisticState({ order: nextOrder, source: events });
+    setOptimisticState({ order: nextOrder });
     setFeedback({ kind: "saving", message: "Đang cập nhật vị trí trong timeline…" });
     try { await onMove(eventId, direction); setFeedback({ kind: "success", message: "Đã gửi yêu cầu sắp xếp. Chờ bản cập nhật thời gian thực." }); }
     catch (error) { setOptimisticState(null); setFeedback({ kind: "error", message: rollbackMessage(error, "Không thể đổi thứ tự.") }); }
@@ -125,6 +136,8 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   </section>;
 }
 
+// Exported for deterministic reorder tests; it does not hold React state.
+// eslint-disable-next-line react-refresh/only-export-components
 export function moveEvent(ids: string[], eventId: string, direction: "up" | "down"): string[] | null {
   const index = ids.indexOf(eventId); const target = direction === "up" ? index - 1 : index + 1;
   if (index < 0 || target < 0 || target >= ids.length) return null;
@@ -135,7 +148,21 @@ function orderEvents(events: EventRecord[], optimisticOrder: string[] | null): E
   const sorted = [...events].sort((left, right) => left.order - right.order || Date.parse(left.startAt) - Date.parse(right.startAt) || left.id.localeCompare(right.id));
   if (!optimisticOrder) return sorted;
   const byId = new Map(sorted.map((event) => [event.id, event]));
-  return optimisticOrder.map((id) => byId.get(id)).filter((item): item is EventRecord => Boolean(item));
+  const optimisticEvents = optimisticOrder.map((id) => byId.get(id)).filter((item): item is EventRecord => Boolean(item));
+  const optimisticIds = new Set(optimisticEvents.map((event) => event.id));
+  let optimisticIndex = 0;
+  return sorted.map((event) => optimisticIds.has(event.id) ? optimisticEvents[optimisticIndex++] : event);
+}
+
+function confirmsRequestedOrder(canonicalOrder: string[], requestedOrder: string[]): boolean {
+  const liveIds = new Set(canonicalOrder);
+  const liveRequestedOrder = requestedOrder.filter((id) => liveIds.has(id));
+  const requestedIds = new Set(liveRequestedOrder);
+  return sameOrder(canonicalOrder.filter((id) => requestedIds.has(id)), liveRequestedOrder);
+}
+
+function sameOrder(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((id, index) => id === right[index]);
 }
 
 function useReducedMotion(): boolean {

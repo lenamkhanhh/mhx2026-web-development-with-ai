@@ -77,9 +77,10 @@ describe("ExpensesPanel", () => {
     });
 
     await actor.click(screen.getByRole("button", { name: "Chốt Xe di chuyển" }));
-    expect(screen.getByRole("dialog", { name: /confirm settlement/i })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Xác nhận chốt khoản chi" })).toBeTruthy();
+    expect(screen.getByText(/không phải bằng chứng chuyển tiền/i)).toBeTruthy();
     expect(onSettle).not.toHaveBeenCalled();
-    await actor.click(screen.getByRole("button", { name: /confirm settle/i }));
+    await actor.click(screen.getByRole("button", { name: "Xác nhận chốt" }));
     expect(onSettle).toHaveBeenCalledWith("expense-1");
   });
 
@@ -97,10 +98,10 @@ describe("ExpensesPanel", () => {
       />,
     );
 
-    expect(screen.getByRole("status").textContent).toContain("Loading expense ledger...");
+    expect(screen.getByRole("status").textContent).toContain("Đang tải sổ chi phí");
     expect(screen.getByRole("alert").textContent).toContain("Unable to refresh the expense ledger.");
 
-    await actor.click(screen.getByRole("button", { name: "Retry" }));
+    await actor.click(screen.getByRole("button", { name: "Thử lại" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });

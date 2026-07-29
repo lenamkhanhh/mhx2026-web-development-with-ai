@@ -18,7 +18,7 @@ describe("MembersPanel", () => {
     render(<MembersPanel currentUserId="member-1" members={members} onRemoveMember={vi.fn()} onUpdateResponsibility={vi.fn()} trip={{ id: "trip-1", joinCode: "DALAT26" }} />);
     expect(screen.getByText("DALAT26")).toBeTruthy();
     expect(screen.getByText("Lead")).toBeTruthy();
-    expect(screen.getByText("Member")).toBeTruthy();
+    expect(screen.getByText("Thành viên", { selector: ".members-panel__role" })).toBeTruthy();
     expect((screen.getByRole("textbox", { name: /Khanh/ }) as HTMLInputElement).disabled).toBe(true);
   });
 
@@ -28,7 +28,7 @@ describe("MembersPanel", () => {
     render(<MembersPanel currentUserId="lead-1" members={members} onRemoveMember={onRemoveMember} onUpdateResponsibility={vi.fn()} trip={{ id: "trip-1", joinCode: "DALAT26" }} />);
     await user.click(screen.getByRole("button", { name: /Minh/ }));
     expect(onRemoveMember).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: "Confirm removal" }));
+    await user.click(screen.getByRole("button", { name: "Xác nhận xóa" }));
     expect(onRemoveMember).toHaveBeenCalledWith("member-1");
   });
 });

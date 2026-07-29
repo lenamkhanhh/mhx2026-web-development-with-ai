@@ -14,7 +14,17 @@ const members: MemberRecord[] = [
 function event(overrides: Partial<EventRecord> = {}): EventRecord {
   return { id: "event-1", title: "Breakfast", category: "food", startAt: "2026-07-30T08:00:00.000Z", endAt: "2026-07-30T09:00:00.000Z", status: "approved", participantIds: ["lead-1", "member-1"], createdBy: "lead-1", approvedBy: "lead-1", order: 0, ...overrides };
 }
-function deferred<T>() { let resolve!: (value: T) => void; let reject!: (reason?: unknown) => void; const promise = new Promise<T>((ok, fail) => { resolve = ok; reject = fail; }); return { promise, resolve, reject }; }
+function deferred<T>() {
+  // eslint-disable-next-line no-unused-vars
+  let resolve!: (value: T) => void;
+  // eslint-disable-next-line no-unused-vars
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((ok, fail) => {
+    resolve = ok;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
+}
 function renderWorkbench(overrides: Partial<ComponentProps<typeof EventsWorkbench>> = {}) {
   const props: ComponentProps<typeof EventsWorkbench> = { currentUserId: "lead-1", events: [], members, role: "lead", onApprove: vi.fn().mockResolvedValue(undefined), onCancel: vi.fn().mockResolvedValue(undefined), onCreate: vi.fn().mockResolvedValue(undefined), onDelete: vi.fn().mockResolvedValue(undefined), onMove: vi.fn().mockResolvedValue(undefined), onSync: vi.fn().mockResolvedValue(undefined), ...overrides };
   return { ...render(<EventsWorkbench {...props} />), props };
@@ -78,7 +88,7 @@ describe("EventsWorkbench", () => {
   it("shows saving feedback, submits typed data, and resets after success", async () => {
     const user = userEvent.setup(); const save = deferred<void>();
     const { container, props } = renderWorkbench({ onCreate: vi.fn(() => save.promise) });
-    const dateInputs = container.querySelectorAll('input[type="datetime-local"]') as NodeListOf<HTMLInputElement>;
+    const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
     await user.type(screen.getByRole("textbox"), "Sunrise");
     await user.selectOptions(screen.getByRole("combobox", { name: "Loại" }), "transport");
     await user.type(dateInputs[0], "2026-07-30T06:00"); await user.type(dateInputs[1], "2026-07-30T07:00");
@@ -98,7 +108,7 @@ describe("EventsWorkbench", () => {
 
   it("keeps the composer draft and announces rollback feedback when saving fails", async () => {
     const user = userEvent.setup(); const { container, props } = renderWorkbench({ onCreate: vi.fn().mockRejectedValue(new Error("offline")) });
-    const dateInputs = container.querySelectorAll('input[type="datetime-local"]') as NodeListOf<HTMLInputElement>;
+    const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
     await user.type(screen.getByRole("textbox"), "Night market");
     await user.type(dateInputs[0], "2026-07-30T18:00"); await user.type(dateInputs[1], "2026-07-30T19:00");
     await user.click(screen.getAllByRole("checkbox")[0]); await user.click(container.querySelector('button[type="submit"]')!);
@@ -119,12 +129,13 @@ describe("EventsWorkbench", () => {
     expect(screen.getByRole("alert").textContent?.length).toBeGreaterThan(0);
   });
 
-  it("locks every reorder control until a realtime snapshot replaces the optimistic order", async () => {
+  it("keeps the optimistic reorder locked through a stale snapshot and clears it only after confirmation", async () => {
     const user = userEvent.setup();
     const pendingMove = deferred<void>();
     const onMove = vi.fn(() => pendingMove.promise);
     const first = event({ id: "first", title: "Breakfast" });
     const second = event({ id: "second", title: "Visit", order: 1 });
+    const unrelated = event({ id: "unrelated", title: "Dinner", order: 2 });
     const rendered = renderWorkbench({ events: [first, second], onMove });
 
     await user.click(screen.getByRole("button", { name: "Đưa Visit lên" }));
@@ -138,7 +149,15 @@ describe("EventsWorkbench", () => {
     await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Chờ bản cập nhật thời gian thực"));
     expect(reorderButtons.every((button) => button.disabled)).toBe(true);
 
-    rendered.rerender(<EventsWorkbench {...rendered.props} events={[{ ...second, order: 0 }, { ...first, order: 1 }]} />);
+    rendered.rerender(<EventsWorkbench {...rendered.props} events={[{ ...first }, { ...second }, unrelated]} />);
+    await waitFor(() => {
+      const staleTimeline = screen.getByRole("list");
+      const staleButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Đưa "));
+      expect(within(staleTimeline).getAllByRole("listitem").map((item) => item.getAttribute("data-event-id"))).toEqual(["second", "first", "unrelated"]);
+      expect(staleButtons.every((button) => button.disabled)).toBe(true);
+    });
+
+    rendered.rerender(<EventsWorkbench {...rendered.props} events={[{ ...second, order: 0 }, { ...first, order: 1 }, unrelated]} />);
     await waitFor(() => {
       const refreshedButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Đưa "));
       expect(refreshedButtons.some((button) => !button.disabled)).toBe(true);

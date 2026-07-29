@@ -96,7 +96,7 @@ export function ExpensesPanel({
       await onSettle(confirmingExpense.id);
       setConfirmingExpense(null);
     } catch {
-      setSettlementError("Unable to settle this expense. Please try again.");
+      setSettlementError("Không thể chốt khoản chi này. Hãy thử lại.");
     } finally {
       setSettling(false);
     }
@@ -126,11 +126,11 @@ export function ExpensesPanel({
       </div>
 
 
-      {isLoading ? <p className="expense-workbench__state" role="status">Loading expense ledger...</p> : null}
+      {isLoading ? <p className="expense-workbench__state" role="status">Đang tải sổ chi phí…</p> : null}
       {loadError ? (
         <div className="expense-workbench__state expense-workbench__state--error">
           <p role="alert">{loadError}</p>
-          {onRetry ? <button onClick={onRetry} type="button">Retry</button> : null}
+          {onRetry ? <button onClick={onRetry} type="button">Thử lại</button> : null}
         </div>
       ) : null}
 
@@ -153,6 +153,8 @@ export function ExpensesPanel({
             <label>
               Số tiền (VND)
               <input
+                aria-label="Số tiền (VND)"
+                aria-describedby="expense-amount-help"
                 inputMode="numeric"
                 min="1"
                 onChange={(event) => setAmount(event.target.value)}
@@ -160,8 +162,8 @@ export function ExpensesPanel({
                 type="number"
                 value={amount}
               />
+              <small id="expense-amount-help">Chỉ nhập số VND nguyên dương, không dùng số thập phân.</small>
             </label>
-              <small id="expense-amount-help">Whole positive VND only - no decimals.</small>
             <label>
               Người đã trả
               <select
@@ -276,21 +278,27 @@ export function ExpensesPanel({
       {confirmingExpense ? (
         <div className="expense-workbench__dialog-backdrop" role="presentation">
           <div
-            aria-label="Confirm settlement"
+            aria-label="Xác nhận chốt khoản chi"
             aria-modal="true"
             className="expense-workbench__dialog"
             role="dialog"
           >
-            <span className="eyebrow">Lead action</span>
-            <h3>Confirm settlement</h3>
-            <p>Mark <strong>{confirmingExpense.title}</strong> as settled for {formatVnd(confirmingExpense.amount)}?</p>
+            <span className="eyebrow">Thao tác của Lead</span>
+            <h3>Chốt khoản chi</h3>
+            <p>
+              Đánh dấu <strong>{confirmingExpense.title}</strong> là đã chốt trong sổ chi phí
+              với {formatVnd(confirmingExpense.amount)}?
+            </p>
+            <p>
+              Đây là trạng thái đối soát nội bộ của nhóm, không phải bằng chứng chuyển tiền.
+            </p>
             {settlementError ? <p role="alert">{settlementError}</p> : null}
             <div className="expense-workbench__dialog-actions">
               <button disabled={settling} onClick={() => setConfirmingExpense(null)} type="button">
-                Cancel
+                Hủy
               </button>
               <button className="primary-button" disabled={settling} onClick={() => void confirmSettlement()} type="button">
-                {settling ? "Settling?" : "Confirm settle"}
+                {settling ? "Đang chốt…" : "Xác nhận chốt"}
               </button>
             </div>
           </div>

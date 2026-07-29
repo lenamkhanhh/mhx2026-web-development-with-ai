@@ -21,8 +21,9 @@ export function StatisticsPanel({ members, expenses }: StatisticsPanelProps) {
         </div>
       </div>
 
-      <aside className="statistics-workbench__ledger-note" aria-label="Current ledger">
-        Current ledger: pending and settled are record states; neither one erases a member balance.
+      <aside className="statistics-workbench__ledger-note" aria-label="Ghi chú sổ chi phí">
+        Chờ chốt và đã chốt chỉ là trạng thái đối soát nội bộ; cả hai vẫn được tính
+        trong công nợ của thành viên.
       </aside>
 
       <dl className="metric-grid" aria-label="Thống kê chi phí">

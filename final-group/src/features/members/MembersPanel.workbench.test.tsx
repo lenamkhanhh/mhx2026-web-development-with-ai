@@ -23,7 +23,7 @@ describe("MembersPanel workbench", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
     render(panel());
-    await user.click(screen.getByRole("button", { name: "Copy join code" }));
+    await user.click(screen.getByRole("button", { name: "Sao chép mã gia nhập" }));
     expect(writeText).toHaveBeenCalledWith("DALAT26");
     expect((screen.getByTestId("join-code-status") as HTMLElement).dataset.state).toBe("copied");
   });
@@ -34,7 +34,7 @@ describe("MembersPanel workbench", () => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
     const { rerender } = render(panel());
 
-    await user.click(screen.getByRole("button", { name: "Copy join code" }));
+    await user.click(screen.getByRole("button", { name: "Sao chép mã gia nhập" }));
     expect((screen.getByTestId("join-code-status") as HTMLElement).dataset.state).toBe("copied");
 
     rerender(panel({ trip: { id: "trip-hue", joinCode: "HUE27" } }));
@@ -48,8 +48,8 @@ describe("MembersPanel workbench", () => {
     render(panel({ onRemoveMember }));
     await user.click(screen.getByRole("button", { name: /Minh/ }));
     expect(onRemoveMember).not.toHaveBeenCalled();
-    expect(screen.getByRole("dialog", { name: "Confirm member removal" })).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Confirm removal" }));
+    expect(screen.getByRole("dialog", { name: "Xác nhận xóa thành viên" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Xác nhận xóa" }));
     expect(onRemoveMember).toHaveBeenCalledWith("member-1");
   });
 
@@ -59,7 +59,7 @@ describe("MembersPanel workbench", () => {
     render(panel({ onRemoveMember }));
 
     await user.click(screen.getByRole("button", { name: /Minh/ }));
-    const confirmButton = screen.getByRole("button", { name: "Confirm removal" });
+    const confirmButton = screen.getByRole("button", { name: "Xác nhận xóa" });
     await user.click(confirmButton);
 
     expect((confirmButton as HTMLButtonElement).disabled).toBe(true);

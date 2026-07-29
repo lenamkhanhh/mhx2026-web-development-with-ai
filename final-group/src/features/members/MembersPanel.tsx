@@ -11,7 +11,9 @@ export interface MembersPanelProps {
   currentUserId: string;
   state?: MembersPanelState;
   errorMessage?: string;
+  // eslint-disable-next-line no-unused-vars
   onUpdateResponsibility: (memberId: string, responsibility: string) => void | Promise<void>;
+  // eslint-disable-next-line no-unused-vars
   onRemoveMember: (memberId: string) => void | Promise<void>;
 }
 
@@ -73,17 +75,17 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
   };
 
   return (
-    <section aria-labelledby="members-heading" className="members-panel" data-reduced-motion="true">
+    <section aria-labelledby="members-heading" className="members-panel">
       <header className="members-panel__header">
         <div>
-          <p className="members-panel__eyebrow">TripFlow / crew workbench</p>
+          <p className="members-panel__eyebrow">TripFlow / nhóm đồng hành</p>
           <h2 id="members-heading">Thành viên</h2>
           <p>Phân vai rõ ràng, cập nhật trách nhiệm của bạn và giữ nhóm đồng bộ.</p>
         </div>
         <aside aria-label="Thông tin gia nhập" className="members-panel__join-card">
           <span>Trip ID</span><strong>{trip.id}</strong>
           <span>Mã gia nhập</span><code>{trip.joinCode}</code>
-          <button aria-label="Copy join code" className="members-panel__copy" onClick={() => void copyJoinCode()} type="button">Sao chép mã</button>
+          <button aria-label="Sao chép mã gia nhập" className="members-panel__copy" onClick={() => void copyJoinCode()} type="button">Sao chép mã</button>
            <p data-state={displayedCopyState} data-testid="join-code-status" role="status">
              {displayedCopyState === "copied" ? "Đã sao chép mã tham gia" : displayedCopyState === "error" ? "Không thể sao chép mã" : "Chỉ chia sẻ với người bạn tin cậy"}
           </p>
@@ -104,7 +106,7 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
             <div className="members-panel__identity">
               <span aria-hidden="true" className="members-panel__avatar">{member.displayName.slice(0, 1).toUpperCase()}</span>
               <div><h3>{member.displayName}</h3><p>{member.email}</p></div>
-              <span className={`members-panel__role members-panel__role--${member.role}`}>{member.role === "lead" ? "Lead" : "Member"}</span>
+              <span className={`members-panel__role members-panel__role--${member.role}`}>{member.role === "lead" ? "Lead" : "Thành viên"}</span>
             </div>
             <label className="members-panel__responsibility">Trách nhiệm
               <input aria-label={`Trách nhiệm của ${member.displayName}`} disabled={!mayEdit || memberFeedback === "saving"} onChange={(event) => setDrafts((value) => ({ ...value, [member.uid]: event.target.value }))} value={draft} />
@@ -118,7 +120,7 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
         })}
       </ul> : null}
 
-      {pendingRemoval ? <div aria-label="Confirm member removal" aria-modal="true" className="members-panel__dialog-backdrop" role="dialog"><section className="members-panel__dialog"><h3>Xóa {pendingRemoval.displayName} khỏi chuyến đi?</h3><p>Người này sẽ mất quyền truy cập vào lịch trình và chi phí của chuyến đi.</p><div><button disabled={Boolean(removingMemberId)} onClick={() => setPendingRemoval(null)} type="button">Hủy</button><button aria-label="Confirm removal" className="members-panel__remove" disabled={Boolean(removingMemberId)} onClick={() => void confirmRemoval()} type="button">Xác nhận xóa</button></div></section></div> : null}
+      {pendingRemoval ? <div aria-label="Xác nhận xóa thành viên" aria-modal="true" className="members-panel__dialog-backdrop" role="dialog"><section className="members-panel__dialog"><h3>Xóa {pendingRemoval.displayName} khỏi chuyến đi?</h3><p>Người này sẽ mất quyền truy cập vào lịch trình và chi phí của chuyến đi.</p><div><button disabled={Boolean(removingMemberId)} onClick={() => setPendingRemoval(null)} type="button">Hủy</button><button aria-label="Xác nhận xóa" className="members-panel__remove" disabled={Boolean(removingMemberId)} onClick={() => void confirmRemoval()} type="button">Xác nhận xóa</button></div></section></div> : null}
     </section>
   );
 }

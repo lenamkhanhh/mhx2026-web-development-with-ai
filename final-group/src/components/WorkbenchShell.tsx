@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import {
   CalendarBlank,
@@ -21,8 +22,9 @@ export interface WorkbenchTripSummary {
 
 export interface WorkbenchShellProps {
   activeView: WorkbenchView;
-  children: React.ReactNode;
+  children: ReactNode;
   displayName: string;
+  // eslint-disable-next-line no-unused-vars
   onChangeView: (view: WorkbenchView) => void;
   onLogout: () => void | Promise<void>;
   pendingCount: number;
@@ -91,6 +93,7 @@ export function WorkbenchShell({
               const isActive = activeView === id;
               return (
                 <a
+                  aria-label={label}
                   aria-current={isActive ? "page" : undefined}
                   className={`workbench-nav-item${isActive ? " active" : ""}`}
                   href={`#${id}`}

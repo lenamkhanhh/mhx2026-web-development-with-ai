@@ -17,7 +17,11 @@ the enforcement boundary.
 | Remove another member | yes | no |
 | Create an expense | yes | yes |
 | Edit/delete another user's expense | yes | no |
+| Mark an expense record settled | yes | no |
 | Sync `happening`/`completed` status | yes | no |
 
 Never trust a client-provided `role`, `leadId`, or membership flag without
 checking the stored trip/member documents in rules and in the repository.
+
+`settled` is a lead-controlled internal ledger state. It records that the group
+has reconciled the item; it is not a bank-transfer receipt or payment proof.

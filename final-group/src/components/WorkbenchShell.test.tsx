@@ -42,11 +42,11 @@ describe("WorkbenchShell", () => {
 
     expect(screen.getByRole("navigation", { name: "Điều hướng TripFlow" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Tổng quan" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Lịch trình/ }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: "Lịch trình" }).getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("link", { name: "Chi phí" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Thành viên" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: /Files|Notes|Integrations/i })).toBeNull();
-    expect(screen.getByRole("link", { name: /Lịch trình/ }).textContent).toContain("2");
+    expect(screen.getByRole("link", { name: "Lịch trình" }).textContent).toContain("2");
     expect(screen.getByText("Nội dung hiện tại")).toBeTruthy();
   });
 
