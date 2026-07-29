@@ -24,7 +24,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 function renderWorkbench(overrides: Partial<ComponentProps<typeof EventsWorkbench>> = {}) {
-  const props: ComponentProps<typeof EventsWorkbench> = { currentUserId: "lead-1", events: [], members, role: "lead", onApprove: vi.fn().mockResolvedValue(undefined), onCancel: vi.fn().mockResolvedValue(undefined), onCreate: vi.fn().mockResolvedValue(undefined), onDelete: vi.fn().mockResolvedValue(undefined), onMove: vi.fn().mockResolvedValue(undefined), onSync: vi.fn().mockResolvedValue(undefined), ...overrides };
+  const props: ComponentProps<typeof EventsWorkbench> = { currentUserId: "lead-1", events: [], members, role: "lead", onApprove: vi.fn().mockResolvedValue(undefined), onCancel: vi.fn().mockResolvedValue(undefined), onCreate: vi.fn().mockResolvedValue(undefined), onDelete: vi.fn().mockResolvedValue(undefined), onMove: vi.fn().mockResolvedValue(undefined), onSync: vi.fn().mockResolvedValue(undefined), onUpdate: vi.fn().mockResolvedValue(undefined), ...overrides };
   return { ...render(<EventsWorkbench {...props} />), props };
 }
 beforeEach(() => vi.stubGlobal("matchMedia", vi.fn().mockImplementation(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))));
@@ -81,6 +81,24 @@ describe("EventsWorkbench", () => {
     expect(within(screen.getByLabelText("Thao tác Backup")).queryByRole("button", { name: "Duyệt" })).toBeNull();
     expect(within(screen.getByLabelText("Thao tác Backup")).queryByRole("button", { name: "Hủy" })).toBeNull();
     expect(screen.getByRole("button", { name: "Đồng bộ trạng thái" })).toBeTruthy();
+  });
+
+  it("opens a real detail panel and saves a permitted event title edit", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    renderWorkbench({ events: [event()], onUpdate });
+
+    await user.click(screen.getByRole("button", { name: "Open Breakfast details" }));
+    const details = screen.getByRole("complementary", { name: "Event details" });
+    expect(within(details).getByText("Breakfast")).toBeTruthy();
+
+    await user.click(within(details).getByRole("button", { name: "Edit event" }));
+    const title = within(details).getByRole("textbox", { name: "Activity title" });
+    await user.clear(title);
+    await user.type(title, "Brunch");
+    await user.click(within(details).getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(onUpdate).toHaveBeenCalledWith("event-1", { title: "Brunch" }));
   });
 
   it("shows saving feedback, submits typed data, and resets after success", async () => {
