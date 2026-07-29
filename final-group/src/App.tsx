@@ -217,6 +217,17 @@ export function App({ backend }: AppProps) {
     }
   }
 
+  async function updateEvent(eventId: string, patch: Parameters<EventFeature["update"]>[1]) {
+    if (!eventFeature) return;
+    try {
+      await eventFeature.update(eventId, patch);
+      setNotice("Đã gửi thay đổi hoạt động để đồng bộ.");
+      setError("");
+    } catch (cause) {
+      throwMutationFailure(cause, "Không thể cập nhật hoạt động.");
+    }
+  }
+
   async function approveEvent(eventId: string) {
     if (!eventFeature) return;
     try {
@@ -326,6 +337,7 @@ export function App({ backend }: AppProps) {
       onDelete={deleteEvent}
       onMove={reorderEvent}
       onSync={syncEventStatuses}
+      onUpdate={updateEvent}
       role={role}
     />
   ) : activeView === "expenses" ? (

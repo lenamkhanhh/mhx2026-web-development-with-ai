@@ -29,10 +29,11 @@ export interface EventsWorkbenchProps {
   onDelete: (eventId: string) => Promise<void>;
   onMove: (eventId: string, direction: "up" | "down") => Promise<void>;
   onSync: () => Promise<void>;
+  onUpdate: (eventId: string, patch: Partial<CreateEventInput>) => Promise<void>;
 }
 
 export function EventsWorkbench(props: EventsWorkbenchProps) {
-  const { currentUserId, events, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync } = props;
+  const { currentUserId, events, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate } = props;
   const [draft, setDraft] = useState({ title: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[] });
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [saving, setSaving] = useState(false);
@@ -41,11 +42,16 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   const [optimisticState, setOptimisticState] = useState<{
     order: string[];
   } | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
   const isLead = role === "lead";
   const optimisticOrder = optimisticState?.order ?? null;
   const timeline = useMemo(() => orderEvents(events, optimisticOrder), [events, optimisticOrder]);
   const reorderPending = optimisticOrder !== null;
+  const selectedEvent = useMemo(
+    () => timeline.find((item) => item.id === selectedEventId) ?? timeline[0] ?? null,
+    [selectedEventId, timeline],
+  );
 
   useEffect(() => {
     if (!optimisticOrder) return;
@@ -112,6 +118,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
       <fieldset className={styles.participants} disabled={saving}><legend>Ai tham gia?</legend>{members.map((member) => <label key={member.uid}><input checked={draft.participantIds.includes(member.uid)} disabled={saving} onChange={() => toggleParticipant(member.uid)} type="checkbox" />{member.displayName}</label>)}</fieldset>
       <button className={styles.createButton} disabled={saving} type="submit">{saving ? "Đang lưu hoạt động…" : "Thêm vào lịch trình"}</button>
     </form>
+    <div className={styles.timelineWorkspace}>
     <div className={styles.timelineHeader}><span>02</span><strong>Timeline có thể hành động</strong><small>{timeline.length} hoạt động</small></div>
     {timeline.length === 0 ? <div className={styles.empty}><strong>Timeline còn trống</strong><p>Chưa có hoạt động nào trong hành trình này.</p></div> : <ol aria-label="Timeline hoạt động" className={styles.timeline}>{timeline.map((item, index) => {
       const canDelete = isLead || (item.createdBy === currentUserId && item.status === "pending");
@@ -125,10 +132,87 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
             {isLead && item.status !== "cancelled" ? <button disabled={runningAction !== null} onClick={() => void runAction(`cancel-${item.id}`, "Đã gửi yêu cầu hủy hoạt động.", () => onCancel(item.id))} type="button">Hủy</button> : null}
             {canDelete ? <button disabled={runningAction !== null} onClick={() => void runAction(`delete-${item.id}`, "Đã gửi yêu cầu xóa hoạt động.", () => onDelete(item.id))} type="button">Xóa</button> : null}
           </div>
+          <button aria-label={`Open ${item.title} details`} className={styles.detailButton} onClick={() => setSelectedEventId(item.id)} type="button">Chi tiết</button>
         </article>
       </li>;
     })}</ol>}
+      {selectedEvent ? <EventDetailPanel
+        canEdit={isLead || (selectedEvent.createdBy === currentUserId && selectedEvent.status === "pending")}
+        event={selectedEvent}
+        members={members}
+        onUpdate={onUpdate}
+      /> : null}
+    </div>
   </section>;
+}
+
+interface EventDetailPanelProps {
+  canEdit: boolean;
+  event: EventRecord;
+  members: MemberRecord[];
+  onUpdate: (eventId: string, patch: Partial<CreateEventInput>) => Promise<void>;
+}
+
+function EventDetailPanel({ canEdit, event, members, onUpdate }: EventDetailPanelProps) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(event.title);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback>(null);
+  const participants = event.participantIds
+    .map((uid) => members.find((member) => member.uid === uid)?.displayName ?? uid)
+    .join(", ") || "Chưa chỉ định";
+
+  function beginEdit() {
+    setTitle(event.title);
+    setFeedback(null);
+    setEditing(true);
+  }
+
+  async function save(eventForm: FormEvent<HTMLFormElement>) {
+    eventForm.preventDefault();
+    const nextTitle = title.trim();
+    if (!nextTitle) {
+      setFeedback({ kind: "error", message: "Tên hoạt động không được để trống." });
+      return;
+    }
+    if (nextTitle === event.title) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    setFeedback({ kind: "saving", message: "Đang lưu thay đổi…" });
+    try {
+      await onUpdate(event.id, { title: nextTitle });
+      setEditing(false);
+      setFeedback({ kind: "success", message: "Đã gửi thay đổi. Chờ bản cập nhật thời gian thực." });
+    } catch (error) {
+      setFeedback({ kind: "error", message: rollbackMessage(error, "Không thể cập nhật hoạt động.") });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return <aside aria-label="Event details" className={styles.detailPanel}>
+    <div className={styles.detailHeader}>
+      <div><p className={styles.detailKicker}>Chi tiết hoạt động</p><h3>{event.title}</h3></div>
+      <span className={`${styles.status} ${styles[`status_${event.status}`]}`}>{STATUS_LABELS[event.status]}</span>
+    </div>
+    <dl className={styles.detailList}>
+      <div><dt>Loại</dt><dd>{CATEGORY_LABELS[event.category]}</dd></div>
+      <div><dt>Thời gian</dt><dd>{formatDateTime(event.startAt)} — {formatDateTime(event.endAt)}</dd></div>
+      <div><dt>Thành viên</dt><dd>{participants}</dd></div>
+      <div><dt>Quyền sửa</dt><dd>{canEdit ? "Bạn có thể cập nhật mục này." : "Chỉ Lead hoặc người tạo mục chờ duyệt mới có thể sửa."}</dd></div>
+    </dl>
+    {feedback ? <p className={`${styles.detailFeedback} ${styles[feedback.kind]}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.message}</p> : null}
+    {canEdit ? editing ? <form className={styles.editForm} onSubmit={(eventForm) => void save(eventForm)}>
+      <label>Activity title<input aria-label="Activity title" disabled={saving} maxLength={120} onChange={(eventInput) => setTitle(eventInput.target.value)} required value={title} /></label>
+      <div className={styles.detailActions}>
+        <button className={styles.saveButton} disabled={saving} type="submit">{saving ? "Saving changes…" : "Save changes"}</button>
+        <button disabled={saving} onClick={() => { setEditing(false); setFeedback(null); }} type="button">Cancel edit</button>
+      </div>
+    </form> : <button className={styles.editButton} onClick={beginEdit} type="button">Edit event</button> : null}
+    <p className={styles.detailAudit}>Đồng bộ theo snapshot thời gian thực. Thay đổi chỉ được xem là hoàn tất khi dữ liệu mới xuất hiện trong timeline.</p>
+  </aside>;
 }
 
 // Exported for deterministic reorder tests; it does not hold React state.
