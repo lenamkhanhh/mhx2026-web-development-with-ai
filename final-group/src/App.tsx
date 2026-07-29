@@ -290,6 +290,28 @@ export function App({ backend }: AppProps) {
     }
   }
 
+  async function updateExpense(expenseId: string, patch: Parameters<ExpenseFeature["update"]>[1]) {
+    if (!expenseFeature) return;
+    try {
+      await expenseFeature.update(expenseId, patch);
+      setNotice("Đã gửi thay đổi khoản chi để đồng bộ.");
+      setError("");
+    } catch (cause) {
+      throwMutationFailure(cause, "Không thể cập nhật khoản chi.");
+    }
+  }
+
+  async function deleteExpense(expenseId: string) {
+    if (!expenseFeature) return;
+    try {
+      await expenseFeature.delete(expenseId);
+      setNotice("Đã xoá khoản chi.");
+      setError("");
+    } catch (cause) {
+      throwMutationFailure(cause, "Không thể xoá khoản chi.");
+    }
+  }
+
   async function settleExpense(expenseId: string) {
     if (!expenseFeature) return;
     try {
@@ -348,7 +370,9 @@ export function App({ backend }: AppProps) {
         expenses={selectedSnapshot.expenses}
         members={selectedSnapshot.members}
         onCreate={createExpense}
+        onDelete={deleteExpense}
         onSettle={settleExpense}
+        onUpdate={updateExpense}
       />
       <StatisticsPanel members={selectedSnapshot.members} expenses={selectedSnapshot.expenses} />
     </div>

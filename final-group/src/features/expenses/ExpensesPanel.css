@@ -13,3 +13,40 @@
 .expense-workbench__dialog { background: #fff; border: 1px solid var(--expense-line); border-radius: 1rem; box-shadow: 0 24px 60px rgb(16 24 40 / 24%); max-width: 30rem; padding: 1.25rem; width: min(100%, 30rem); }
 .expense-workbench__dialog-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.25rem; }
 @media (prefers-reduced-motion: reduce) { .expense-workbench *, .expense-workbench *::before, .expense-workbench *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+
+.expense-workbench__ledger { grid-template-columns: minmax(260px, .82fr) minmax(300px, 1.08fr) minmax(250px, .82fr); align-items: start; }
+.expense-workbench__detail { position: sticky; top: 18px; display: grid; gap: 13px; border-color: var(--expense-line); box-shadow: 0 8px 20px rgb(28 43 58 / 5%); }
+.expense-workbench__detail--empty { min-height: 180px; align-content: center; color: #64707c; }
+.expense-workbench__detail--empty p { margin: 4px 0 0; line-height: 1.5; }
+.expense-workbench__detail-heading { align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid var(--expense-line); }
+.expense-workbench__detail-heading h3 { margin: 5px 0 0; letter-spacing: -.02em; }
+.expense-workbench__detail-list { display: grid; gap: 10px; margin: 0; }
+.expense-workbench__detail-list > div { display: grid; gap: 3px; }
+.expense-workbench__detail-list dt { color: #697684; font-size: .65rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.expense-workbench__detail-list dd { margin: 0; color: #29313a; font-size: .82rem; line-height: 1.45; }
+.expense-workbench__details-button { min-height: 32px; border: 1px solid #b7ceff; border-radius: 6px; padding: 0 .55rem; color: #155eef; background: #fff; font: inherit; font-size: .76rem; font-weight: 760; cursor: pointer; }
+.expense-workbench__details-button:hover { border-color: #155eef; background: #eef4ff; }
+.expense-workbench__details-button:focus-visible, .expense-workbench__edit-form input:focus, .expense-workbench__edit-form select:focus { outline: 3px solid rgb(21 94 239 / 20%); outline-offset: 2px; }
+.expense-workbench__edit-form { display: grid; gap: 10px; }
+.expense-workbench__edit-form > label { display: grid; gap: 5px; color: #4c5965; font-size: .75rem; font-weight: 760; }
+.expense-workbench__edit-form input, .expense-workbench__edit-form select { box-sizing: border-box; min-height: 38px; width: 100%; padding: 0 .6rem; border: 1px solid #c7d0d8; border-radius: 6px; color: #20262c; background: #fff; font: inherit; }
+.expense-workbench__edit-form fieldset { display: flex; flex-wrap: wrap; gap: 7px 10px; margin: 0; padding: 9px; border: 1px solid #d8e0e7; border-radius: 6px; }
+.expense-workbench__edit-form legend { padding: 0 4px; color: #4c5965; font-size: .72rem; font-weight: 760; }
+.expense-workbench__edit-form fieldset label { display: flex; align-items: center; gap: 5px; font-size: .74rem; }
+.expense-workbench__detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.expense-workbench__detail-actions button, .expense-workbench__delete-button { min-height: 36px; }
+.expense-workbench__delete-button { border: 1px solid #f0b4c0; border-radius: 6px; padding: 0 .7rem; color: #a4203b; background: #fff; font: inherit; font-size: .78rem; font-weight: 760; cursor: pointer; }
+.expense-workbench__delete-button:hover { border-color: #c7362f; background: #fff1f3; }
+.expense-workbench__delete-button:disabled { cursor: not-allowed; opacity: .55; }
+.expense-workbench__detail-error { margin: 0; padding: .65rem .75rem; border-radius: 6px; color: #8b1f37; background: #fff0f3; font-size: .78rem; font-weight: 700; }
+.expense-workbench__detail-audit { margin: 0; padding-top: 10px; border-top: 1px solid var(--expense-line); color: #71808d; font-size: .7rem; line-height: 1.5; }
+
+@media (max-width: 1180px) {
+  .expense-workbench__ledger { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .expense-workbench__detail { position: static; grid-column: 1 / -1; }
+}
+
+@media (max-width: 900px) {
+  .expense-workbench__ledger { grid-template-columns: 1fr; }
+  .expense-workbench__detail { grid-column: auto; }
+}
