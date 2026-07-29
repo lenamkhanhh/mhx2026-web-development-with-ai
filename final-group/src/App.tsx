@@ -4,6 +4,8 @@ import { EventFeature } from "./features/events/events";
 import { ExpenseFeature, ExpensesPanel } from "./features/expenses";
 import { MembersFeature } from "./features/members/members";
 import { MembersPanel } from "./features/members/MembersPanel";
+import { WorkbenchShell, type WorkbenchView } from "./components/WorkbenchShell";
+import { WorkbenchOverview } from "./components/WorkbenchOverview";
 import { submitNewTrip, type TripDraft } from "./features/onboarding/OnboardingFlow";
 import { StatisticsPanel } from "./features/statistics";
 import { WorkbenchOverview } from "./components/WorkbenchOverview";
@@ -63,6 +65,7 @@ export function App({ backend }: AppProps) {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [activeView, setActiveView] = useState<WorkbenchView>("overview");
 
   useEffect(() => {
     let active = true;
@@ -288,167 +291,74 @@ export function App({ backend }: AppProps) {
     return <ScreenMessage title="Đang tải bảng điều khiển chuyến đi…" />;
   }
 
+  const pendingCount = snapshot.events.filter((event) => event.status === "pending").length;
+  const currentScreen = activeView === "overview" ? (
+    <WorkbenchOverview
+      currentUserId={user.uid}
+      onOpenExpenses={() => setActiveView("expenses")}
+      onOpenSchedule={() => setActiveView("schedule")}
+      snapshot={snapshot}
+    />
+  ) : activeView === "schedule" ? (
+    <div className="workbench-feature-stack">
+      <EventComposer members={snapshot.members} onCreate={createEvent} />
+      <EventsPanel
+        events={snapshot.events}
+        isLead={role === "lead"}
+        onApprove={approveEvent}
+        onCancel={cancelEvent}
+        onDelete={deleteEvent}
+        onMove={reorderEvent}
+        onSync={syncEventStatuses}
+      />
+    </div>
+  ) : activeView === "expenses" ? (
+    <div className="workbench-feature-stack">
+      <ExpensesPanel
+        canSettle={role === "lead"}
+        currentUserId={user.uid}
+        expenses={snapshot.expenses}
+        members={snapshot.members}
+        onCreate={createExpense}
+        onSettle={settleExpense}
+      />
+      <StatisticsPanel members={snapshot.members} expenses={snapshot.expenses} />
+    </div>
+  ) : (
+    <MembersPanel
+      currentUserId={user.uid}
+      members={snapshot.members}
+      onRemoveMember={(uid) => membersFeature.removeMember(uid)}
+      onUpdateResponsibility={(uid, responsibility) => membersFeature.updateResponsibility(uid, responsibility)}
+      trip={snapshot.trip}
+    />
+  );
+
   return (
     <WorkbenchShell
       activeView={activeView}
-      displayName={profile.displayName || profile.email}
+      displayName={currentMember.displayName}
       onChangeView={setActiveView}
       onLogout={handleLogout}
-      pendingCount={snapshot.events.filter((event) => event.status === "pending").length}
+      pendingCount={pendingCount}
       role={role}
       trip={snapshot.trip}
     >
-      {error ? <p className="workbench-alert error" role="alert">{error}</p> : null}
-      {notice ? <p className="workbench-alert" role="status">{notice}</p> : null}
-
-      {activeView === "overview" ? (
-        <WorkbenchOverview
-          currentUserId={user.uid}
-          onOpenExpenses={() => setActiveView("expenses")}
-          onOpenSchedule={() => setActiveView("schedule")}
-          snapshot={snapshot}
-        />
-      ) : null}
-
-      {activeView === "schedule" ? (
-        <section aria-labelledby="schedule-view-heading" className="view-stack workbench-feature-view">
-          <div className="section-heading page-heading">
-            <div>
-              <span className="eyebrow">Timeline / realtime</span>
-              <h1 id="schedule-view-heading">Lịch trình</h1>
-              <p>Đề xuất, duyệt và sắp xếp các hoạt động của chuyến đi.</p>
-            </div>
-            {role === "lead" ? (
-              <button className="secondary-button" onClick={() => void syncEventStatuses()} type="button">
-                Đồng bộ trạng thái
-              </button>
-            ) : null}
-          </div>
-          <EventComposer members={snapshot.members} onCreate={createEvent} />
-          <EventsPanel
-            events={snapshot.events}
-            isLead={role === "lead"}
-            onApprove={approveEvent}
-            onCancel={cancelEvent}
-            onDelete={deleteEvent}
-            onMove={reorderEvent}
-            onSync={syncEventStatuses}
-          />
-        </section>
-      ) : null}
-
-      {activeView === "expenses" ? (
-        <section aria-labelledby="expenses-view-heading" className="view-stack workbench-feature-view">
-          <div className="section-heading page-heading">
-            <div>
-              <span className="eyebrow">Money ledger / VND</span>
-              <h1 id="expenses-view-heading">Chi phí</h1>
-              <p>Ghi nhận, chia đều và đối soát minh bạch cho cả nhóm.</p>
-            </div>
-          </div>
-          <ExpensesPanel
-            canSettle={role === "lead"}
-            currentUserId={user.uid}
-            expenses={snapshot.expenses}
-            members={snapshot.members}
-            onCreate={createExpense}
-            onSettle={settleExpense}
-          />
-          <StatisticsPanel members={snapshot.members} expenses={snapshot.expenses} />
-        </section>
-      ) : null}
-
-      {activeView === "members" ? (
-        <section aria-labelledby="members-view-heading" className="view-stack workbench-feature-view">
-          <div className="section-heading page-heading">
-            <div>
-              <span className="eyebrow">Crew board / permissions</span>
-              <h1 id="members-view-heading">Thành viên</h1>
-              <p>Vai trò, trách nhiệm và mã tham gia của chuyến đi.</p>
-            </div>
-          </div>
-          <MembersPanel
-            currentUserId={user.uid}
-            members={snapshot.members}
-            onRemoveMember={(uid) => membersFeature.removeMember(uid)}
-            onUpdateResponsibility={(uid, responsibility) => membersFeature.updateResponsibility(uid, responsibility)}
-            trip={snapshot.trip}
-          />
-        </section>
-      ) : null}
+      <div className="workbench-screen-stack">
+        <label className="workbench-trip-switcher">
+          <span>Chuyến đi đang mở</span>
+          <select value={tripId} onChange={(event) => setTripId(event.target.value)}>
+            {trips.map((trip) => <option key={trip.id} value={trip.id}>{trip.name}</option>)}
+          </select>
+        </label>
+        {error ? <p className="app-alert error" role="alert">{error}</p> : null}
+        {notice ? <p className="app-alert" role="status">{notice}</p> : null}
+        {currentScreen}
+      </div>
     </WorkbenchShell>
-  );
-
-  /*
-  return (
-    <main className="tripflow-app">
-      <header className="app-header">
-        <div>
-          <p className="eyebrow">TripFlow / group itinerary</p>
-          <h1>{snapshot.trip.name}</h1>
-          <p>{snapshot.trip.destination} · {snapshot.trip.startDate} — {snapshot.trip.endDate}</p>
-        </div>
-        <div className="header-actions">
-          <label>
-            <span className="visually-hidden">Chọn chuyến đi</span>
-            <select value={tripId} onChange={(event) => setTripId(event.target.value)}>
-              {trips.map((trip) => <option key={trip.id} value={trip.id}>{trip.name}</option>)}
-            </select>
-          </label>
-          <span className="role-badge">{role === "lead" ? "Lead" : "Member"}</span>
-          <button className="secondary-button" onClick={() => void handleLogout()} type="button">Đăng xuất</button>
-        </div>
-      </header>
-
-      {error ? <p className="app-alert error" role="alert">{error}</p> : null}
-      {notice ? <p className="app-alert" role="status">{notice}</p> : null}
-
-      <section className="trip-summary" aria-label="Tổng quan chuyến đi">
-        <article><strong>{snapshot.events.length}</strong><span>hoạt động</span></article>
-        <article><strong>{snapshot.members.length}</strong><span>thành viên</span></article>
-        <article><strong>{snapshot.expenses.length}</strong><span>khoản chi</span></article>
-      </section>
-
-      <section className="dashboard-grid" aria-label="Bảng điều khiển chuyến đi">
-        <div className="dashboard-main">
-          <EventComposer members={snapshot.members} onCreate={createEvent} />
-          <EventsPanel
-            events={snapshot.events}
-            isLead={role === "lead"}
-            onApprove={approveEvent}
-            onCancel={cancelEvent}
-            onDelete={deleteEvent}
-            onMove={reorderEvent}
-            onSync={syncEventStatuses}
-          />
-        </div>
-        <aside className="dashboard-side">
-          <MembersPanel
-            currentUserId={user.uid}
-            members={snapshot.members}
-            onRemoveMember={(uid) => membersFeature.removeMember(uid)}
-            onUpdateResponsibility={(uid, responsibility) => membersFeature.updateResponsibility(uid, responsibility)}
-            trip={snapshot.trip}
-          />
-        </aside>
-      </section>
-
-      <section className="money-section" aria-label="Chi phí chuyến đi">
-        <ExpensesPanel
-          canSettle={role === "lead"}
-          currentUserId={user.uid}
-          expenses={snapshot.expenses}
-          members={snapshot.members}
-          onCreate={createExpense}
-          onSettle={settleExpense}
-        />
-        <StatisticsPanel members={snapshot.members} expenses={snapshot.expenses} />
-      </section>
-    </main>
   );
 */
 }
-
 function OnboardingGate({ email, onCreate }: { email: string; onCreate: (draft: TripDraft) => void }) {
   const [draft, setDraft] = useState<TripDraft>({ name: "", destination: "", startDate: "", endDate: "" });
   const [submitting, setSubmitting] = useState(false);

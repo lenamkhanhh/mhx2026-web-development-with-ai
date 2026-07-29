@@ -5,6 +5,8 @@ import userEvent from "@testing-library/user-event";
 import { screen, waitFor } from "@testing-library/react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 import {
   App,
   categoryLabel,
@@ -54,24 +56,22 @@ describe("TripFlow App composition", () => {
 
   it("renders persisted labels, expense actions, and the remaining fail-closed control", async () => {
     await render(<App backend={makeBackend(user, snapshot.trip, [snapshot.trip], snapshot)} />);
-    const actor = userEvent.setup();
-    await actor.click(screen.getByRole("link", { name: /Lịch trình/ }));
-    await waitFor(() => {
-      expect(container?.textContent).toContain("Đang diễn ra");
-      expect(container?.textContent).toContain("Lưu trú");
-      expect(button("Chuyển Nhận phòng xuống").disabled).toBe(false);
-    });
-    await actor.click(screen.getByRole("link", { name: "Chi phí" }));
-    await waitFor(() => expect(screen.getByText("Thêm khoản chi")).toBeTruthy());
+    expect(container?.textContent).toContain("Đang diễn ra");
+
+    await openWorkbenchView("schedule");
+    expect(container?.textContent).toContain("Lưu trú");
+    expect(button("Chuyển Nhận phòng xuống").disabled).toBe(false);
+
+    await openWorkbenchView("expenses");
     expect(button("Thêm khoản chi").disabled).toBe(false);
     expect(button("Chốt Khách sạn").disabled).toBe(false);
   });
+
   it("composes the Workbench shell and keeps feature screens behind its navigation", async () => {
     await render(<App backend={makeBackend(user, snapshot.trip, [snapshot.trip], snapshot)} />);
     expect(container?.textContent).toContain("Workbench");
-    const expensesLink = container?.querySelector<HTMLAnchorElement>('a[href="#expenses"]');
-    expect(expensesLink).toBeTruthy();
-    await act(async () => expensesLink?.click());
+
+    await openWorkbenchView("expenses");
     expect(container?.textContent).toContain("Chi phí & chia tiền");
     expect(button("Thêm khoản chi").disabled).toBe(false);
   });
@@ -88,6 +88,15 @@ async function render(node: ReactNode) {
   });
 }
 
+async function openWorkbenchView(view: "schedule" | "expenses") {
+  const link = container?.querySelector<HTMLAnchorElement>(`a[href="#${view}"]`);
+  expect(link).toBeTruthy();
+
+  await act(async () => {
+    link?.click();
+    await new Promise((resolve) => setTimeout(resolve, 220));
+  });
+}
 function button(prefix: string): HTMLButtonElement {
   const candidate = [...(container?.querySelectorAll("button") ?? [])].find(
     (element) =>
