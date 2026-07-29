@@ -38,7 +38,9 @@ test("lead and member permissions stay consistent across realtime updates", asyn
 
   await register(leadPage, lead);
   await createTrip(leadPage, tripName);
-  const tripId = await leadPage.getByLabel("Chuyến đi đang mở").inputValue();
+  const tripPicker = leadPage.getByLabel("Chuyến đi đang mở");
+  await expect(tripPicker).toHaveValue(/.+/);
+  const tripId = await tripPicker.inputValue();
 
   const memberContext = await browser.newContext();
   const memberPage = await memberContext.newPage();

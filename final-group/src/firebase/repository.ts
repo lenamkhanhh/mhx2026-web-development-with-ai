@@ -262,11 +262,20 @@ export class FirebaseTripBackend implements TripBackend {
       const current = new Map<string, TripRecord>();
       const publish = () => listener(tripIds.flatMap((id) => (current.has(id) ? [current.get(id)!] : [])));
       stopTrips = tripIds.map((tripId) =>
-        onSnapshot(doc(this.firestore, "trips", tripId), (trip) => {
-          if (trip.exists()) current.set(tripId, decodeTripRecord(tripId, trip.data()));
-          else current.delete(tripId);
-          publish();
-        }),
+        onSnapshot(
+          doc(this.firestore, "trips", tripId),
+          (trip) => {
+            if (trip.exists()) current.set(tripId, decodeTripRecord(tripId, trip.data()));
+            else current.delete(tripId);
+            publish();
+          },
+          () => {
+            // tripIds is only a convenience index. Membership/Rules are the
+            // source of truth, so an unavailable trip must disappear locally.
+            current.delete(tripId);
+            publish();
+          },
+        ),
       );
       if (tripIds.length === 0) publish();
     });

@@ -121,7 +121,13 @@ export function App({ backend }: AppProps) {
     return backend.subscribeTrip(
       tripId,
       setSnapshot,
-      (cause) => setError(toMessage(cause, "Không thể đồng bộ chuyến đi.")),
+      (cause) => {
+        // Membership and Rules are authoritative. If any protected trip
+        // stream becomes unavailable, stop rendering the stale snapshot.
+        setSnapshot(null);
+        setTripId(null);
+        setError(toMessage(cause, "Không thể đồng bộ chuyến đi."));
+      },
     );
   }, [backend, tripId]);
 
