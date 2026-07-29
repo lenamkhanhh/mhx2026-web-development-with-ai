@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { MemberRecord, TripRecord } from "../../firebase/contracts";
 import { canEditResponsibility, canRemoveMember } from "./authorization";
 import "./MembersPanel.css";
@@ -23,10 +23,15 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
   const [feedback, setFeedback] = useState<Record<string, Feedback>>({});
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [pendingRemoval, setPendingRemoval] = useState<MemberRecord | null>(null);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCopyState("idle");
+  }, [trip.joinCode]);
 
   const updateResponsibility = async (member: MemberRecord) => {
     if (!canEditResponsibility(currentUserId, member)) return;
-    const responsibility = drafts[member.uid] ?? member.responsibility;
+    const responsibility = (drafts[member.uid] ?? member.responsibility).trim();
     if (responsibility === member.responsibility) return;
     setFeedback((value) => ({ ...value, [member.uid]: "saving" }));
     try {
@@ -48,15 +53,21 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
   };
 
   const confirmRemoval = async () => {
-    if (!pendingRemoval || !canRemoveMember(currentUserId, currentMember?.role, pendingRemoval)) return;
+    if (
+      !pendingRemoval ||
+      removingMemberId ||
+      !canRemoveMember(currentUserId, currentMember?.role, pendingRemoval)
+    ) return;
     const member = pendingRemoval;
+    setRemovingMemberId(member.uid);
     setFeedback((value) => ({ ...value, [member.uid]: "saving" }));
     try {
       await onRemoveMember(member.uid);
       setPendingRemoval(null);
     } catch {
       setFeedback((value) => ({ ...value, [member.uid]: "error" }));
-      setPendingRemoval(null);
+    } finally {
+      setRemovingMemberId(null);
     }
   };
 
@@ -98,7 +109,7 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
               <input aria-label={`Trách nhiệm của ${member.displayName}`} disabled={!mayEdit || memberFeedback === "saving"} onChange={(event) => setDrafts((value) => ({ ...value, [member.uid]: event.target.value }))} value={draft} />
             </label>
             <div className="members-panel__actions">
-              {mayEdit ? <button disabled={memberFeedback === "saving" || draft === member.responsibility} onClick={() => void updateResponsibility(member)} type="button">Lưu trách nhiệm</button> : <span className="members-panel__locked">Chỉ thành viên này có thể sửa</span>}
+              {mayEdit ? <button disabled={memberFeedback === "saving" || draft.trim() === member.responsibility} onClick={() => void updateResponsibility(member)} type="button">Lưu trách nhiệm</button> : <span className="members-panel__locked">Chỉ thành viên này có thể sửa</span>}
               {mayRemove ? <button aria-label={`Xóa ${member.displayName} khỏi chuyến đi`} className="members-panel__remove" disabled={memberFeedback === "saving"} onClick={() => setPendingRemoval(member)} type="button">Gỡ khỏi nhóm</button> : null}
             </div>
             {memberFeedback !== "idle" ? <p className="members-panel__feedback" data-state={memberFeedback} data-testid={`responsibility-status-${member.uid}`} role="status">{memberFeedback === "saving" ? "Đang lưu trách nhiệm…" : memberFeedback === "saved" ? "Đã lưu trách nhiệm" : "Không thể lưu trách nhiệm. Thử lại nhé."}</p> : null}
@@ -106,7 +117,7 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
         })}
       </ul> : null}
 
-      {pendingRemoval ? <div aria-label="Confirm member removal" aria-modal="true" className="members-panel__dialog-backdrop" role="dialog"><section className="members-panel__dialog"><h3>Xóa {pendingRemoval.displayName} khỏi chuyến đi?</h3><p>Người này sẽ mất quyền truy cập vào lịch trình và chi phí của chuyến đi.</p><div><button onClick={() => setPendingRemoval(null)} type="button">Hủy</button><button aria-label="Confirm removal" className="members-panel__remove" onClick={() => void confirmRemoval()} type="button">Xác nhận xóa</button></div></section></div> : null}
+      {pendingRemoval ? <div aria-label="Confirm member removal" aria-modal="true" className="members-panel__dialog-backdrop" role="dialog"><section className="members-panel__dialog"><h3>Xóa {pendingRemoval.displayName} khỏi chuyến đi?</h3><p>Người này sẽ mất quyền truy cập vào lịch trình và chi phí của chuyến đi.</p><div><button disabled={Boolean(removingMemberId)} onClick={() => setPendingRemoval(null)} type="button">Hủy</button><button aria-label="Confirm removal" className="members-panel__remove" disabled={Boolean(removingMemberId)} onClick={() => void confirmRemoval()} type="button">Xác nhận xóa</button></div></section></div> : null}
     </section>
   );
 }

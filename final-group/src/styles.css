@@ -33,31 +33,31 @@ button:disabled { cursor: not-allowed; opacity: .62; }
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .header-actions select { max-width: 200px; min-height: 40px; padding: 0 10px; border: 1px solid #b9cbea; border-radius: 9px; color: #1b376c; background: #fff; }
 .role-badge, .status { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border-radius: 999px; color: #102755; background: #d9f54a; font-size: 13px; font-weight: 800; }
-.primary-button, .secondary-button, .fail-closed-card button, .event-actions button, .members-panel button { min-height: 40px; padding: 0 13px; border: 1px solid #a9bee3; border-radius: 9px; color: #173c86; background: #fff; font-weight: 750; }
+.primary-button, .secondary-button, .fail-closed-card button, .event-actions button { min-height: 40px; padding: 0 13px; border: 1px solid #a9bee3; border-radius: 9px; color: #173c86; background: #fff; font-weight: 750; }
 .primary-button { border-color: #155eef; color: #fff; background: #155eef; }
 .primary-button:hover { background: #0d43b8; }
-.secondary-button:hover, .event-actions button:hover, .members-panel button:hover { background: #eaf1ff; }
+.secondary-button:hover, .event-actions button:hover { background: #eaf1ff; }
 .app-alert { margin: 12px 0; padding: 12px 14px; border-radius: 10px; color: #124676; background: #dcebff; }
 .app-alert.error { color: #8b1831; background: #ffe6ed; }
 .trip-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 22px 0; }
-.trip-summary article, .panel-card, .fail-closed-card, .members-panel, .onboarding-card { border: 1px solid #c9d7ef; border-radius: 16px; background: rgba(255,255,255,.94); box-shadow: 0 8px 26px rgba(23, 64, 132, .06); }
+.trip-summary article, .panel-card, .fail-closed-card, .onboarding-card { border: 1px solid #c9d7ef; border-radius: 16px; background: rgba(255,255,255,.94); box-shadow: 0 8px 26px rgba(23, 64, 132, .06); }
 .trip-summary article { padding: 19px; }
 .trip-summary strong { display: block; color: #102755; font-size: 30px; }
 .trip-summary span { display: block; margin-top: 4px; color: #62749b; }
 .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, .8fr); gap: 18px; align-items: start; }
 .dashboard-main, .dashboard-side, .money-section { display: grid; gap: 18px; }
-.panel-card, .members-panel { padding: clamp(18px, 2.5vw, 26px); }
+.panel-card { padding: clamp(18px, 2.5vw, 26px); }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.panel-card h2, .members-panel h2, .panel-card h3 { margin: 5px 0; color: #102755; }
-.panel-card p, .members-panel p { color: #5f7095; line-height: 1.5; }
+.panel-card h2, .panel-card h3 { margin: 5px 0; color: #102755; }
+.panel-card p { color: #5f7095; line-height: 1.5; }
 .event-composer form, .onboarding-card form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
 .event-composer label, .onboarding-card label { display: grid; gap: 6px; color: #38537e; font-size: 14px; font-weight: 700; }
-.event-composer input, .event-composer select, .onboarding-card input, .members-panel input { min-height: 42px; width: 100%; padding: 0 10px; border: 1px solid #b9cbea; border-radius: 8px; color: #13294f; background: #fff; }
+.event-composer input, .event-composer select, .onboarding-card input { min-height: 42px; width: 100%; padding: 0 10px; border: 1px solid #b9cbea; border-radius: 8px; color: #13294f; background: #fff; }
 .event-composer fieldset { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: 10px 16px; margin: 0; padding: 12px; border: 1px solid #c9d7ef; border-radius: 9px; }
 .event-composer fieldset label { display: flex; align-items: center; gap: 7px; font-weight: 500; }
 .event-composer fieldset input { width: auto; min-height: auto; }
 .event-composer .primary-button, .onboarding-card .primary-button { justify-self: start; }
-.events-panel ul, .members-panel ul, .expense-list { display: grid; gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+.events-panel ul, .expense-list { display: grid; gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
 .events-panel li { padding: 14px; border: 1px solid #d8e3f5; border-radius: 11px; }
 .events-panel article { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
 .events-panel h3 { margin: 9px 0 0; }
@@ -77,7 +77,6 @@ button:disabled { cursor: not-allowed; opacity: .62; }
 .participant-picker label { display: flex; align-items: center; gap: 7px; }
 .expense-item-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
 .money-section, .view-stack, .panel-card, .split-grid > * { min-width: 0; }
-.members-panel header { margin-bottom: 18px; }.members-panel > aside { display: grid; grid-template-columns: 1fr auto; gap: 5px 16px; padding: 14px; border-radius: 10px; color: #314d7d; background: #eaf1ff; }.members-panel > aside span { font-size: 12px; }.members-panel > aside strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.members-panel li article { display: grid; grid-template-columns: 1fr minmax(130px, .8fr); gap: 10px; padding: 14px 0; border-bottom: 1px solid #e1e9f6; }.members-panel li h3 { margin: 0; }.members-panel li p { margin: 3px 0; font-size: 13px; }.members-panel li button { justify-self: start; }
 .workbench-screen-stack,
 .workbench-feature-stack {
   display: grid;
@@ -116,5 +115,5 @@ button:disabled { cursor: not-allowed; opacity: .62; }
 }
 @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; }.dashboard-side { order: 2; }.split-grid { grid-template-columns: 1fr; } }
 @media (max-width: 620px) {
-  .workbench-trip-switcher { align-items: stretch; flex-direction: column; } .auth-card { margin: 16px auto; padding: 28px 20px; border-radius: 18px; }.auth-card::before { top: -105px; right: -90px; }.tripflow-app { padding: 18px 14px; }.app-header, .events-panel article { flex-direction: column; }.header-actions { width: 100%; }.header-actions label { flex: 1; }.header-actions select { width: 100%; max-width: none; }.trip-summary, .event-composer form, .metric-grid, .expense-form-grid { grid-template-columns: 1fr; }.event-composer fieldset { grid-column: auto; }.event-actions { justify-content: flex-start; }.members-panel li article { grid-template-columns: 1fr; }.balance-row { min-width: 500px; }.section-heading { flex-direction: column; }.expense-item { align-items: flex-start; flex-direction: column; }.expense-item-actions { width: 100%; justify-content: space-between; }.onboarding-card { padding: 24px 18px; } }
+  .workbench-trip-switcher { align-items: stretch; flex-direction: column; } .auth-card { margin: 16px auto; padding: 28px 20px; border-radius: 18px; }.auth-card::before { top: -105px; right: -90px; }.tripflow-app { padding: 18px 14px; }.app-header, .events-panel article { flex-direction: column; }.header-actions { width: 100%; }.header-actions label { flex: 1; }.header-actions select { width: 100%; max-width: none; }.trip-summary, .event-composer form, .metric-grid, .expense-form-grid { grid-template-columns: 1fr; }.event-composer fieldset { grid-column: auto; }.event-actions { justify-content: flex-start; }.balance-row { min-width: 500px; }.section-heading { flex-direction: column; }.expense-item { align-items: flex-start; flex-direction: column; }.expense-item-actions { width: 100%; justify-content: space-between; }.onboarding-card { padding: 24px 18px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }

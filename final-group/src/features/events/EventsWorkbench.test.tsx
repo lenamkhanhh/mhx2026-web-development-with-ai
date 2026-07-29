@@ -28,11 +28,49 @@ describe("EventsWorkbench", () => {
     expect(container.querySelector('button[type="submit"]')).toBeTruthy();
   });
 
-  it("shows pending and approved states while hiding lead controls from members", () => {
-    const { container } = renderWorkbench({ currentUserId: "member-1", role: "member", events: [event({ id: "pending", title: "Proposal", status: "pending", createdBy: "member-1", approvedBy: null }), event({ id: "approved", title: "Visit", category: "activity" })] });
-    expect(container.querySelector('[class*="status_pending"]')).toBeTruthy();
-    expect(container.querySelector('[class*="status_approved"]')).toBeTruthy();
-    expect(screen.getAllByRole("button")).toHaveLength(2);
+  it("shows canonical status/category labels and only the member-owned pending action", () => {
+    renderWorkbench({ currentUserId: "member-1", role: "member", events: [event({ id: "pending", title: "Proposal", status: "pending", createdBy: "member-1", approvedBy: null }), event({ id: "approved", title: "Visit", category: "activity" })] });
+    const pending = within(screen.getByTestId("event-pending"));
+    const approved = within(screen.getByTestId("event-approved"));
+    const pendingActions = within(pending.getByLabelText("Thao tác Proposal"));
+    const approvedActions = within(approved.getByLabelText("Thao tác Visit"));
+
+    expect(pending.getByText("Chờ duyệt")).toBeTruthy();
+    expect(pending.getByText(/Ăn uống ·/)).toBeTruthy();
+    expect(approved.getByText("Đã duyệt")).toBeTruthy();
+    expect(approved.getByText(/Hoạt động ·/)).toBeTruthy();
+    expect(pendingActions.getByRole("button", { name: "Xóa" })).toBeTruthy();
+    expect(pendingActions.queryByRole("button", { name: "Duyệt" })).toBeNull();
+    expect(pendingActions.queryByRole("button", { name: "Hủy" })).toBeNull();
+    expect(approvedActions.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Đồng bộ trạng thái" })).toBeNull();
+  });
+
+  it("renders every persisted status/category label and the lead action matrix", () => {
+    const cases = [
+      { id: "pending", title: "Train", status: "pending", category: "transport", statusLabel: "Chờ duyệt", categoryLabel: "Di chuyển" },
+      { id: "approved", title: "Hotel", status: "approved", category: "stay", statusLabel: "Đã duyệt", categoryLabel: "Lưu trú" },
+      { id: "happening", title: "Lunch", status: "happening", category: "food", statusLabel: "Đang diễn ra", categoryLabel: "Ăn uống" },
+      { id: "completed", title: "Museum", status: "completed", category: "activity", statusLabel: "Đã hoàn thành", categoryLabel: "Hoạt động" },
+      { id: "cancelled", title: "Backup", status: "cancelled", category: "other", statusLabel: "Đã hủy", categoryLabel: "Khác" },
+    ] as const;
+    renderWorkbench({ events: cases.map((item, order) => event({ ...item, order })) });
+
+    for (const item of cases) {
+      const row = within(screen.getByTestId(`event-${item.id}`));
+      expect(row.getByText(item.statusLabel)).toBeTruthy();
+      expect(row.getByText(new RegExp(`^${item.categoryLabel} ·`))).toBeTruthy();
+      expect(row.getByRole("button", { name: "Xóa" })).toBeTruthy();
+    }
+
+    const pendingActions = within(screen.getByLabelText("Thao tác Train"));
+    expect(pendingActions.getByRole("button", { name: "Duyệt" })).toBeTruthy();
+    expect(pendingActions.getByRole("button", { name: "Hủy" })).toBeTruthy();
+    expect(within(screen.getByLabelText("Thao tác Hotel")).queryByRole("button", { name: "Duyệt" })).toBeNull();
+    expect(within(screen.getByLabelText("Thao tác Hotel")).getByRole("button", { name: "Hủy" })).toBeTruthy();
+    expect(within(screen.getByLabelText("Thao tác Backup")).queryByRole("button", { name: "Duyệt" })).toBeNull();
+    expect(within(screen.getByLabelText("Thao tác Backup")).queryByRole("button", { name: "Hủy" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Đồng bộ trạng thái" })).toBeTruthy();
   });
 
   it("shows saving feedback, submits typed data, and resets after success", async () => {
@@ -40,10 +78,18 @@ describe("EventsWorkbench", () => {
     const { container, props } = renderWorkbench({ onCreate: vi.fn(() => save.promise) });
     const dateInputs = container.querySelectorAll('input[type="datetime-local"]') as NodeListOf<HTMLInputElement>;
     await user.type(screen.getByRole("textbox"), "Sunrise");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Loại" }), "transport");
     await user.type(dateInputs[0], "2026-07-30T06:00"); await user.type(dateInputs[1], "2026-07-30T07:00");
     await user.click(screen.getAllByRole("checkbox")[0]); await user.click(container.querySelector('button[type="submit"]')!);
     expect((container.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByRole("status")).toBeTruthy();
+    expect(props.onCreate).toHaveBeenCalledWith({
+      title: "Sunrise",
+      category: "transport",
+      startAt: new Date("2026-07-30T06:00").toISOString(),
+      endAt: new Date("2026-07-30T07:00").toISOString(),
+      participantIds: ["lead-1"],
+    });
     save.resolve(); await waitFor(() => expect(props.onCreate).toHaveBeenCalledTimes(1));
     expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
   });
@@ -62,13 +108,40 @@ describe("EventsWorkbench", () => {
     const user = userEvent.setup(); const move = deferred<void>();
     renderWorkbench({ events: [event({ id: "first", title: "Breakfast" }), event({ id: "second", title: "Visit", order: 1 })], onMove: vi.fn(() => move.promise) });
     await new Promise((resolve) => setTimeout(resolve, 0));
-    const moveButtons = screen.getAllByRole("button").filter((button) => button.getAttribute("aria-label")?.includes("Visit") && !button.disabled);
+    const moveButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.includes("Visit") && !button.disabled);
     await user.click(moveButtons[0]); const timeline = screen.getByRole("list");
     await waitFor(() => expect(within(timeline).getAllByRole("listitem")[0].getAttribute("data-event-id")).toBe("second"));
     expect(within(timeline).getByTestId("event-second").getAttribute("data-motion")).toBe("reordering");
     move.reject(new Error("unsupported"));
     await waitFor(() => expect(within(timeline).getAllByRole("listitem")[0].getAttribute("data-event-id")).toBe("first"));
     expect(screen.getByRole("alert").textContent?.length).toBeGreaterThan(0);
+  });
+
+  it("locks every reorder control until a realtime snapshot replaces the optimistic order", async () => {
+    const user = userEvent.setup();
+    const pendingMove = deferred<void>();
+    const onMove = vi.fn(() => pendingMove.promise);
+    const first = event({ id: "first", title: "Breakfast" });
+    const second = event({ id: "second", title: "Visit", order: 1 });
+    const rendered = renderWorkbench({ events: [first, second], onMove });
+
+    await user.click(screen.getByRole("button", { name: "Đưa Visit lên" }));
+    await waitFor(() => expect(onMove).toHaveBeenCalledTimes(1));
+
+    const reorderButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Đưa "));
+    expect(reorderButtons.length).toBeGreaterThan(0);
+    expect(reorderButtons.every((button) => button.disabled)).toBe(true);
+
+    pendingMove.resolve();
+    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Chờ bản cập nhật thời gian thực"));
+    expect(reorderButtons.every((button) => button.disabled)).toBe(true);
+
+    rendered.rerender(<EventsWorkbench {...rendered.props} events={[{ ...second, order: 0 }, { ...first, order: 1 }]} />);
+    await waitFor(() => {
+      const refreshedButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Đưa "));
+      expect(refreshedButtons.some((button) => !button.disabled)).toBe(true);
+    });
+    expect(onMove).toHaveBeenCalledTimes(1);
   });
 
   it("marks motion as reduced when the user requests it", () => {

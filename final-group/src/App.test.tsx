@@ -45,13 +45,15 @@ describe("TripFlow integration mappings", () => {
 describe("TripFlow App composition", () => {
   it("shows the AuthFlow when no Firebase session exists", async () => {
     await render(<App backend={makeBackend(null)} />);
-    expect(container?.textContent).toContain("Chào mừng trở lại");
+    expect(screen.getByTestId("auth-workbench")).toBeTruthy();
+    expect(container?.textContent).toContain("TRIPFLOW WORKBENCH");
   });
 
   it("shows create-trip onboarding and keeps join-by-code disabled", async () => {
     await render(<App backend={makeBackend(user, null, [])} />);
-    expect(container?.textContent).toContain("Tạo chuyến đi đầu tiên");
-    expect(button("Nhập mã tham gia").disabled).toBe(true);
+    expect(screen.getByTestId("onboarding-workbench")).toBeTruthy();
+    await userEvent.setup().click(screen.getByRole("tab", { name: "Tham gia chuyến đi" }));
+    expect(button("Chưa thể tham gia bằng mã").disabled).toBe(true);
   });
 
   it("renders persisted labels, expense actions, and the remaining fail-closed control", async () => {
@@ -59,8 +61,9 @@ describe("TripFlow App composition", () => {
     expect(container?.textContent).toContain("Đang diễn ra");
 
     await openWorkbenchView("schedule");
+    expect(screen.getByTestId("events-workbench")).toBeTruthy();
     expect(container?.textContent).toContain("Lưu trú");
-    expect(button("Chuyển Nhận phòng xuống").disabled).toBe(false);
+    expect(button("Đưa Nhận phòng xuống").disabled).toBe(false);
 
     await openWorkbenchView("expenses");
     expect(button("Thêm khoản chi").disabled).toBe(false);
@@ -74,6 +77,66 @@ describe("TripFlow App composition", () => {
     await openWorkbenchView("expenses");
     expect(container?.textContent).toContain("Chi phí & chia tiền");
     expect(button("Thêm khoản chi").disabled).toBe(false);
+  });
+
+  it("keeps an event draft when the backend rejects instead of reporting false success", async () => {
+    const backend = makeBackend(user, snapshot.trip, [snapshot.trip], snapshot, {
+      createEvent: vi.fn().mockRejectedValue(new Error("Backend rejected the event.")),
+    });
+    const actor = userEvent.setup();
+
+    await render(<App backend={backend} />);
+    await openWorkbenchView("schedule");
+
+    await actor.type(screen.getByLabelText("Tên hoạt động"), "Chợ đêm");
+    const dateInputs = container?.querySelectorAll<HTMLInputElement>(
+      'input[type="datetime-local"]',
+    );
+    expect(dateInputs?.length).toBe(2);
+    await actor.type(dateInputs?.[0] as HTMLInputElement, "2026-08-02T18:00");
+    await actor.type(dateInputs?.[1] as HTMLInputElement, "2026-08-02T19:00");
+    await actor.click(screen.getByRole("checkbox", { name: "Lan" }));
+    await actor.click(button("Thêm vào lịch trình"));
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText("Tên hoạt động") as HTMLInputElement).value,
+      ).toBe("Chợ đêm");
+    });
+    expect(container?.textContent).toContain("Backend rejected the event.");
+  });
+
+  it("never renders a snapshot whose trip id differs from the selected trip", async () => {
+    const secondTrip = {
+      ...snapshot.trip,
+      id: "trip-2",
+      name: "Huế",
+      destination: "Huế",
+    };
+    const backend = makeBackend(
+      user,
+      snapshot.trip,
+      [snapshot.trip, secondTrip],
+      snapshot,
+      {
+        subscribeTrip: (_tripId, listener) => {
+          listener(snapshot);
+          return vi.fn();
+        },
+      },
+    );
+    const actor = userEvent.setup();
+
+    await render(<App backend={backend} />);
+    await actor.selectOptions(
+      screen.getByLabelText("Chuyến đi đang mở"),
+      secondTrip.id,
+    );
+
+    await waitFor(() => {
+      expect(container?.textContent).toContain("Đang tải bảng điều khiển chuyến đi");
+    });
+    expect(container?.textContent).not.toContain("Nhận phòng");
   });
 });
 
@@ -131,6 +194,7 @@ function makeBackend(
   profileTrip: TripSnapshot["trip"] | null = null,
   trips = profileTrip ? [profileTrip] : [],
   selectedSnapshot: TripSnapshot | null = null,
+  overrides: Partial<TripBackend> = {},
 ): TripBackend {
   return {
     observeSession: (listener) => { listener(session); return vi.fn(); },
@@ -141,5 +205,6 @@ function makeBackend(
     createTrip: vi.fn(), joinTrip: vi.fn(), updateResponsibility: vi.fn(), removeMember: vi.fn(),
     createEvent: vi.fn(), updateEvent: vi.fn(), approveEvent: vi.fn(), deleteEvent: vi.fn(), reorderEvents: vi.fn(),
     createExpense: vi.fn(), updateExpense: vi.fn(), deleteExpense: vi.fn(), settleExpense: vi.fn(),
+    ...overrides,
   };
 }

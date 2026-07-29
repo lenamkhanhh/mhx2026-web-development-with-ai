@@ -42,6 +42,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   const reducedMotion = useReducedMotion();
   const isLead = role === "lead";
   const timeline = useMemo(() => orderEvents(events, optimisticOrder), [events, optimisticOrder]);
+  const reorderPending = optimisticOrder !== null;
 
   useEffect(() => setOptimisticOrder(null), [events]);
 
@@ -76,6 +77,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   }
 
   async function move(eventId: string, direction: "up" | "down") {
+    if (reorderPending) return;
     const nextOrder = moveEvent(timeline.map((event) => event.id), eventId, direction);
     if (!nextOrder) return;
     setMovingId(eventId); setOptimisticOrder(nextOrder);
@@ -108,7 +110,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
         <span aria-hidden="true" className={styles.railMarker}>{String(index + 1).padStart(2, "0")}</span>
         <article className={styles.eventCard}><div className={styles.eventContent}><span className={`${styles.status} ${styles[`status_${item.status}`]}`}>{STATUS_LABELS[item.status]}</span><h3>{item.title}</h3><p>{CATEGORY_LABELS[item.category]} · {formatDateTime(item.startAt)} — {formatDateTime(item.endAt)}</p><small>{item.participantIds.length} người tham gia</small></div>
           <div aria-label={`Thao tác ${item.title}`} className={styles.actions}>
-            {isLead ? <><button aria-label={`Đưa ${item.title} lên`} disabled={index === 0 || runningAction !== null} onClick={() => void move(item.id, "up")} type="button">↑</button><button aria-label={`Đưa ${item.title} xuống`} disabled={index === timeline.length - 1 || runningAction !== null} onClick={() => void move(item.id, "down")} type="button">↓</button></> : null}
+            {isLead ? <><button aria-label={`Đưa ${item.title} lên`} disabled={index === 0 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "up")} type="button">↑</button><button aria-label={`Đưa ${item.title} xuống`} disabled={index === timeline.length - 1 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "down")} type="button">↓</button></> : null}
             {isLead && item.status === "pending" ? <button disabled={runningAction !== null} onClick={() => void runAction(`approve-${item.id}`, "Đã gửi yêu cầu duyệt hoạt động.", () => onApprove(item.id))} type="button">Duyệt</button> : null}
             {isLead && item.status !== "cancelled" ? <button disabled={runningAction !== null} onClick={() => void runAction(`cancel-${item.id}`, "Đã gửi yêu cầu hủy hoạt động.", () => onCancel(item.id))} type="button">Hủy</button> : null}
             {canDelete ? <button disabled={runningAction !== null} onClick={() => void runAction(`delete-${item.id}`, "Đã gửi yêu cầu xóa hoạt động.", () => onDelete(item.id))} type="button">Xóa</button> : null}
@@ -133,9 +135,18 @@ function orderEvents(events: EventRecord[], optimisticOrder: string[] | null): E
 }
 
 function useReducedMotion(): boolean {
-  const preference = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const preference = () =>
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const [reduced, setReduced] = useState(preference);
-  useEffect(() => { const query = window.matchMedia("(prefers-reduced-motion: reduce)"); const update = () => setReduced(query.matches); query.addEventListener?.("change", update); return () => query.removeEventListener?.("change", update); }, []);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(query.matches);
+    query.addEventListener?.("change", update);
+    return () => query.removeEventListener?.("change", update);
+  }, []);
   return reduced;
 }
 function formatDateTime(value: string): string { return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
