@@ -91,6 +91,7 @@ function createBackend(): TripBackend & {
     ),
     updateExpense: vi.fn(async () => undefined),
     deleteExpense: vi.fn(async () => undefined),
+    settleExpense: vi.fn(async () => undefined),
     emit(expenses) {
       tripListener?.(snapshot(expenses));
     },
@@ -166,5 +167,32 @@ describe("ExpenseFeature", () => {
     expect(listener).toHaveBeenLastCalledWith([expense({ title: "Từ Firestore" })]);
     expect(backend.subscribeTrip).toHaveBeenCalledWith("trip-1", expect.any(Function));
     expect(backend.unsubscribe).toHaveBeenCalledOnce();
+  });
+
+  it("allows only the lead to settle a pending expense", async () => {
+    const backend = createBackend();
+    const leadFeature = new ExpenseFeature({
+      backend,
+      tripId: "trip-1",
+      actor: lead,
+      role: "lead",
+    });
+    leadFeature.replaceExpenses([expense({ status: "pending" })]);
+
+    await leadFeature.settle("expense-1");
+
+    expect(backend.settleExpense).toHaveBeenCalledWith("trip-1", "expense-1");
+
+    const memberFeature = new ExpenseFeature({
+      backend,
+      tripId: "trip-1",
+      actor: member,
+      role: "member",
+    });
+    memberFeature.replaceExpenses([expense({ status: "pending" })]);
+
+    await expect(memberFeature.settle("expense-1")).rejects.toMatchObject({
+      code: "forbidden",
+    });
   });
 });

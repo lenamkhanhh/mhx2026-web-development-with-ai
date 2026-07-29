@@ -132,4 +132,5 @@ export interface TripBackend {
   createExpense(tripId: string, input: CreateExpenseInput, actor: AuthenticatedUser): Promise<ExpenseRecord>;
   updateExpense(tripId: string, expenseId: string, patch: Partial<CreateExpenseInput>): Promise<void>;
   deleteExpense(tripId: string, expenseId: string): Promise<void>;
+  settleExpense(tripId: string, expenseId: string): Promise<void>;
 }
