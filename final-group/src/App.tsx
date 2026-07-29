@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { AuthFlow, type AuthenticatedSession } from "./features/auth/AuthFlow";
 import { EventFeature } from "./features/events/events";
-import { ExpensesPanel } from "./features/expenses";
+import { ExpenseFeature, ExpensesPanel } from "./features/expenses";
 import { MembersFeature } from "./features/members/members";
 import { MembersPanel } from "./features/members/MembersPanel";
 import { submitNewTrip, type TripDraft } from "./features/onboarding/OnboardingFlow";
@@ -141,6 +141,13 @@ export function App({ backend }: AppProps) {
         : null,
     [backend, role, tripId, user],
   );
+  const expenseFeature = useMemo(
+    () =>
+      user && tripId && role
+        ? new ExpenseFeature({ backend, tripId, actor: user, role })
+        : null,
+    [backend, role, tripId, user],
+  );
 
   useEffect(() => {
     if (!eventFeature) return;
@@ -153,6 +160,11 @@ export function App({ backend }: AppProps) {
     membersFeature.start();
     return () => membersFeature.stop();
   }, [membersFeature]);
+
+  useEffect(() => {
+    if (!expenseFeature || !snapshot) return;
+    expenseFeature.replaceExpenses(snapshot.expenses);
+  }, [expenseFeature, snapshot]);
 
   async function handleAuthenticated(session: AuthenticatedSession) {
     setUser(session.user);
@@ -229,6 +241,28 @@ export function App({ backend }: AppProps) {
     }
   }
 
+  async function createExpense(input: Parameters<ExpenseFeature["create"]>[0]) {
+    if (!expenseFeature) return;
+    try {
+      await expenseFeature.create(input);
+      setNotice("Đã thêm khoản chi.");
+      setError("");
+    } catch (cause) {
+      setError(toMessage(cause, "Không thể thêm khoản chi."));
+    }
+  }
+
+  async function settleExpense(expenseId: string) {
+    if (!expenseFeature) return;
+    try {
+      await expenseFeature.settle(expenseId);
+      setNotice("Đã chốt khoản chi.");
+      setError("");
+    } catch (cause) {
+      setError(toMessage(cause, "Không thể chốt khoản chi."));
+    }
+  }
+
   if (loading) return <ScreenMessage title="Đang kiểm tra phiên đăng nhập…" />;
   if (!user || !profile) {
     return <AuthFlow backend={backend} onAuthenticated={(session) => void handleAuthenticated(session)} />;
@@ -236,7 +270,7 @@ export function App({ backend }: AppProps) {
   if (!tripId) {
     return <OnboardingGate email={profile.email} onCreate={(draft) => void createTrip(draft)} />;
   }
-  if (!snapshot || !currentMember || !role || !eventFeature || !membersFeature) {
+  if (!snapshot || !currentMember || !role || !eventFeature || !membersFeature || !expenseFeature) {
     return <ScreenMessage title="Đang tải bảng điều khiển chuyến đi…" />;
   }
 
@@ -298,13 +332,15 @@ export function App({ backend }: AppProps) {
       </section>
 
       <section className="money-section" aria-label="Chi phí chuyến đi">
-        <ExpensesPanel members={snapshot.members} expenses={snapshot.expenses} />
+        <ExpensesPanel
+          canSettle={role === "lead"}
+          currentUserId={user.uid}
+          expenses={snapshot.expenses}
+          members={snapshot.members}
+          onCreate={createExpense}
+          onSettle={settleExpense}
+        />
         <StatisticsPanel members={snapshot.members} expenses={snapshot.expenses} />
-        <div className="fail-closed-card" role="note">
-          <strong>Chốt thanh toán đang tắt</strong>
-          <span>Schema hiện chưa lưu người chuyển, người nhận và số tiền của từng lần thanh toán.</span>
-          <button disabled type="button">Đánh dấu đã thanh toán (chưa hỗ trợ)</button>
-        </div>
       </section>
     </main>
   );

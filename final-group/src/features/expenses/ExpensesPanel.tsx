@@ -1,3 +1,5 @@
+import { useEffect, useState, type FormEvent } from "react";
+import type { CreateExpenseInput } from "../../firebase/contracts";
 import {
   calculateExpenseLedger,
   formatVnd,
@@ -8,10 +10,87 @@ import {
 interface ExpensesPanelProps {
   members: ExpenseMember[];
   expenses: TripExpense[];
+  currentUserId?: string;
+  canSettle?: boolean;
+  onCreate?: (input: CreateExpenseInput) => Promise<void>;
+  onSettle?: (expenseId: string) => Promise<void>;
 }
 
-export function ExpensesPanel({ members, expenses }: ExpensesPanelProps) {
+export function ExpensesPanel({
+  members,
+  expenses,
+  currentUserId,
+  canSettle = false,
+  onCreate,
+  onSettle,
+}: ExpensesPanelProps) {
   const ledger = calculateExpenseLedger(members, expenses);
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
+  const [paidBy, setPaidBy] = useState(currentUserId ?? members[0]?.uid ?? "");
+  const [splitAmong, setSplitAmong] = useState<string[]>(() =>
+    members.map((member) => member.uid),
+  );
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  useEffect(() => {
+    const memberIds = new Set(members.map((member) => member.uid));
+    setPaidBy((current) =>
+      memberIds.has(current)
+        ? current
+        : currentUserId && memberIds.has(currentUserId)
+          ? currentUserId
+          : members[0]?.uid ?? "",
+    );
+    setSplitAmong((current) => {
+      const retained = current.filter((uid) => memberIds.has(uid));
+      return retained.length > 0 ? retained : [...memberIds];
+    });
+  }, [currentUserId, members]);
+
+  async function submitExpense(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!onCreate) return;
+    const normalizedAmount = Number(amount);
+    if (
+      !title.trim() ||
+      !Number.isSafeInteger(normalizedAmount) ||
+      normalizedAmount <= 0 ||
+      !paidBy ||
+      splitAmong.length === 0
+    ) {
+      setFormError("Nhập tên, số tiền VND nguyên dương, người trả và người được chia.");
+      return;
+    }
+
+    setSaving(true);
+    setFormError("");
+    try {
+      await onCreate({
+        title: title.trim(),
+        amount: normalizedAmount,
+        paidBy,
+        splitAmong,
+      });
+      setTitle("");
+      setAmount("");
+    } catch (cause) {
+      setFormError(
+        cause instanceof Error ? cause.message : "Không thể thêm khoản chi.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function toggleParticipant(uid: string) {
+    setSplitAmong((current) =>
+      current.includes(uid)
+        ? current.filter((candidate) => candidate !== uid)
+        : [...current, uid],
+    );
+  }
 
   return (
     <section aria-labelledby="expenses-heading" className="view-stack">
@@ -26,6 +105,67 @@ export function ExpensesPanel({ members, expenses }: ExpensesPanelProps) {
           <strong>{formatVnd(ledger.totalAmount)}</strong>
         </div>
       </div>
+
+      {onCreate ? (
+        <form className="panel-card expense-composer" onSubmit={submitExpense}>
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Thêm giao dịch</span>
+              <h3>Ghi khoản chi mới</h3>
+            </div>
+          </div>
+          <div className="expense-form-grid">
+            <label>
+              Tên khoản chi
+              <input
+                onChange={(event) => setTitle(event.target.value)}
+                value={title}
+              />
+            </label>
+            <label>
+              Số tiền (VND)
+              <input
+                inputMode="numeric"
+                min="1"
+                onChange={(event) => setAmount(event.target.value)}
+                step="1"
+                type="number"
+                value={amount}
+              />
+            </label>
+            <label>
+              Người đã trả
+              <select
+                onChange={(event) => setPaidBy(event.target.value)}
+                value={paidBy}
+              >
+                {members.map((member) => (
+                  <option key={member.uid} value={member.uid}>
+                    {member.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <fieldset className="participant-picker">
+            <legend>Chia cho</legend>
+            {members.map((member) => (
+              <label key={member.uid}>
+                <input
+                  checked={splitAmong.includes(member.uid)}
+                  onChange={() => toggleParticipant(member.uid)}
+                  type="checkbox"
+                />
+                {member.displayName}
+              </label>
+            ))}
+          </fieldset>
+          {formError ? <p role="alert">{formError}</p> : null}
+          <button className="primary-button" disabled={saving} type="submit">
+            {saving ? "Đang lưu…" : "Thêm khoản chi"}
+          </button>
+        </form>
+      ) : null}
 
       <div className="split-grid expense-grid">
         <article className="panel-card">
@@ -77,7 +217,18 @@ export function ExpensesPanel({ members, expenses }: ExpensesPanelProps) {
                       {countKnownParticipants(expense, members)} người · {expense.status === "settled" ? "Đã chốt" : "Chờ chốt"}
                     </small>
                   </div>
-                  <strong>{formatVnd(expense.amount)}</strong>
+                  <div className="expense-item-actions">
+                    <strong>{formatVnd(expense.amount)}</strong>
+                    {canSettle && onSettle && expense.status === "pending" ? (
+                      <button
+                        className="secondary-button"
+                        onClick={() => void onSettle(expense.id)}
+                        type="button"
+                      >
+                        Chốt {expense.title}
+                      </button>
+                    ) : null}
+                  </div>
                 </li>
               ))}
             </ul>

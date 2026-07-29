@@ -50,12 +50,13 @@ describe("TripFlow App composition", () => {
     expect(button("Nhập mã tham gia").disabled).toBe(true);
   });
 
-  it("renders persisted status/category labels and fail-closed controls", async () => {
+  it("renders persisted labels, expense actions, and the remaining fail-closed control", async () => {
     await render(<App backend={makeBackend(user, snapshot.trip, [snapshot.trip], snapshot)} />);
     expect(container?.textContent).toContain("Đang diễn ra");
     expect(container?.textContent).toContain("Lưu trú");
     expect(button("Đổi thứ tự").disabled).toBe(true);
-    expect(button("Đánh dấu đã thanh toán").disabled).toBe(true);
+    expect(button("Thêm khoản chi").disabled).toBe(false);
+    expect(button("Chốt Khách sạn").disabled).toBe(false);
   });
 });
 
@@ -83,7 +84,15 @@ const snapshot: TripSnapshot = {
   trip: { id: "trip-1", name: "Đà Lạt", destination: "Đà Lạt", startDate: "2026-08-01", endDate: "2026-08-03", leadId: "user-1", joinCode: "DALAT26" },
   members: [{ uid: "user-1", displayName: "Lan", email: "user@example.com", role: "lead", responsibility: "Lịch trình", isDemo: false }],
   events: [{ id: "event-1", title: "Nhận phòng", category: "stay", startAt: "2026-08-01T08:00:00.000Z", endAt: "2026-08-01T09:00:00.000Z", status: "happening", participantIds: ["user-1"], createdBy: "user-1", approvedBy: "user-1" }],
-  expenses: [],
+  expenses: [{
+    id: "expense-1",
+    title: "Khách sạn",
+    amount: 1_000_000,
+    paidBy: "user-1",
+    splitAmong: ["user-1"],
+    status: "pending",
+    createdBy: "user-1",
+  }],
 };
 
 function makeBackend(
