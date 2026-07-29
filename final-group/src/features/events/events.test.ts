@@ -92,6 +92,7 @@ function createBackend(): TripBackend & {
     createExpense: vi.fn(),
     updateExpense: vi.fn(),
     deleteExpense: vi.fn(),
+    settleExpense: vi.fn(),
     emit(events) {
       tripListener?.(snapshot(events));
     },

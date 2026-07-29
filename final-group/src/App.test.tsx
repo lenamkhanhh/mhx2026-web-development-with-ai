@@ -100,6 +100,6 @@ function makeBackend(
     subscribeTrip: (_tripId, listener) => { if (selectedSnapshot) listener(selectedSnapshot); return vi.fn(); },
     createTrip: vi.fn(), joinTrip: vi.fn(), updateResponsibility: vi.fn(), removeMember: vi.fn(),
     createEvent: vi.fn(), updateEvent: vi.fn(), approveEvent: vi.fn(), deleteEvent: vi.fn(), reorderEvents: vi.fn(),
-    createExpense: vi.fn(), updateExpense: vi.fn(), deleteExpense: vi.fn(),
+    createExpense: vi.fn(), updateExpense: vi.fn(), deleteExpense: vi.fn(), settleExpense: vi.fn(),
   };
 }

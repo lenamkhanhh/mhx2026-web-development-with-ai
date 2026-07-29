@@ -396,6 +396,16 @@ export class FirebaseTripBackend implements TripBackend {
     return deleteDoc(doc(this.firestore, "trips", tripId, "expenses", expenseId));
   }
 
+  settleExpense(tripId: string, expenseId: string): Promise<void> {
+    if (!this.auth.currentUser) {
+      return Promise.reject(new FirestoreDataError("Authentication is required."));
+    }
+    return updateDoc(doc(this.firestore, "trips", tripId, "expenses", expenseId), {
+      status: "settled",
+      updatedAt: serverTimestamp(),
+    });
+  }
+
   private async getMember(tripId: string, uid: string): Promise<MemberRecord | null> {
     const snapshot = await getDoc(doc(this.firestore, "trips", tripId, "members", uid));
     return snapshot.exists() ? decodeMemberRecord(uid, snapshot.data()) : null;

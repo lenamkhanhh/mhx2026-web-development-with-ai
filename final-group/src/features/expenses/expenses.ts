@@ -15,7 +15,11 @@ export interface ExpenseFeatureOptions {
   role: FirestoreMemberRole;
 }
 
-export type ExpenseActionErrorCode = "forbidden" | "invalid-input" | "not-found";
+export type ExpenseActionErrorCode =
+  | "forbidden"
+  | "invalid-input"
+  | "invalid-state"
+  | "not-found";
 
 export class ExpenseFeatureError extends Error {
   readonly code: ExpenseActionErrorCode;
@@ -97,6 +101,23 @@ export class ExpenseFeature {
   async delete(expenseId: string): Promise<void> {
     this.assertCanManage(this.findExpense(expenseId));
     await this.backend.deleteExpense(this.tripId, expenseId);
+  }
+
+  async settle(expenseId: string): Promise<void> {
+    if (this.role !== "lead") {
+      throw new ExpenseFeatureError(
+        "forbidden",
+        "Chỉ lead mới có thể chốt khoản chi.",
+      );
+    }
+    const expense = this.findExpense(expenseId);
+    if (expense.status !== "pending") {
+      throw new ExpenseFeatureError(
+        "invalid-state",
+        "Khoản chi này đã được chốt.",
+      );
+    }
+    await this.backend.settleExpense(this.tripId, expenseId);
   }
 
   private findExpense(expenseId: string): ExpenseRecord {
