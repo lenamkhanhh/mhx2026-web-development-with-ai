@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:final-group:auth-live": "node --env-file=.env.local final-group/scripts/live-auth-smoke.mjs",
     "test:final-group:rules": "firebase emulators:exec --only firestore --config final-group/firebase.json \"vitest run --config final-group/src/firebase/vitest.rules.config.mjs\"",
+    "test:final-group:e2e": "node ./node_modules/@playwright/test/cli.js test --config final-group/playwright.config.ts",
     "test:coverage": "vitest run --coverage",
     "preview": "vite preview"
   },
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@firebase/rules-unit-testing": "^4.0.1",
+    "@playwright/test": "1.62.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/cors": "^2.8.19",
