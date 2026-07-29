@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 
 import { act, type ReactNode } from "react";
+import userEvent from "@testing-library/user-event";
+import { screen, waitFor } from "@testing-library/react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -52,9 +54,15 @@ describe("TripFlow App composition", () => {
 
   it("renders persisted labels, expense actions, and the remaining fail-closed control", async () => {
     await render(<App backend={makeBackend(user, snapshot.trip, [snapshot.trip], snapshot)} />);
-    expect(container?.textContent).toContain("Đang diễn ra");
-    expect(container?.textContent).toContain("Lưu trú");
-    expect(button("Chuyển Nhận phòng xuống").disabled).toBe(false);
+    const actor = userEvent.setup();
+    await actor.click(screen.getByRole("link", { name: /Lịch trình/ }));
+    await waitFor(() => {
+      expect(container?.textContent).toContain("Đang diễn ra");
+      expect(container?.textContent).toContain("Lưu trú");
+      expect(button("Chuyển Nhận phòng xuống").disabled).toBe(false);
+    });
+    await actor.click(screen.getByRole("link", { name: "Chi phí" }));
+    await waitFor(() => expect(screen.getByText("Thêm khoản chi")).toBeTruthy());
     expect(button("Thêm khoản chi").disabled).toBe(false);
     expect(button("Chốt Khách sạn").disabled).toBe(false);
   });

@@ -6,6 +6,8 @@ import { MembersFeature } from "./features/members/members";
 import { MembersPanel } from "./features/members/MembersPanel";
 import { submitNewTrip, type TripDraft } from "./features/onboarding/OnboardingFlow";
 import { StatisticsPanel } from "./features/statistics";
+import { WorkbenchOverview } from "./components/WorkbenchOverview";
+import { WorkbenchShell, type WorkbenchView } from "./components/WorkbenchShell";
 import type {
   AuthenticatedUser,
   EventRecord,
@@ -57,6 +59,7 @@ export function App({ backend }: AppProps) {
   const [trips, setTrips] = useState<TripRecord[]>([]);
   const [tripId, setTripId] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<TripSnapshot | null>(null);
+  const [activeView, setActiveView] = useState<WorkbenchView>("overview");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -286,6 +289,98 @@ export function App({ backend }: AppProps) {
   }
 
   return (
+    <WorkbenchShell
+      activeView={activeView}
+      displayName={profile.displayName || profile.email}
+      onChangeView={setActiveView}
+      onLogout={handleLogout}
+      pendingCount={snapshot.events.filter((event) => event.status === "pending").length}
+      role={role}
+      trip={snapshot.trip}
+    >
+      {error ? <p className="workbench-alert error" role="alert">{error}</p> : null}
+      {notice ? <p className="workbench-alert" role="status">{notice}</p> : null}
+
+      {activeView === "overview" ? (
+        <WorkbenchOverview
+          currentUserId={user.uid}
+          onOpenExpenses={() => setActiveView("expenses")}
+          onOpenSchedule={() => setActiveView("schedule")}
+          snapshot={snapshot}
+        />
+      ) : null}
+
+      {activeView === "schedule" ? (
+        <section aria-labelledby="schedule-view-heading" className="view-stack workbench-feature-view">
+          <div className="section-heading page-heading">
+            <div>
+              <span className="eyebrow">Timeline / realtime</span>
+              <h1 id="schedule-view-heading">Lịch trình</h1>
+              <p>Đề xuất, duyệt và sắp xếp các hoạt động của chuyến đi.</p>
+            </div>
+            {role === "lead" ? (
+              <button className="secondary-button" onClick={() => void syncEventStatuses()} type="button">
+                Đồng bộ trạng thái
+              </button>
+            ) : null}
+          </div>
+          <EventComposer members={snapshot.members} onCreate={createEvent} />
+          <EventsPanel
+            events={snapshot.events}
+            isLead={role === "lead"}
+            onApprove={approveEvent}
+            onCancel={cancelEvent}
+            onDelete={deleteEvent}
+            onMove={reorderEvent}
+            onSync={syncEventStatuses}
+          />
+        </section>
+      ) : null}
+
+      {activeView === "expenses" ? (
+        <section aria-labelledby="expenses-view-heading" className="view-stack workbench-feature-view">
+          <div className="section-heading page-heading">
+            <div>
+              <span className="eyebrow">Money ledger / VND</span>
+              <h1 id="expenses-view-heading">Chi phí</h1>
+              <p>Ghi nhận, chia đều và đối soát minh bạch cho cả nhóm.</p>
+            </div>
+          </div>
+          <ExpensesPanel
+            canSettle={role === "lead"}
+            currentUserId={user.uid}
+            expenses={snapshot.expenses}
+            members={snapshot.members}
+            onCreate={createExpense}
+            onSettle={settleExpense}
+          />
+          <StatisticsPanel members={snapshot.members} expenses={snapshot.expenses} />
+        </section>
+      ) : null}
+
+      {activeView === "members" ? (
+        <section aria-labelledby="members-view-heading" className="view-stack workbench-feature-view">
+          <div className="section-heading page-heading">
+            <div>
+              <span className="eyebrow">Crew board / permissions</span>
+              <h1 id="members-view-heading">Thành viên</h1>
+              <p>Vai trò, trách nhiệm và mã tham gia của chuyến đi.</p>
+            </div>
+          </div>
+          <MembersPanel
+            currentUserId={user.uid}
+            members={snapshot.members}
+            onRemoveMember={(uid) => membersFeature.removeMember(uid)}
+            onUpdateResponsibility={(uid, responsibility) => membersFeature.updateResponsibility(uid, responsibility)}
+            trip={snapshot.trip}
+          />
+        </section>
+      ) : null}
+    </WorkbenchShell>
+  );
+
+  /*
+  return (
     <main className="tripflow-app">
       <header className="app-header">
         <div>
@@ -351,6 +446,7 @@ export function App({ backend }: AppProps) {
       </section>
     </main>
   );
+*/
 }
 
 function OnboardingGate({ email, onCreate }: { email: string; onCreate: (draft: TripDraft) => void }) {
