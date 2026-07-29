@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
+import "./ExpensesPanel.css";
 import type { CreateExpenseInput } from "../../firebase/contracts";
 import {
   calculateExpenseLedger,
@@ -12,14 +13,22 @@ interface ExpensesPanelProps {
   expenses: TripExpense[];
   currentUserId?: string;
   canSettle?: boolean;
+  // eslint-disable-next-line no-unused-vars
   onCreate?: (input: CreateExpenseInput) => Promise<void>;
+  // eslint-disable-next-line no-unused-vars
   onSettle?: (expenseId: string) => Promise<void>;
+  isLoading?: boolean;
+  loadError?: string;
+  onRetry?: () => void;
 }
 
 export function ExpensesPanel({
   members,
   expenses,
   currentUserId,
+  isLoading = false,
+  loadError,
+  onRetry,
   canSettle = false,
   onCreate,
   onSettle,
@@ -27,29 +36,23 @@ export function ExpensesPanel({
   const ledger = calculateExpenseLedger(members, expenses);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
+  const [confirmingExpense, setConfirmingExpense] = useState<TripExpense | null>(null);
+  const [settling, setSettling] = useState(false);
+  const [settlementError, setSettlementError] = useState("");
   const [paidBy, setPaidBy] = useState(currentUserId ?? members[0]?.uid ?? "");
   const [splitAmong, setSplitAmong] = useState<string[]>(() =>
     members.map((member) => member.uid),
   );
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const memberIds = new Set(members.map((member) => member.uid));
+  const effectivePaidBy = memberIds.has(paidBy) ? paidBy : currentUserId && memberIds.has(currentUserId) ? currentUserId : members[0]?.uid ?? "";
+  const effectiveSplitAmong = splitAmong.filter((uid) => memberIds.has(uid));
 
-  useEffect(() => {
-    const memberIds = new Set(members.map((member) => member.uid));
-    setPaidBy((current) =>
-      memberIds.has(current)
-        ? current
-        : currentUserId && memberIds.has(currentUserId)
-          ? currentUserId
-          : members[0]?.uid ?? "",
-    );
-    setSplitAmong((current) => {
-      const retained = current.filter((uid) => memberIds.has(uid));
-      return retained.length > 0 ? retained : [...memberIds];
-    });
-  }, [currentUserId, members]);
+
 
   async function submitExpense(event: FormEvent<HTMLFormElement>) {
+
     event.preventDefault();
     if (!onCreate) return;
     const normalizedAmount = Number(amount);
@@ -57,8 +60,8 @@ export function ExpensesPanel({
       !title.trim() ||
       !Number.isSafeInteger(normalizedAmount) ||
       normalizedAmount <= 0 ||
-      !paidBy ||
-      splitAmong.length === 0
+      !effectivePaidBy ||
+      effectiveSplitAmong.length === 0
     ) {
       setFormError("Nhập tên, số tiền VND nguyên dương, người trả và người được chia.");
       return;
@@ -70,17 +73,32 @@ export function ExpensesPanel({
       await onCreate({
         title: title.trim(),
         amount: normalizedAmount,
-        paidBy,
-        splitAmong,
+        paidBy: effectivePaidBy,
+        splitAmong: effectiveSplitAmong,
       });
       setTitle("");
       setAmount("");
+
     } catch (cause) {
       setFormError(
         cause instanceof Error ? cause.message : "Không thể thêm khoản chi.",
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function confirmSettlement() {
+    if (!confirmingExpense || !onSettle) return;
+    setSettling(true);
+    setSettlementError("");
+    try {
+      await onSettle(confirmingExpense.id);
+      setConfirmingExpense(null);
+    } catch {
+      setSettlementError("Unable to settle this expense. Please try again.");
+    } finally {
+      setSettling(false);
     }
   }
 
@@ -93,7 +111,8 @@ export function ExpensesPanel({
   }
 
   return (
-    <section aria-labelledby="expenses-heading" className="view-stack">
+    <>
+    <section aria-labelledby="expenses-heading" className="view-stack expense-workbench">
       <div className="section-heading page-heading">
         <div>
           <span className="eyebrow">Money ledger</span>
@@ -106,8 +125,17 @@ export function ExpensesPanel({
         </div>
       </div>
 
+
+      {isLoading ? <p className="expense-workbench__state" role="status">Loading expense ledger...</p> : null}
+      {loadError ? (
+        <div className="expense-workbench__state expense-workbench__state--error">
+          <p role="alert">{loadError}</p>
+          {onRetry ? <button onClick={onRetry} type="button">Retry</button> : null}
+        </div>
+      ) : null}
+
       {onCreate ? (
-        <form className="panel-card expense-composer" onSubmit={submitExpense}>
+        <form className="panel-card expense-composer expense-workbench__composer" onSubmit={submitExpense}>
           <div className="section-heading">
             <div>
               <span className="eyebrow">Thêm giao dịch</span>
@@ -133,11 +161,12 @@ export function ExpensesPanel({
                 value={amount}
               />
             </label>
+              <small id="expense-amount-help">Whole positive VND only - no decimals.</small>
             <label>
               Người đã trả
               <select
                 onChange={(event) => setPaidBy(event.target.value)}
-                value={paidBy}
+                value={effectivePaidBy}
               >
                 {members.map((member) => (
                   <option key={member.uid} value={member.uid}>
@@ -152,7 +181,7 @@ export function ExpensesPanel({
             {members.map((member) => (
               <label key={member.uid}>
                 <input
-                  checked={splitAmong.includes(member.uid)}
+                  checked={effectiveSplitAmong.includes(member.uid)}
                   onChange={() => toggleParticipant(member.uid)}
                   type="checkbox"
                 />
@@ -167,7 +196,7 @@ export function ExpensesPanel({
         </form>
       ) : null}
 
-      <div className="split-grid expense-grid">
+      <div className="split-grid expense-grid expense-workbench__ledger">
         <article className="panel-card">
           <div className="section-heading">
             <div>
@@ -210,7 +239,7 @@ export function ExpensesPanel({
           {ledger.includedExpenses.length > 0 ? (
             <ul className="expense-list" aria-label="Danh sách chi phí">
               {ledger.includedExpenses.map((expense) => (
-                <li className="expense-item" key={expense.id}>
+                <li className="expense-item expense-workbench__item" key={expense.id}>
                   <div>
                     <strong>{expense.title}</strong>
                     <small>
@@ -222,7 +251,7 @@ export function ExpensesPanel({
                     {canSettle && onSettle && expense.status === "pending" ? (
                       <button
                         className="secondary-button"
-                        onClick={() => void onSettle(expense.id)}
+                        onClick={() => { setSettlementError(""); setConfirmingExpense(expense); }}
                         type="button"
                       >
                         Chốt {expense.title}
@@ -243,6 +272,32 @@ export function ExpensesPanel({
         </article>
       </div>
     </section>
+
+      {confirmingExpense ? (
+        <div className="expense-workbench__dialog-backdrop" role="presentation">
+          <div
+            aria-label="Confirm settlement"
+            aria-modal="true"
+            className="expense-workbench__dialog"
+            role="dialog"
+          >
+            <span className="eyebrow">Lead action</span>
+            <h3>Confirm settlement</h3>
+            <p>Mark <strong>{confirmingExpense.title}</strong> as settled for {formatVnd(confirmingExpense.amount)}?</p>
+            {settlementError ? <p role="alert">{settlementError}</p> : null}
+            <div className="expense-workbench__dialog-actions">
+              <button disabled={settling} onClick={() => setConfirmingExpense(null)} type="button">
+                Cancel
+              </button>
+              <button className="primary-button" disabled={settling} onClick={() => void confirmSettlement()} type="button">
+                {settling ? "Settling?" : "Confirm settle"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+
   );
 }
 

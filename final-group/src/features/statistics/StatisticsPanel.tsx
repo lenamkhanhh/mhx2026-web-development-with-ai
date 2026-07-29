@@ -1,4 +1,5 @@
 import type { ExpenseMember, TripExpense } from "../expenses/expense-calculations";
+import "./StatisticsPanel.css";
 import { formatVnd } from "../expenses/expense-calculations";
 import { calculateExpenseStatistics } from "./expense-statistics";
 
@@ -11,7 +12,7 @@ export function StatisticsPanel({ members, expenses }: StatisticsPanelProps) {
   const statistics = calculateExpenseStatistics(members, expenses);
 
   return (
-    <section aria-labelledby="statistics-heading" className="view-stack">
+    <section aria-labelledby="statistics-heading" className="view-stack statistics-workbench">
       <div className="section-heading page-heading">
         <div>
           <span className="eyebrow">Trip statistics</span>
@@ -19,6 +20,10 @@ export function StatisticsPanel({ members, expenses }: StatisticsPanelProps) {
           <p>Các chỉ số lấy từ mọi khoản chi VND hợp lệ trong chuyến đi.</p>
         </div>
       </div>
+
+      <aside className="statistics-workbench__ledger-note" aria-label="Current ledger">
+        Current ledger: pending and settled are record states; neither one erases a member balance.
+      </aside>
 
       <dl className="metric-grid" aria-label="Thống kê chi phí">
         <Metric label="Đã ghi" value={formatVnd(statistics.totalRecorded)} />

@@ -1,0 +1,7 @@
+/* Statistics Workbench */
+
+.statistics-workbench__ledger-note { border-left: 3px solid #64748b; color: #475569; font-size: .9rem; margin: 0 0 1rem; padding: .65rem .85rem; }
+.statistics-workbench .metric-card { border: 1px solid #d8e0e7; box-shadow: 0 8px 24px rgb(28 43 58 / 6%); }
+.statistics-workbench .metric-card dd { transition: color 160ms ease; }
+.statistics-workbench .metric-card:hover { border-color: #94a3b8; }
+@media (prefers-reduced-motion: reduce) { .statistics-workbench *, .statistics-workbench *::before, .statistics-workbench *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }

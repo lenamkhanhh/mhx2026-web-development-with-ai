@@ -77,6 +77,30 @@ describe("ExpensesPanel", () => {
     });
 
     await actor.click(screen.getByRole("button", { name: "Chốt Xe di chuyển" }));
+    expect(screen.getByRole("dialog", { name: /confirm settlement/i })).toBeTruthy();
+    expect(onSettle).not.toHaveBeenCalled();
+    await actor.click(screen.getByRole("button", { name: /confirm settle/i }));
     expect(onSettle).toHaveBeenCalledWith("expense-1");
+  });
+
+  it("shows loading and retry states without changing the ledger", async () => {
+    const actor = userEvent.setup();
+    const onRetry = vi.fn();
+
+    render(
+      <ExpensesPanel
+        isLoading
+        loadError="Unable to refresh the expense ledger."
+        members={[{ uid: "lead-1", displayName: "Lead" }]}
+        expenses={[]}
+        onRetry={onRetry}
+      />,
+    );
+
+    expect(screen.getByRole("status").textContent).toContain("Loading expense ledger...");
+    expect(screen.getByRole("alert").textContent).toContain("Unable to refresh the expense ledger.");
+
+    await actor.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });
