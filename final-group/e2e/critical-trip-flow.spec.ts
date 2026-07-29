@@ -79,6 +79,27 @@ test("a new traveller can create a trip, open Workbench, and log out", async ({
   await expect(page.getByText("Đón bình minh", { exact: true })).toBeVisible();
   await expect(page.getByText("Đã duyệt", { exact: true })).toBeVisible();
 
+  await page.getByLabel("Tên hoạt động").fill("Ăn sáng E2E");
+  await page.getByRole("combobox", { name: "Loại" }).selectOption("food");
+  await page.getByLabel("Bắt đầu").fill("2026-08-10T07:00");
+  await page.getByLabel("Kết thúc").fill("2026-08-10T08:00");
+  await page.getByRole("checkbox", { name: displayName }).check();
+  await page.getByRole("button", { name: "Thêm vào lịch trình" }).click();
+  await expect(page.getByText("Ăn sáng E2E", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Đưa Ăn sáng E2E lên" }).click();
+  const timeline = page.getByRole("list", { name: "Timeline hoạt động" });
+  await expect(timeline.getByRole("listitem").first()).toContainText("Ăn sáng E2E");
+
+  await page.reload();
+  await page.getByRole("link", { name: "Lịch trình" }).click();
+  await expect(
+    page
+      .getByRole("list", { name: "Timeline hoạt động" })
+      .getByRole("listitem")
+      .first(),
+  ).toContainText("Ăn sáng E2E");
+
   await page.getByRole("link", { name: "Chi phí" }).click();
   await page.getByLabel("Tên khoản chi").fill("Bữa tối E2E");
   await page.getByLabel("Số tiền (VND)").fill("450000");
