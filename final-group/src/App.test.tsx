@@ -56,6 +56,19 @@ describe("TripFlow App composition", () => {
     expect(button("Chưa thể tham gia bằng mã").disabled).toBe(true);
   });
 
+  it("labels an in-memory preview as local demo data instead of live trip data", async () => {
+    await render(
+      <App
+        backend={makeBackend(user, snapshot.trip, [snapshot.trip], snapshot)}
+        demoMode
+      />,
+    );
+
+    expect(screen.getByTestId("local-demo-notice").textContent).toContain(
+      "Dữ liệu minh họa local",
+    );
+  });
+
   it("renders persisted labels, expense actions, and the remaining fail-closed control", async () => {
     await render(<App backend={makeBackend(user, snapshot.trip, [snapshot.trip], snapshot)} />);
     expect(container?.textContent).toContain("Đang diễn ra");
