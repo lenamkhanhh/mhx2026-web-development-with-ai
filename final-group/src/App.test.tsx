@@ -66,6 +66,15 @@ describe("TripFlow App composition", () => {
     expect(button("Thêm khoản chi").disabled).toBe(false);
     expect(button("Chốt Khách sạn").disabled).toBe(false);
   });
+  it("composes the Workbench shell and keeps feature screens behind its navigation", async () => {
+    await render(<App backend={makeBackend(user, snapshot.trip, [snapshot.trip], snapshot)} />);
+    expect(container?.textContent).toContain("Workbench");
+    const expensesLink = container?.querySelector<HTMLAnchorElement>('a[href="#expenses"]');
+    expect(expensesLink).toBeTruthy();
+    await act(async () => expensesLink?.click());
+    expect(container?.textContent).toContain("Chi phí & chia tiền");
+    expect(button("Thêm khoản chi").disabled).toBe(false);
+  });
 });
 
 async function render(node: ReactNode) {
