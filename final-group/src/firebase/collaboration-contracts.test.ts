@@ -8,8 +8,8 @@ describe("collaboration contracts", () => {
     expect(contracts).toContain("export interface EventNote");
     expect(contracts).toContain("export interface EventSubitem");
     expect(contracts).toContain("export interface TripActivity");
-    expect(contracts).toContain("notes: EventNote[]");
-    expect(contracts).toContain("subitems: EventSubitem[]");
-    expect(contracts).toContain("activity: TripActivity[]");
+    expect(contracts).toContain("notes?: EventNote[]");
+    expect(contracts).toContain("subitems?: EventSubitem[]");
+    expect(contracts).toContain("activity?: TripActivity[]");
   });
 });

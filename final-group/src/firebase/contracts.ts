@@ -130,9 +130,10 @@ export interface TripSnapshot {
   members: MemberRecord[];
   events: EventRecord[];
   expenses: ExpenseRecord[];
-  notes: EventNote[];
-  subitems: EventSubitem[];
-  activity: TripActivity[];
+  /** Optional during the additive Firestore migration; repository snapshots emit arrays. */
+  notes?: EventNote[];
+  subitems?: EventSubitem[];
+  activity?: TripActivity[];
 }
 
 export interface CreateTripInput {
