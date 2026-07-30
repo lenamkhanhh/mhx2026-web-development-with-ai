@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateExpenseBalances,
+  calculateSettlementSuggestions,
+  expensesToCsv,
   formatVnd,
   validateExpenseInput,
   type TripExpense,
@@ -83,5 +85,36 @@ describe("expense VND calculations", () => {
 
   it("formats VND without decimal fractions", () => {
     expect(formatVnd(1_250_000)).toBe("1.250.000 ₫");
+  });
+
+  it("derives deterministic integer-VND settlement suggestions", () => {
+    const suggestions = calculateSettlementSuggestions(
+      calculateExpenseBalances(members, [expense]),
+    );
+
+    expect(suggestions).toEqual([
+      {
+        amount: 33_334,
+        fromId: "member-1",
+        fromName: "Minh",
+        toId: "lead-1",
+        toName: "Khánh",
+      },
+      {
+        amount: 33_333,
+        fromId: "member-2",
+        fromName: "An",
+        toId: "lead-1",
+        toName: "Khánh",
+      },
+    ]);
+  });
+
+  it("exports only truthful expense fields as escaped CSV", () => {
+    expect(expensesToCsv(members, [
+      { ...expense, title: "Ăn tối, nhóm" },
+    ])).toContain(
+      '"Ăn tối, nhóm",100001,Khánh,"Khánh; Minh; An",pending',
+    );
   });
 });

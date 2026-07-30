@@ -65,9 +65,10 @@ describe("ExpensesPanel", () => {
       />,
     );
 
+    await actor.click(screen.getByRole("button", { name: "Thêm khoản chi" }));
     await actor.type(screen.getByLabelText("Tên khoản chi"), "Ăn tối");
     await actor.type(screen.getByLabelText("Số tiền (VND)"), "300000");
-    await actor.click(screen.getByRole("button", { name: "Thêm khoản chi" }));
+    await actor.click(screen.getByRole("button", { name: "Lưu khoản chi" }));
 
     expect(onCreate).toHaveBeenCalledWith({
       title: "Ăn tối",
@@ -82,6 +83,57 @@ describe("ExpensesPanel", () => {
     expect(onSettle).not.toHaveBeenCalled();
     await actor.click(screen.getByRole("button", { name: "Xác nhận chốt" }));
     expect(onSettle).toHaveBeenCalledWith("expense-1");
+  });
+
+  it("uses the reference KPI-table-rail anatomy with real filters and settlement suggestions", async () => {
+    const actor = userEvent.setup();
+    render(
+      <ExpensesPanel
+        canSettle
+        currentUserId="lead-1"
+        members={[
+          { uid: "lead-1", displayName: "Khánh" },
+          { uid: "member-1", displayName: "Minh" },
+        ]}
+        expenses={[
+          {
+            id: "pending",
+            title: "Xe di chuyển",
+            amount: 200_000,
+            paidBy: "lead-1",
+            splitAmong: ["lead-1", "member-1"],
+            status: "pending",
+            createdBy: "lead-1",
+          },
+          {
+            id: "settled",
+            title: "Khách sạn",
+            amount: 400_000,
+            paidBy: "lead-1",
+            splitAmong: ["lead-1", "member-1"],
+            status: "settled",
+            createdBy: "lead-1",
+          },
+        ]}
+        onCreate={vi.fn()}
+        onSettle={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: "Chỉ số chi phí" })).toBeTruthy();
+    expect(screen.getByRole("table", { name: "Bảng khoản chi" })).toBeTruthy();
+    expect(screen.getByRole("complementary", { name: "Gợi ý thanh toán" }).textContent).toContain(
+      "Minh trả Khánh",
+    );
+    expect(screen.getByRole("button", { name: "Xuất CSV" })).toBeTruthy();
+
+    await actor.selectOptions(
+      screen.getByRole("combobox", { name: "Lọc trạng thái khoản chi" }),
+      "pending",
+    );
+    const table = screen.getByRole("table", { name: "Bảng khoản chi" });
+    expect(within(table).getByText("Xe di chuyển")).toBeTruthy();
+    expect(within(table).queryByText("Khách sạn")).toBeNull();
   });
 
   it("opens details, lets the expense owner update, and confirms deletion", async () => {

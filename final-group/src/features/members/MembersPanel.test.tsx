@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MemberRecord } from "../../firebase/contracts";
@@ -30,5 +30,44 @@ describe("MembersPanel", () => {
     expect(onRemoveMember).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Xác nhận xóa" }));
     expect(onRemoveMember).toHaveBeenCalledWith("member-1");
+  });
+
+  it("filters the member table and keeps real recent expenses in the context rail", async () => {
+    const user = userEvent.setup();
+    render(
+      <MembersPanel
+        currentUserId="lead-1"
+        expenses={[{
+          id: "expense-1",
+          title: "Xe sân bay",
+          amount: 320_000,
+          paidBy: "lead-1",
+          splitAmong: ["lead-1", "member-1"],
+          status: "pending",
+          createdBy: "lead-1",
+        }]}
+        members={members}
+        onRemoveMember={vi.fn()}
+        onUpdateResponsibility={vi.fn()}
+        trip={{ id: "trip-1", joinCode: "DALAT26" }}
+      />,
+    );
+
+    const table = screen.getByRole("region", { name: "Danh sách thành viên" });
+    await user.type(screen.getByRole("searchbox", { name: "Tìm thành viên" }), "Minh");
+    expect(within(table).getByText("Minh")).toBeTruthy();
+    expect(within(table).queryByText("Khanh")).toBeNull();
+
+    await user.clear(screen.getByRole("searchbox", { name: "Tìm thành viên" }));
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Lọc vai trò" }),
+      "lead",
+    );
+    expect(within(table).getByText("Khanh")).toBeTruthy();
+    expect(within(table).queryByText("Minh")).toBeNull();
+
+    const rail = screen.getByRole("complementary", { name: "Ngữ cảnh thành viên" });
+    expect(within(rail).getByText("Xe sân bay")).toBeTruthy();
+    expect(within(rail).getByText("320.000 ₫")).toBeTruthy();
   });
 });
