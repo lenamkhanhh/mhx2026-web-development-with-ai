@@ -100,6 +100,20 @@ describe("WorkbenchShell", () => {
     expect(onChangeView).toHaveBeenCalledWith("expenses");
   });
 
+  it("finds a real itinerary item and opens its Timeline context", async () => {
+    const user = userEvent.setup();
+    const onOpenSearchResult = vi.fn();
+    renderShell("overview", vi.fn(), {
+      onOpenSearchResult,
+      searchRecords: [{ id: "event-1", label: "Airport pickup", meta: "Timeline item", view: "schedule" }],
+    });
+
+    await user.type(screen.getByRole("searchbox", { name: "Search TripFlow" }), "airport");
+    await user.click(screen.getByRole("button", { name: "Open Airport pickup" }));
+
+    expect(onOpenSearchResult).toHaveBeenCalledWith({ id: "event-1", view: "schedule" });
+  });
+
   it("returns to the top whenever the active work area changes", async () => {
     const user = userEvent.setup();
     const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
