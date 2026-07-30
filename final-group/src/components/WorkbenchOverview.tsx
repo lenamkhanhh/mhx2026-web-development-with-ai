@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import type { ComponentType } from "react";
-import type { EventRecord, FirestoreEventCategory, TripSnapshot } from "../firebase/contracts";
+import type { EventRecord, ExpenseCategory, FirestoreEventCategory, TripSnapshot } from "../firebase/contracts";
 import { formatVnd } from "../features/expenses/expense-calculations";
 
 interface WorkbenchOverviewProps {
@@ -37,6 +37,14 @@ const CATEGORY_META: Record<
   food: { icon: ForkKnife, label: "Food & drinks" },
   activity: { icon: MapPinLine, label: "Activity" },
   other: { icon: SquaresFour, label: "Other" },
+};
+
+const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  transport: "Transport",
+  accommodation: "Accommodation",
+  food: "Food & drinks",
+  activities: "Activities",
+  other: "Other",
 };
 
 export function WorkbenchOverview({
@@ -71,6 +79,16 @@ export function WorkbenchOverview({
     .filter((expense) => expense.status === "settled")
     .reduce((sum, expense) => sum + expense.amount, 0);
   const pendingExpenses = totalExpenses - settledExpenses;
+  const budgetUsage = snapshot.trip.budgetVnd === undefined
+    ? undefined
+    : Math.min(100, Math.round((totalExpenses / snapshot.trip.budgetVnd) * 100));
+  const expenseBreakdown = Object.entries(
+    snapshot.expenses.reduce<Record<string, number>>((totals, expense) => {
+      const key = expense.category ?? "uncategorized";
+      totals[key] = (totals[key] ?? 0) + expense.amount;
+      return totals;
+    }, {}),
+  ).sort((left, right) => right[1] - left[1]);
   const currentMember = snapshot.members.find((member) => member.uid === currentUserId);
   const memberById = new Map(snapshot.members.map((member) => [member.uid, member]));
   const recentExpenses = [...snapshot.expenses]
@@ -141,8 +159,10 @@ export function WorkbenchOverview({
                 <th aria-label="Row number">#</th>
                 <th>Item</th>
                 <th>Date &amp; time</th>
-                <th>Participants</th>
+                <th>Location</th>
+                <th>Assignee</th>
                 <th>Status</th>
+                <th>Priority</th>
                 <th aria-label="Actions" />
               </tr>
             </thead>
@@ -150,9 +170,7 @@ export function WorkbenchOverview({
               {visibleEvents.length ? visibleEvents.map((event, index) => {
                 const category = CATEGORY_META[event.category];
                 const Icon = category.icon;
-                const participants = event.participantIds
-                  .map((uid) => memberById.get(uid))
-                  .filter((member) => member !== undefined);
+                const assignee = event.assigneeUid ? memberById.get(event.assigneeUid) : undefined;
                 return (
                   <tr key={event.id}>
                     <td className="workbench-row-index">{index + 1}</td>
@@ -168,17 +186,16 @@ export function WorkbenchOverview({
                     <td>
                       <span className="workbench-date-cell">{formatEventDate(event.startAt)}</span>
                     </td>
+                    <td><span className="workbench-location-cell">{event.location ?? "—"}</span></td>
                     <td>
-                      <div className="workbench-participants" aria-label={`${participants.length} participants`}>
-                        {participants.slice(0, 3).map((member) => (
-                          <span aria-label={member.displayName} className="workbench-mini-avatar" key={member.uid}>
-                            {initials(member.displayName)}
-                          </span>
-                        ))}
-                        {participants.length > 3 ? <small>+{participants.length - 3}</small> : null}
-                      </div>
+                      {assignee ? (
+                        <span aria-label={assignee.displayName} className="workbench-mini-avatar">
+                          {initials(assignee.displayName)}
+                        </span>
+                      ) : <span className="workbench-empty-cell">—</span>}
                     </td>
                     <td><EventStatus status={event.status} /></td>
+                    <td><EventPriority priority={event.priority} /></td>
                     <td>
                       <button
                         aria-label={`Open ${event.title} in Timeline`}
@@ -193,7 +210,7 @@ export function WorkbenchOverview({
                 );
               }) : (
                 <tr>
-                  <td className="workbench-table-empty" colSpan={6}>
+                  <td className="workbench-table-empty" colSpan={8}>
                     No items match this status.
                   </td>
                 </tr>
@@ -237,12 +254,19 @@ export function WorkbenchOverview({
             <strong>{formatVnd(totalExpenses)}</strong>
             <small>{snapshot.expenses.length} {snapshot.expenses.length === 1 ? "expense" : "expenses"}</small>
           </div>
-          <div className="workbench-expense-progress" aria-label={`${formatVnd(settledExpenses)} settled`}>
-            <span style={{ width: `${totalExpenses ? Math.round((settledExpenses / totalExpenses) * 100) : 0}%` }} />
+          <div className="workbench-expense-progress" aria-label={budgetUsage === undefined ? "Budget not set" : `${budgetUsage}% of budget used`}>
+            <span style={{ width: `${budgetUsage ?? 0}%` }} />
           </div>
           <dl className="workbench-expense-breakdown">
+            <div><dt>Budget</dt><dd>{snapshot.trip.budgetVnd === undefined ? "Not set" : formatVnd(snapshot.trip.budgetVnd)}</dd></div>
             <div><dt>Settled</dt><dd>{formatVnd(settledExpenses)}</dd></div>
             <div><dt>Pending</dt><dd>{formatVnd(pendingExpenses)}</dd></div>
+            {expenseBreakdown.map(([category, amount]) => (
+              <div key={category}>
+                <dt>{category === "uncategorized" ? "Uncategorized" : EXPENSE_CATEGORY_LABELS[category as ExpenseCategory]}</dt>
+                <dd>{formatVnd(amount)}</dd>
+              </div>
+            ))}
           </dl>
         </ContextPanel>
 
@@ -328,6 +352,10 @@ function ContextPanel({
 
 function EventStatus({ status }: { status: EventRecord["status"] }) {
   return <span className={`workbench-event-status ${status}`}>{statusLabel(status)}</span>;
+}
+
+function EventPriority({ priority }: { priority: EventRecord["priority"] }) {
+  return priority ? <span className={`workbench-event-priority ${priority}`}>{priority}</span> : <span className="workbench-empty-cell">—</span>;
 }
 
 function formatEventDate(value: string): string {
