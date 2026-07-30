@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 
+import type { ComponentProps } from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WorkbenchShell, type WorkbenchView } from "./WorkbenchShell";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const trip = {
   id: "trip-1",
@@ -18,6 +22,7 @@ const trip = {
 function renderShell(
   activeView: WorkbenchView = "overview",
   onChangeView = vi.fn(),
+  overrides: Partial<ComponentProps<typeof WorkbenchShell>> = {},
 ) {
   return {
     onChangeView,
@@ -31,6 +36,7 @@ function renderShell(
         pendingCount={2}
         role="lead"
         trip={trip}
+        {...overrides}
       >
         <section aria-label="Nội dung hiện tại">Nội dung hiện tại</section>
       </WorkbenchShell>,
@@ -92,5 +98,51 @@ describe("WorkbenchShell", () => {
     await user.click(screen.getByRole("button", { name: "Mở Chi phí" }));
 
     expect(onChangeView).toHaveBeenCalledWith("expenses");
+  });
+
+  it("returns to the top whenever the active work area changes", async () => {
+    const user = userEvent.setup();
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+    renderShell();
+
+    await user.click(screen.getByRole("link", { name: "Chi phí" }));
+
+    expect(scrollTo).toHaveBeenCalledWith({ behavior: "auto", top: 0 });
+  });
+
+  it("implements the advertised keyboard shortcuts without hijacking text input", async () => {
+    const user = userEvent.setup();
+    const onChangeView = vi.fn();
+    renderShell("overview", onChangeView);
+
+    await user.keyboard("{Control>}k{/Control}");
+    expect(document.activeElement).toBe(
+      screen.getByRole("searchbox", { name: "Tìm nhanh trong TripFlow" }),
+    );
+
+    await user.keyboard("{Escape}");
+    await user.keyboard("n");
+    expect(onChangeView).toHaveBeenCalledWith("schedule");
+
+    await user.keyboard("e");
+    expect(onChangeView).toHaveBeenCalledWith("expenses");
+
+    const search = screen.getByRole("searchbox", { name: "Tìm nhanh trong TripFlow" });
+    await user.click(search);
+    await user.type(search, "n");
+    expect(onChangeView).toHaveBeenCalledTimes(2);
+  });
+
+  it("exposes real invite and share actions in the page header", async () => {
+    const user = userEvent.setup();
+    const onInvite = vi.fn();
+    const onShare = vi.fn();
+    renderShell("overview", vi.fn(), { onInvite, onShare });
+
+    await user.click(screen.getByRole("button", { name: "Mời thành viên" }));
+    await user.click(screen.getByRole("button", { name: "Chia sẻ chuyến đi" }));
+
+    expect(onInvite).toHaveBeenCalledTimes(1);
+    expect(onShare).toHaveBeenCalledTimes(1);
   });
 });
