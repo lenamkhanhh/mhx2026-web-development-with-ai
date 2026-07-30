@@ -28,8 +28,8 @@ function renderWorkbench(overrides: Partial<ComponentProps<typeof EventsWorkbenc
   return { ...render(<EventsWorkbench {...props} />), props };
 }
 async function openComposer(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: "Thêm hoạt động" }));
-  return screen.getByRole("form", { name: "Tạo hoạt động mới" });
+  await user.click(screen.getByRole("button", { name: "Add item" }));
+  return screen.getByRole("form", { name: "Create a timeline item" });
 }
 beforeEach(() => vi.stubGlobal("matchMedia", vi.fn().mockImplementation(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -40,7 +40,7 @@ describe("EventsWorkbench", () => {
     renderWorkbench();
     expect(screen.getByRole("heading")).toBeTruthy();
     expect(screen.getAllByText(/Timeline/).length).toBeGreaterThan(1);
-    expect(screen.queryByRole("form", { name: "Tạo hoạt động mới" })).toBeNull();
+    expect(screen.queryByRole("form", { name: "Create a timeline item" })).toBeNull();
     expect(await openComposer(user)).toBeTruthy();
   });
 
@@ -48,27 +48,27 @@ describe("EventsWorkbench", () => {
     renderWorkbench({ currentUserId: "member-1", role: "member", events: [event({ id: "pending", title: "Proposal", status: "pending", createdBy: "member-1", approvedBy: null }), event({ id: "approved", title: "Visit", category: "activity" })] });
     const pending = within(screen.getByTestId("event-pending"));
     const approved = within(screen.getByTestId("event-approved"));
-    const pendingActions = within(pending.getByLabelText("Thao tác Proposal"));
-    const approvedActions = within(approved.getByLabelText("Thao tác Visit"));
+    const pendingActions = within(pending.getByLabelText("Actions for Proposal"));
+    const approvedActions = within(approved.getByLabelText("Actions for Visit"));
 
-    expect(pending.getByText("Chờ duyệt")).toBeTruthy();
-    expect(pending.getByText(/Ăn uống ·/)).toBeTruthy();
-    expect(approved.getByText("Đã duyệt")).toBeTruthy();
-    expect(approved.getByText(/Hoạt động ·/)).toBeTruthy();
-    expect(pendingActions.getByRole("button", { name: "Xóa" })).toBeTruthy();
-    expect(pendingActions.queryByRole("button", { name: "Duyệt" })).toBeNull();
-    expect(pendingActions.queryByRole("button", { name: "Hủy" })).toBeNull();
+    expect(pending.getByText("In review")).toBeTruthy();
+    expect(pending.getByText(/Food & drinks ·/)).toBeTruthy();
+    expect(approved.getByText("Open")).toBeTruthy();
+    expect(approved.getByText(/Activity ·/)).toBeTruthy();
+    expect(pendingActions.getByRole("button", { name: "Delete" })).toBeTruthy();
+    expect(pendingActions.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(pendingActions.queryByRole("button", { name: "Cancel" })).toBeNull();
     expect(approvedActions.queryByRole("button")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Đồng bộ trạng thái" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sync statuses" })).toBeNull();
   });
 
   it("renders every persisted status/category label and the lead action matrix", () => {
     const cases = [
-      { id: "pending", title: "Train", status: "pending", category: "transport", statusLabel: "Chờ duyệt", categoryLabel: "Di chuyển" },
-      { id: "approved", title: "Hotel", status: "approved", category: "stay", statusLabel: "Đã duyệt", categoryLabel: "Lưu trú" },
-      { id: "happening", title: "Lunch", status: "happening", category: "food", statusLabel: "Đang diễn ra", categoryLabel: "Ăn uống" },
-      { id: "completed", title: "Museum", status: "completed", category: "activity", statusLabel: "Đã hoàn thành", categoryLabel: "Hoạt động" },
-      { id: "cancelled", title: "Backup", status: "cancelled", category: "other", statusLabel: "Đã hủy", categoryLabel: "Khác" },
+      { id: "pending", title: "Train", status: "pending", category: "transport", statusLabel: "In review", categoryLabel: "Transport" },
+      { id: "approved", title: "Hotel", status: "approved", category: "stay", statusLabel: "Open", categoryLabel: "Stay" },
+      { id: "happening", title: "Lunch", status: "happening", category: "food", statusLabel: "In progress", categoryLabel: "Food & drinks" },
+      { id: "completed", title: "Museum", status: "completed", category: "activity", statusLabel: "Done", categoryLabel: "Activity" },
+      { id: "cancelled", title: "Backup", status: "cancelled", category: "other", statusLabel: "Cancelled", categoryLabel: "Other" },
     ] as const;
     renderWorkbench({ events: cases.map((item, order) => event({ ...item, order })) });
 
@@ -76,17 +76,17 @@ describe("EventsWorkbench", () => {
       const row = within(screen.getByTestId(`event-${item.id}`));
       expect(row.getByText(item.statusLabel)).toBeTruthy();
       expect(row.getByText(new RegExp(`^${item.categoryLabel} ·`))).toBeTruthy();
-      expect(row.getByRole("button", { name: "Xóa" })).toBeTruthy();
+      expect(row.getByRole("button", { name: "Delete" })).toBeTruthy();
     }
 
-    const pendingActions = within(screen.getByLabelText("Thao tác Train"));
-    expect(pendingActions.getByRole("button", { name: "Duyệt" })).toBeTruthy();
-    expect(pendingActions.getByRole("button", { name: "Hủy" })).toBeTruthy();
-    expect(within(screen.getByLabelText("Thao tác Hotel")).queryByRole("button", { name: "Duyệt" })).toBeNull();
-    expect(within(screen.getByLabelText("Thao tác Hotel")).getByRole("button", { name: "Hủy" })).toBeTruthy();
-    expect(within(screen.getByLabelText("Thao tác Backup")).queryByRole("button", { name: "Duyệt" })).toBeNull();
-    expect(within(screen.getByLabelText("Thao tác Backup")).queryByRole("button", { name: "Hủy" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Đồng bộ trạng thái" })).toBeTruthy();
+    const pendingActions = within(screen.getByLabelText("Actions for Train"));
+    expect(pendingActions.getByRole("button", { name: "Approve" })).toBeTruthy();
+    expect(pendingActions.getByRole("button", { name: "Cancel" })).toBeTruthy();
+    expect(within(screen.getByLabelText("Actions for Hotel")).queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(within(screen.getByLabelText("Actions for Hotel")).getByRole("button", { name: "Cancel" })).toBeTruthy();
+    expect(within(screen.getByLabelText("Actions for Backup")).queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(within(screen.getByLabelText("Actions for Backup")).queryByRole("button", { name: "Cancel" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Sync statuses" })).toBeTruthy();
   });
 
   it("starts with a focused inspector and filters the timeline by status and date", async () => {
@@ -113,17 +113,17 @@ describe("EventsWorkbench", () => {
     ).toHaveLength(4);
 
     await user.selectOptions(
-      screen.getByRole("combobox", { name: "Lọc trạng thái" }),
+      screen.getByRole("combobox", { name: "Filter status" }),
       "pending",
     );
     expect(screen.queryByTestId("event-event-1")).toBeNull();
     expect(screen.getByTestId("event-pending")).toBeTruthy();
 
     await user.selectOptions(
-      screen.getByRole("combobox", { name: "Lọc trạng thái" }),
+      screen.getByRole("combobox", { name: "Filter status" }),
       "all",
     );
-    fireEvent.change(screen.getByLabelText("Từ ngày"), {
+    fireEvent.change(screen.getByLabelText("From date"), {
       target: { value: "2026-07-31" },
     });
     expect(screen.queryByTestId("event-event-1")).toBeNull();
@@ -167,7 +167,7 @@ describe("EventsWorkbench", () => {
     await openComposer(user);
     const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
     await user.type(screen.getByRole("textbox"), "Sunrise");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Loại" }), "transport");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Category" }), "transport");
     await user.type(dateInputs[0], "2026-07-30T06:00"); await user.type(dateInputs[1], "2026-07-30T07:00");
     await user.click(screen.getAllByRole("checkbox")[0]); await user.click(container.querySelector('button[type="submit"]')!);
     expect((container.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true);
@@ -193,8 +193,8 @@ describe("EventsWorkbench", () => {
         'input[type="datetime-local"]',
       ),
     ];
-    const title = screen.getByLabelText("Tên hoạt động");
-    const category = screen.getByRole("combobox", { name: "Loại" });
+    const title = screen.getByLabelText("Item title");
+    const category = screen.getByRole("combobox", { name: "Category" });
     const participant = screen.getAllByRole("checkbox")[0];
     const submit = container.querySelector<HTMLButtonElement>(
       'button[type="submit"]',
@@ -249,28 +249,28 @@ describe("EventsWorkbench", () => {
     const unrelated = event({ id: "unrelated", title: "Dinner", order: 2 });
     const rendered = renderWorkbench({ events: [first, second], onMove });
 
-    await user.click(screen.getByRole("button", { name: "Đưa Visit lên" }));
+    await user.click(screen.getByRole("button", { name: "Move Visit up" }));
     await waitFor(() => expect(onMove).toHaveBeenCalledTimes(1));
 
-    const reorderButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Đưa "));
+    const reorderButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Move "));
     expect(reorderButtons.length).toBeGreaterThan(0);
     expect(reorderButtons.every((button) => button.disabled)).toBe(true);
 
     pendingMove.resolve();
-    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Chờ bản cập nhật thời gian thực"));
+    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Waiting for the realtime update"));
     expect(reorderButtons.every((button) => button.disabled)).toBe(true);
 
     rendered.rerender(<EventsWorkbench {...rendered.props} events={[{ ...first }, { ...second }, unrelated]} />);
     await waitFor(() => {
       const staleTimeline = screen.getByRole("list");
-      const staleButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Đưa "));
+      const staleButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Move "));
       expect(within(staleTimeline).getAllByRole("listitem").map((item) => item.getAttribute("data-event-id"))).toEqual(["second", "first", "unrelated"]);
       expect(staleButtons.every((button) => button.disabled)).toBe(true);
     });
 
     rendered.rerender(<EventsWorkbench {...rendered.props} events={[{ ...second, order: 0 }, { ...first, order: 1 }, unrelated]} />);
     await waitFor(() => {
-      const refreshedButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Đưa "));
+      const refreshedButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.startsWith("Move "));
       expect(refreshedButtons.some((button) => !button.disabled)).toBe(true);
     });
     expect(onMove).toHaveBeenCalledTimes(1);
