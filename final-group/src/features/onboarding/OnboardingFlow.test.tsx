@@ -91,16 +91,15 @@ describe("onboarding actions", () => {
 });
 
 describe("OnboardingFlow", () => {
-  it("renders a create-first calm workbench and keeps join fail-closed", async () => {
+  it("renders both setup paths as workbench cards and keeps join fail-closed", () => {
     const backend = createBackend();
-    const actor = userEvent.setup();
     render(<OnboardingFlow backend={backend} profile={profile} onTripReady={vi.fn()} />);
 
     expect(screen.getByTestId("onboarding-workbench").getAttribute("data-motion")).toBe("calm");
     expect(screen.getByTestId("onboarding-workbench").getAttribute("data-ui-system")).toBe("light-workbench");
+    expect(screen.getByRole("region", { name: "Tạo không gian mới" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Tham gia bằng mã" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Tạo chuyến đi mới" })).toBeTruthy();
-
-    await actor.click(screen.getByRole("tab", { name: "Tham gia chuyến đi" }));
 
     expect(
       screen.getByText("Tham gia bằng mã chưa được mở vì chưa có cơ chế xác minh an toàn."),
@@ -137,7 +136,7 @@ describe("OnboardingFlow", () => {
     await actor.click(screen.getByRole("button", { name: "Tạo chuyến đi mới" }));
 
     expect((screen.getByRole("button", { name: "Đang tạo chuyến đi…" }) as HTMLButtonElement).disabled).toBe(true);
-    expect((screen.getByRole("tab", { name: "Tham gia chuyến đi" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Chưa thể tham gia bằng mã" }) as HTMLButtonElement).disabled).toBe(true);
 
     resolveTrip?.(trip);
   });

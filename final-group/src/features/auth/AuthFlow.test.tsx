@@ -103,6 +103,23 @@ describe("AuthFlow", () => {
     expect(screen.getByRole("tab", { name: "Đăng nhập" }).getAttribute("aria-selected")).toBe("true");
   });
 
+  it("lets the user reveal and hide password fields without changing their values", async () => {
+    const backend = createBackend();
+    const actor = userEvent.setup();
+    render(<AuthFlow backend={backend} onAuthenticated={vi.fn()} />);
+
+    const password = screen.getByLabelText("Mật khẩu") as HTMLInputElement;
+    await actor.type(password, "TripFlow!2026");
+    expect(password.type).toBe("password");
+
+    await actor.click(screen.getByRole("button", { name: "Hiện mật khẩu" }));
+    expect(password.type).toBe("text");
+    expect(password.value).toBe("TripFlow!2026");
+
+    await actor.click(screen.getByRole("button", { name: "Ẩn mật khẩu" }));
+    expect(password.type).toBe("password");
+  });
+
   it("shows validation errors and does not submit an invalid registration", async () => {
     const backend = createBackend();
     const actor = userEvent.setup();
