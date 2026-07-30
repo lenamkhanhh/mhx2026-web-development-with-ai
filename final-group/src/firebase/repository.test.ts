@@ -32,6 +32,45 @@ describe("TripFlow Firestore record contract", () => {
     });
   });
 
+  it("preserves the approved Page 2 overview fields without inventing values", () => {
+    expect(createTripRecord({
+      name: "Da Nang weekend",
+      destination: "Da Nang",
+      startDate: "2026-08-01",
+      endDate: "2026-08-03",
+      budgetVnd: 8_000_000,
+    }, "lead-1", "DNANG2026")).toMatchObject({ budgetVnd: 8_000_000 });
+
+    expect(decodeEventRecord("event-1", {
+      title: "Airport transfer",
+      category: "transport",
+      startAt: "2026-08-01T08:00:00.000Z",
+      endAt: "2026-08-01T09:00:00.000Z",
+      status: "approved",
+      participantIds: ["lead-1"],
+      createdBy: "lead-1",
+      approvedBy: "lead-1",
+      location: "Da Nang International Airport",
+      assigneeUid: "lead-1",
+      priority: "high",
+      order: 0,
+    })).toMatchObject({
+      location: "Da Nang International Airport",
+      assigneeUid: "lead-1",
+      priority: "high",
+    });
+
+    expect(decodeExpenseRecord("expense-1", {
+      title: "Airport transfer",
+      amount: 500_000,
+      paidBy: "lead-1",
+      splitAmong: ["lead-1"],
+      status: "pending",
+      createdBy: "lead-1",
+      category: "transport",
+    })).toMatchObject({ category: "transport" });
+  });
+
   it("decodes an event using the approved Firestore status vocabulary", () => {
     const createdAt = new Date("2026-08-01T07:00:00.000Z");
     const updatedAt = new Date("2026-08-01T08:30:00.000Z");
