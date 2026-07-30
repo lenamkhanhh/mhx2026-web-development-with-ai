@@ -10,6 +10,9 @@ trips/{tripId}
 trips/{tripId}/members/{uid}
 trips/{tripId}/events/{eventId}
 trips/{tripId}/expenses/{expenseId}
+trips/{tripId}/notes/{noteId}
+trips/{tripId}/subitems/{subitemId}
+trips/{tripId}/activity/{activityId}
 ```
 
 ## Documents
@@ -87,3 +90,7 @@ The UI must show that absence directly and must not infer a location, assignee,
 priority, budget, or expense category from a title or another field.
 The `settled` status is only an internal reconciliation marker. It does not
 represent or replace a transfer record, receipt, or payment-provider proof.
+
+The collaboration extension is specified in
+[`collaboration-data-extension.md`](./collaboration-data-extension.md). Its
+documents are plain text only and remain within the Timeline/Overview flow.

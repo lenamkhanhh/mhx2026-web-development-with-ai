@@ -19,6 +19,11 @@ the enforcement boundary.
 | Edit/delete another user's expense | yes | no |
 | Mark an expense record settled | yes | no |
 | Sync `happening`/`completed` status | yes | no |
+| Create a plain-text event note | yes | yes |
+| Delete an event note | yes | author only |
+| Create an event sub-item | yes | yes |
+| Update/delete an event sub-item | yes | author only |
+| Read actor-attributed activity | yes | yes |
 
 Never trust a client-provided `role`, `leadId`, or membership flag without
 checking the stored trip/member documents in rules and in the repository.
