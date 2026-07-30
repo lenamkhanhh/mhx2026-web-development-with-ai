@@ -56,9 +56,9 @@
   max-width: 14ch;
   margin: 17px 0 12px;
   color: #111820;
-  font-size: clamp(36px, 5vw, 62px);
-  letter-spacing: -.065em;
-  line-height: .95;
+  font-size: clamp(32px, 3.6vw, 46px);
+  letter-spacing: -.055em;
+  line-height: 1;
 }
 
 .storyIntro {
@@ -70,7 +70,7 @@
 }
 
 .storyLabel {
-  margin-top: 42px;
+  margin-top: 30px;
   color: #56636f;
 }
 
@@ -157,10 +157,10 @@
 
 .card {
   width: 100%;
-  max-width: 620px;
+  max-width: 540px;
   align-self: center;
   justify-self: end;
-  padding: clamp(26px, 4vw, 48px);
+  padding: clamp(24px, 3vw, 38px);
   border: 1px solid #d7dee4;
   border-radius: 7px;
   background: #fff;
@@ -182,12 +182,12 @@
 }
 
 .header h1 {
-  max-width: 11ch;
+  max-width: 14ch;
   margin: 0;
   color: #121a24;
-  font-size: clamp(34px, 5vw, 52px);
-  letter-spacing: -.055em;
-  line-height: .98;
+  font-size: clamp(28px, 3.2vw, 36px);
+  letter-spacing: -.045em;
+  line-height: 1.02;
 }
 
 .intro {
@@ -200,7 +200,7 @@
 .tabs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  margin: 30px 0 22px;
+  margin: 22px 0 18px;
   border-bottom: 1px solid #d7dee4;
 }
 
@@ -241,7 +241,7 @@
 
 .field input {
   box-sizing: border-box;
-  min-height: 48px;
+  min-height: 44px;
   width: 100%;
   padding: 0 13px;
   border: 1px solid #c7d1da;
@@ -249,6 +249,42 @@
   color: #17202a;
   background: #fff;
   font: inherit;
+}
+
+.passwordControl {
+  position: relative;
+}
+
+.passwordControl input {
+  padding-right: 68px;
+}
+
+.passwordControl button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  bottom: 6px;
+  min-width: 52px;
+  padding: 0 8px;
+  border: 1px solid #c7d1da;
+  border-radius: 4px;
+  color: #42505d;
+  background: #f7f9fb;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.passwordControl button:hover:not(:disabled) {
+  border-color: #9fc6ff;
+  color: #155eef;
+  background: #f1f7ff;
+}
+
+.passwordControl button:focus-visible {
+  outline: 2px solid rgb(21 94 239 / 22%);
+  outline-offset: 1px;
 }
 
 .field input:focus-visible {

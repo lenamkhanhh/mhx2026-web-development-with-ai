@@ -102,6 +102,7 @@ export function AuthFlow({
   const [requestError, setRequestError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   function switchMode(nextMode: AuthMode) {
     if (submitting) return;
@@ -109,6 +110,7 @@ export function AuthFlow({
     setErrors({});
     setRequestError("");
     setSuccess("");
+    setPasswordVisible(false);
   }
 
   function fieldProps(error: string | undefined, errorId: string) {
@@ -255,16 +257,26 @@ export function AuthFlow({
 
           <label className={styles.field}>
             <span>Mật khẩu</span>
-            <input
-              {...fieldProps(errors.password, "password-error")}
-              autoComplete={isLogin ? "current-password" : "new-password"}
-              disabled={submitting}
-              onChange={(event) =>
-                setInput((current) => ({ ...current, password: event.target.value }))
-              }
-              type="password"
-              value={input.password}
-            />
+            <div className={styles.passwordControl}>
+              <input
+                {...fieldProps(errors.password, "password-error")}
+                autoComplete={isLogin ? "current-password" : "new-password"}
+                disabled={submitting}
+                onChange={(event) =>
+                  setInput((current) => ({ ...current, password: event.target.value }))
+                }
+                type={passwordVisible ? "text" : "password"}
+                value={input.password}
+              />
+              <button
+                aria-label={passwordVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                disabled={submitting}
+                onClick={() => setPasswordVisible((current) => !current)}
+                type="button"
+              >
+                {passwordVisible ? "Ẩn" : "Hiện"}
+              </button>
+            </div>
             {errors.password ? (
               <span className={styles.fieldError} id="password-error" role="alert">
                 {errors.password}
@@ -275,16 +287,30 @@ export function AuthFlow({
           {!isLogin ? (
             <label className={styles.field}>
               <span>Xác nhận mật khẩu</span>
-              <input
-                {...fieldProps(errors.confirmPassword, "confirm-password-error")}
-                autoComplete="new-password"
-                disabled={submitting}
-                onChange={(event) =>
-                  setInput((current) => ({ ...current, confirmPassword: event.target.value }))
-                }
-                type="password"
-                value={input.confirmPassword}
-              />
+              <div className={styles.passwordControl}>
+                <input
+                  {...fieldProps(errors.confirmPassword, "confirm-password-error")}
+                  autoComplete="new-password"
+                  disabled={submitting}
+                  onChange={(event) =>
+                    setInput((current) => ({ ...current, confirmPassword: event.target.value }))
+                  }
+                  type={passwordVisible ? "text" : "password"}
+                  value={input.confirmPassword}
+                />
+                <button
+                  aria-label={
+                    passwordVisible
+                      ? "Ẩn xác nhận mật khẩu"
+                      : "Hiện xác nhận mật khẩu"
+                  }
+                  disabled={submitting}
+                  onClick={() => setPasswordVisible((current) => !current)}
+                  type="button"
+                >
+                  {passwordVisible ? "Ẩn" : "Hiện"}
+                </button>
+              </div>
               {errors.confirmPassword ? (
                 <span className={styles.fieldError} id="confirm-password-error" role="alert">
                   {errors.confirmPassword}

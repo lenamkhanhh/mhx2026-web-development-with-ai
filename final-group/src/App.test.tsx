@@ -52,7 +52,7 @@ describe("TripFlow App composition", () => {
   it("shows create-trip onboarding and keeps join-by-code disabled", async () => {
     await render(<App backend={makeBackend(user, null, [])} />);
     expect(screen.getByTestId("onboarding-workbench")).toBeTruthy();
-    await userEvent.setup().click(screen.getByRole("tab", { name: "Tham gia chuyến đi" }));
+    expect(screen.getByRole("region", { name: "Tham gia bằng mã" })).toBeTruthy();
     expect(button("Chưa thể tham gia bằng mã").disabled).toBe(true);
   });
 

@@ -34,9 +34,9 @@
 
 .card {
   display: grid;
-  width: min(100%, 1080px);
+  width: min(100%, 1160px);
   gap: 18px;
-  padding: clamp(26px, 4vw, 42px);
+  padding: clamp(24px, 3vw, 36px);
   border: 1px solid #d7dee4;
   border-radius: 7px;
   background: #fff;
@@ -69,7 +69,21 @@
 }
 
 .header h1 {
-  font-size: clamp(36px, 5vw, 54px);
+  font-size: clamp(28px, 3.2vw, 38px);
+}
+
+.pathGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.createPath {
+  padding: 16px;
+  border: 1px solid #d7dee4;
+  border-radius: 6px;
+  background: #fff;
 }
 
 .intro,
@@ -112,7 +126,6 @@
 
 .form {
   display: grid;
-  max-width: 700px;
   gap: 13px;
 }
 
@@ -214,7 +227,7 @@
 
 .lockedJoin {
   display: grid;
-  max-width: 700px;
+  align-content: start;
   gap: 12px;
   padding: 18px;
   border: 1px solid #efc47e;
@@ -317,6 +330,12 @@
 
   .processStrip li:last-child {
     border-bottom: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .pathGrid {
+    grid-template-columns: 1fr;
   }
 }
 

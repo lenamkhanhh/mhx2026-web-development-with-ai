@@ -15,7 +15,6 @@ export interface TripDraft {
 
 export type OnboardingBackend = Pick<TripBackend, "createTrip" | "joinTrip">;
 
-type OnboardingMode = "create" | "join";
 type FieldErrors = Partial<Record<keyof TripDraft | "joinCode", string>>;
 
 // Kept beside the form so its tested validation contract stays local.
@@ -96,7 +95,6 @@ export function OnboardingFlow({
   profile: UserRecord;
   onTripReady: (trip: TripRecord) => void;
 }) {
-  const [mode, setMode] = useState<OnboardingMode>("create");
   const [draft, setDraft] = useState<TripDraft>({
     name: "",
     destination: "",
@@ -108,14 +106,6 @@ export function OnboardingFlow({
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  function switchMode(nextMode: OnboardingMode) {
-    if (submitting) return;
-    setMode(nextMode);
-    setErrors({});
-    setRequestError("");
-    setSuccess("");
-  }
-
   function fieldProps(error: string | undefined, errorId: string) {
     return {
       "aria-describedby": error ? errorId : undefined,
@@ -125,7 +115,7 @@ export function OnboardingFlow({
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting || mode !== "create") return;
+    if (submitting) return;
     setErrors({});
     setRequestError("");
     setSuccess("");
@@ -146,7 +136,6 @@ export function OnboardingFlow({
     }
   }
 
-  const isCreate = mode === "create";
   return (
     <section aria-labelledby="onboarding-title" className={styles.workbench} data-motion="calm" data-testid="onboarding-workbench" data-ui-system="light-workbench">
       <div aria-hidden="true" className={styles.grid} />
@@ -157,13 +146,9 @@ export function OnboardingFlow({
           <p className={styles.intro}>Chào {profile.displayName}. Tạo không gian chung trước, rồi thêm lịch trình và thành viên sau.</p>
         </header>
 
-        <div aria-label="Chọn thao tác chuyến đi" className={styles.tabs} role="tablist">
-          <button aria-selected={isCreate} className={isCreate ? styles.activeTab : undefined} disabled={submitting} onClick={() => switchMode("create")} role="tab" type="button">Tạo chuyến đi</button>
-          <button aria-selected={!isCreate} className={!isCreate ? styles.activeTab : undefined} disabled={submitting} onClick={() => switchMode("join")} role="tab" type="button">Tham gia chuyến đi</button>
-        </div>
-
-        {isCreate ? (
-          <form aria-busy={submitting} className={styles.form} noValidate onSubmit={onSubmit}>
+        <div className={styles.pathGrid}>
+          <section aria-label="Tạo không gian mới" className={styles.createPath}>
+            <form aria-busy={submitting} className={styles.form} noValidate onSubmit={onSubmit}>
             <div className={styles.formHeading}><p>CHUYẾN ĐI MỚI</p><span>Thông tin này sẽ là điểm bắt đầu của workbench.</span></div>
             <label className={styles.field}>
               <span>Tên chuyến đi</span>
@@ -189,17 +174,17 @@ export function OnboardingFlow({
             </div>
             {requestError ? <p className={styles.errorNotice} role="alert">{requestError}</p> : null}
             {success ? <p className={styles.successNotice} role="status">{success}</p> : null}
-            <button className={styles.primaryAction} disabled={submitting} type="submit">{submitting ? "Đang tạo chuyến đi…" : "Tạo chuyến đi mới"}</button>
-          </form>
-        ) : (
-          <section aria-label="Trạng thái tham gia bằng mã" className={styles.lockedJoin}>
+              <button className={styles.primaryAction} disabled={submitting} type="submit">{submitting ? "Đang tạo chuyến đi…" : "Tạo chuyến đi mới"}</button>
+            </form>
+          </section>
+          <section aria-label="Tham gia bằng mã" className={styles.lockedJoin}>
             <p className={styles.lockedKicker}>JOIN BY CODE / LOCKED</p>
             <h2>Chưa mở đường đi tắt</h2>
             <p>Tham gia bằng mã chưa được mở vì chưa có cơ chế xác minh an toàn.</p>
             <label className={styles.field}><span>Mã tham gia</span><input disabled placeholder="Sẽ khả dụng sau khi server-proof được phê duyệt" /></label>
             <button className={styles.lockedAction} disabled type="button">Chưa thể tham gia bằng mã</button>
           </section>
-        )}
+        </div>
         <ol aria-label="Các bước bắt đầu" className={styles.processStrip}>
           <li><strong>01</strong><span><b>Create / Join</b><small>Tạo chuyến đi mới hoặc tham gia bằng mã.</small></span></li>
           <li><strong>02</strong><span><b>Add members</b><small>Mời thành viên và phân vai trò.</small></span></li>
