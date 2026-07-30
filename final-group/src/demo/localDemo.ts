@@ -2,8 +2,10 @@ import type {
   AuthenticatedUser,
   CreateEventInput,
   CreateExpenseInput,
+  ExpenseCategory,
   EventRecord,
   ExpenseRecord,
+  FirestoreEventPriority,
   FirestoreEventStatus,
   MemberRecord,
   TripBackend,
@@ -71,6 +73,7 @@ const BANGKOK_TRIP: TripRecord = {
   endDate: "2026-08-02",
   leadId: DEMO_LEAD.uid,
   joinCode: "BANGKOK26",
+  budgetVnd: 8_000_000,
 };
 
 const DALAT_TRIP: TripRecord = {
@@ -81,6 +84,7 @@ const DALAT_TRIP: TripRecord = {
   endDate: "2026-08-16",
   leadId: DEMO_LEAD.uid,
   joinCode: "DALAT26",
+  budgetVnd: 6_000_000,
 };
 
 const DANANG_TRIP: TripRecord = {
@@ -91,6 +95,7 @@ const DANANG_TRIP: TripRecord = {
   endDate: "2026-09-06",
   leadId: DEMO_LEAD.uid,
   joinCode: "DANANG26",
+  budgetVnd: 12_000_000,
 };
 
 /**
@@ -528,7 +533,11 @@ function event(
   approvedBy: string | null,
 ): EventRecord {
   const timestamp = demoRecordTimestamp(id);
-  return { id, order, title, category, startAt, endAt, status, participantIds, createdBy, approvedBy, createdAt: timestamp, updatedAt: timestamp };
+  return {
+    id, order, title, category, startAt, endAt, status, participantIds, createdBy, approvedBy,
+    ...demoEventDetails(id),
+    createdAt: timestamp, updatedAt: timestamp,
+  };
 }
 
 function expense(
@@ -541,7 +550,41 @@ function expense(
   createdBy: string,
 ): ExpenseRecord {
   const timestamp = demoRecordTimestamp(id);
-  return { id, title, amount, paidBy, splitAmong, status, createdBy, createdAt: timestamp, updatedAt: timestamp };
+  return { id, title, amount, paidBy, splitAmong, status, createdBy, category: demoExpenseCategory(id), createdAt: timestamp, updatedAt: timestamp };
+}
+
+function demoEventDetails(id: string): { location: string; assigneeUid: string; priority: FirestoreEventPriority } {
+  const details: Record<string, { location: string; assigneeUid: string; priority: FirestoreEventPriority }> = {
+    "bkk-01": { location: "Suvarnabhumi Airport", assigneeUid: "demo-tuan", priority: "high" },
+    "bkk-02": { location: "Ari Hostel", assigneeUid: "demo-ha", priority: "high" },
+    "bkk-03": { location: "Ari, Bangkok", assigneeUid: "demo-linh", priority: "medium" },
+    "bkk-04": { location: "Talad Noi", assigneeUid: "demo-minh", priority: "low" },
+    "bkk-05": { location: "Ari Common Room", assigneeUid: "demo-lead", priority: "medium" },
+    "bkk-06": { location: "IconSiam BTS", assigneeUid: "demo-tuan", priority: "medium" },
+    "bkk-07": { location: "Yaowarat Road", assigneeUid: "demo-linh", priority: "low" },
+    "bkk-08": { location: "MOCA Bangkok", assigneeUid: "demo-ha", priority: "medium" },
+    "bkk-09": { location: "Bangkok Riverside", assigneeUid: "demo-minh", priority: "low" },
+    "bkk-10": { location: "Suvarnabhumi Airport", assigneeUid: "demo-tuan", priority: "high" },
+    "dl-01": { location: "Da Lat Bus Station", assigneeUid: "demo-tuan", priority: "high" },
+    "dl-02": { location: "Pine Studio", assigneeUid: "demo-ha", priority: "high" },
+    "dl-03": { location: "Tuyen Lam Lake", assigneeUid: "demo-minh", priority: "low" },
+    "dl-04": { location: "Da Lat Night Market", assigneeUid: "demo-linh", priority: "medium" },
+    "dn-01": { location: "Da Nang International Airport", assigneeUid: "demo-tuan", priority: "high" },
+    "dn-02": { location: "My Khe Villa", assigneeUid: "demo-ha", priority: "high" },
+    "dn-03": { location: "Da Nang Coworking Hub", assigneeUid: "demo-lead", priority: "medium" },
+    "dn-04": { location: "Man Thai Beach", assigneeUid: "demo-linh", priority: "medium" },
+  };
+  return details[id] ?? { location: "Trip workspace", assigneeUid: "demo-lead", priority: "medium" };
+}
+
+function demoExpenseCategory(id: string): ExpenseCategory {
+  const categories: Record<string, ExpenseCategory> = {
+    "bkk-exp-01": "transport", "bkk-exp-02": "accommodation", "bkk-exp-03": "food", "bkk-exp-04": "transport",
+    "bkk-exp-05": "activities", "bkk-exp-06": "other", "bkk-exp-07": "food", "bkk-exp-08": "transport",
+    "dl-exp-01": "accommodation", "dl-exp-02": "transport", "dl-exp-03": "food",
+    "dn-exp-01": "accommodation", "dn-exp-02": "transport", "dn-exp-03": "food",
+  };
+  return categories[id] ?? "other";
 }
 
 function nowIso(): string {
