@@ -535,6 +535,18 @@
   margin-top: 14px;
 }
 
+@media (max-width: 1320px) {
+  .expense-workbench__ledger {
+    grid-template-columns: 1fr;
+  }
+
+  .expense-workbench__detail {
+    position: static;
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
 @media (max-width: 1080px) {
   .expense-workbench {
     grid-template-columns: 1fr;

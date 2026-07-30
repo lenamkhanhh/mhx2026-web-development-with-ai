@@ -557,6 +557,22 @@
   margin-top: 14px;
 }
 
+@media (max-width: 1320px) {
+  .members-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .members-panel__header {
+    grid-template-columns: 1fr;
+  }
+
+  .members-panel__context {
+    position: static;
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
 @media (max-width: 920px) {
   .members-panel {
     grid-template-columns: minmax(0, 1fr);
