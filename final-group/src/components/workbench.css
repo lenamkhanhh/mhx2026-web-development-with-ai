@@ -1221,6 +1221,23 @@
   outline-offset: 2px;
 }
 
+/* A 1280px viewport still has the sidebar, top controls, and two work areas.
+   Give the itinerary table the full reading width before collapsing the whole
+   application to its tablet layout. */
+@media (max-width: 1320px) {
+  .workbench-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .workbench-context-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .workbench-current-role {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 1180px) {
   .workbench-overview {
     grid-template-columns: 1fr;
