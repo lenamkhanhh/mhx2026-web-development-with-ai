@@ -143,6 +143,18 @@ describe("EventsWorkbench", () => {
     expect(within(details).getByText("Selected event")).toBeTruthy();
   });
 
+  it("lets a permitted member open the Notes workspace for the selected event", async () => {
+    const user = userEvent.setup();
+    renderWorkbench({ events: [event()] });
+
+    const details = screen.getByRole("complementary", { name: "Event details" });
+    const notesTab = within(details).getByRole("tab", { name: "Notes" });
+    expect(notesTab.hasAttribute("disabled")).toBe(false);
+
+    await user.click(notesTab);
+    expect(within(details).getByRole("form", { name: "Add note" })).toBeTruthy();
+  });
+
   it("opens a real detail panel and saves a permitted event title edit", async () => {
     const user = userEvent.setup();
     const onUpdate = vi.fn().mockResolvedValue(undefined);
