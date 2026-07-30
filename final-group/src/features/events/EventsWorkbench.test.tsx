@@ -153,6 +153,12 @@ describe("EventsWorkbench", () => {
 
     await user.click(notesTab);
     expect(within(details).getByRole("form", { name: "Add note" })).toBeTruthy();
+    expect(within(details).queryByText("Category")).toBeNull();
+    expect(within(details).queryByRole("button", { name: "Edit event" })).toBeNull();
+
+    await user.click(within(details).getByRole("tab", { name: "Details" }));
+    expect(within(details).getByText("Category")).toBeTruthy();
+    expect(within(details).getByRole("button", { name: "Edit event" })).toBeTruthy();
   });
 
   it("opens a real detail panel and saves a permitted event title edit", async () => {
