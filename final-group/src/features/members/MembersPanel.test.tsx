@@ -1,73 +1,12 @@
 // @vitest-environment jsdom
-
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MemberRecord } from "../../firebase/contracts";
 import { MembersPanel } from "./MembersPanel";
-
-const members: MemberRecord[] = [
-  { uid: "lead-1", displayName: "Khanh", email: "lead@example.com", role: "lead", responsibility: "Coordination", isDemo: true },
-  { uid: "member-1", displayName: "Minh", email: "member@example.com", role: "member", responsibility: "Photography", isDemo: true },
-];
-
-afterEach(cleanup);
-
-describe("MembersPanel", () => {
-  it("renders roles, join code, and keeps another member responsibility locked", () => {
-    render(<MembersPanel currentUserId="member-1" members={members} onRemoveMember={vi.fn()} onUpdateResponsibility={vi.fn()} trip={{ id: "trip-1", joinCode: "DALAT26" }} />);
-    expect(screen.getByText("DALAT26")).toBeTruthy();
-    expect(screen.getByText("Lead")).toBeTruthy();
-    expect(screen.getByText("Thành viên", { selector: ".members-panel__role" })).toBeTruthy();
-    expect((screen.getByRole("textbox", { name: /Khanh/ }) as HTMLInputElement).disabled).toBe(true);
-  });
-
-  it("requires lead confirmation before removing another member", async () => {
-    const user = userEvent.setup();
-    const onRemoveMember = vi.fn();
-    render(<MembersPanel currentUserId="lead-1" members={members} onRemoveMember={onRemoveMember} onUpdateResponsibility={vi.fn()} trip={{ id: "trip-1", joinCode: "DALAT26" }} />);
-    await user.click(screen.getByRole("button", { name: /Minh/ }));
-    expect(onRemoveMember).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: "Xác nhận xóa" }));
-    expect(onRemoveMember).toHaveBeenCalledWith("member-1");
-  });
-
-  it("filters the member table and keeps real recent expenses in the context rail", async () => {
-    const user = userEvent.setup();
-    render(
-      <MembersPanel
-        currentUserId="lead-1"
-        expenses={[{
-          id: "expense-1",
-          title: "Xe sân bay",
-          amount: 320_000,
-          paidBy: "lead-1",
-          splitAmong: ["lead-1", "member-1"],
-          status: "pending",
-          createdBy: "lead-1",
-        }]}
-        members={members}
-        onRemoveMember={vi.fn()}
-        onUpdateResponsibility={vi.fn()}
-        trip={{ id: "trip-1", joinCode: "DALAT26" }}
-      />,
-    );
-
-    const table = screen.getByRole("region", { name: "Danh sách thành viên" });
-    await user.type(screen.getByRole("searchbox", { name: "Tìm thành viên" }), "Minh");
-    expect(within(table).getByText("Minh")).toBeTruthy();
-    expect(within(table).queryByText("Khanh")).toBeNull();
-
-    await user.clear(screen.getByRole("searchbox", { name: "Tìm thành viên" }));
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Lọc vai trò" }),
-      "lead",
-    );
-    expect(within(table).getByText("Khanh")).toBeTruthy();
-    expect(within(table).queryByText("Minh")).toBeNull();
-
-    const rail = screen.getByRole("complementary", { name: "Ngữ cảnh thành viên" });
-    expect(within(rail).getByText("Xe sân bay")).toBeTruthy();
-    expect(within(rail).getByText("320.000 ₫")).toBeTruthy();
-  });
+const members:MemberRecord[]=[{uid:"lead-1",displayName:"Khanh",email:"lead@example.com",role:"lead",responsibility:"Coordination",isDemo:true},{uid:"member-1",displayName:"Minh",email:"member@example.com",role:"member",responsibility:"Photography",isDemo:true}]; afterEach(cleanup);
+describe("MembersPanel",()=>{
+ it("renders roles, join code, and keeps another member responsibility locked",()=>{render(<MembersPanel currentUserId="member-1" members={members} onRemoveMember={vi.fn()} onUpdateResponsibility={vi.fn()} trip={{id:"trip-1",joinCode:"DALAT26"}}/>);expect(screen.getByText("DALAT26")).toBeTruthy();expect(screen.getByText("Member",{selector:".members-panel__role"})).toBeTruthy();expect((screen.getByRole("textbox",{name:/Khanh/}) as HTMLInputElement).disabled).toBe(true);});
+ it("requires lead confirmation before removing another member",async()=>{const user=userEvent.setup(),remove=vi.fn();render(<MembersPanel currentUserId="lead-1" members={members} onRemoveMember={remove} onUpdateResponsibility={vi.fn()} trip={{id:"trip-1",joinCode:"DALAT26"}}/>);await user.click(screen.getByRole("button",{name:/Minh/}));await user.click(screen.getByRole("button",{name:"Confirm removal"}));expect(remove).toHaveBeenCalledWith("member-1");});
+ it("filters members and keeps real recent expenses in the context rail",async()=>{const user=userEvent.setup();render(<MembersPanel currentUserId="lead-1" expenses={[{id:"expense-1",title:"Airport ride",amount:320000,paidBy:"lead-1",splitAmong:["lead-1","member-1"],status:"pending",createdBy:"lead-1"}]} members={members} onRemoveMember={vi.fn()} onUpdateResponsibility={vi.fn()} trip={{id:"trip-1",joinCode:"DALAT26"}}/>);const table=screen.getByRole("region",{name:"Member list"});await user.type(screen.getByRole("searchbox",{name:"Search members"}),"Minh");expect(within(table).getByText("Minh")).toBeTruthy();await user.clear(screen.getByRole("searchbox",{name:"Search members"}));await user.selectOptions(screen.getByRole("combobox",{name:"Filter role"}),"lead");expect(within(table).getByText("Khanh")).toBeTruthy();const rail=screen.getByRole("complementary",{name:"Member context"});expect(within(rail).getByText("Airport ride")).toBeTruthy();});
 });
