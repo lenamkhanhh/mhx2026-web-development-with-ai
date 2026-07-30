@@ -104,56 +104,56 @@ export function MembersPanel({
     <section aria-labelledby="members-heading" className="members-panel">
       <header className="members-panel__header">
         <div>
-          <p className="members-panel__eyebrow">TripFlow / nhóm đồng hành</p>
-          <h2 id="members-heading">Thành viên</h2>
-          <p>Phân vai rõ ràng, cập nhật trách nhiệm của bạn và giữ nhóm đồng bộ.</p>
+          <p className="members-panel__eyebrow">TripFlow / shared workspace</p>
+          <h2 id="members-heading">Members</h2>
+          <p>Clarify ownership, update your responsibility, and keep the group aligned.</p>
         </div>
-        <aside aria-label="Thông tin gia nhập" className="members-panel__join-card">
+        <aside aria-label="Join information" className="members-panel__join-card">
           <span>Trip ID</span><strong>{trip.id}</strong>
-          <span>Mã gia nhập</span><code>{trip.joinCode}</code>
-          <p className="members-panel__verification" data-state="required" data-testid="join-code-verification">Server verification required — mã này chưa tự chứng minh quyền tham gia.</p>
-          <button aria-label="Sao chép mã gia nhập" className="members-panel__copy" onClick={() => void copyJoinCode()} type="button">Sao chép mã</button>
+          <span>Join code</span><code>{trip.joinCode}</code>
+          <p className="members-panel__verification" data-state="required" data-testid="join-code-verification">Server verification required — this code does not prove membership by itself.</p>
+          <button aria-label="Copy join code" className="members-panel__copy" onClick={() => void copyJoinCode()} type="button">Copy code</button>
            <p data-state={displayedCopyState} data-testid="join-code-status" role="status">
-             {displayedCopyState === "copied" ? "Đã sao chép mã tham gia" : displayedCopyState === "error" ? "Không thể sao chép mã" : "Chỉ chia sẻ với người bạn tin cậy"}
+             {displayedCopyState === "copied" ? "Join code copied" : displayedCopyState === "error" ? "Unable to copy the code" : "Only share with people you trust"}
           </p>
         </aside>
       </header>
 
       <div className="members-panel__toolbar">
         <label>
-          <span>Tìm trong nhóm</span>
+          <span>Search members</span>
           <input
-            aria-label="Tìm thành viên"
+            aria-label="Search members"
             onChange={(event) => setMemberQuery(event.target.value)}
-            placeholder="Tên, email hoặc trách nhiệm…"
+            placeholder="Name, email, or responsibility…"
             type="search"
             value={memberQuery}
           />
         </label>
         <label>
-          <span>Vai trò</span>
+          <span>Role</span>
           <select
-            aria-label="Lọc vai trò"
+            aria-label="Filter role"
             onChange={(event) =>
               setRoleFilter(event.target.value as "all" | MemberRecord["role"])
             }
             value={roleFilter}
           >
-            <option value="all">Tất cả vai trò</option>
-            <option value="lead">Trưởng nhóm (Lead)</option>
-            <option value="member">Thành viên</option>
+            <option value="all">All roles</option>
+            <option value="lead">Trip lead</option>
+            <option value="member">Member</option>
           </select>
         </label>
-        <strong>{visibleMembers.length} / {members.length} thành viên</strong>
+        <strong>{visibleMembers.length} / {members.length} members</strong>
       </div>
 
-      {state === "loading" ? <div className="members-panel__state" data-state="loading" data-testid="members-state" role="status">Đang tải thành viên…</div> : null}
-      {state === "error" ? <div className="members-panel__state members-panel__state--error" data-state="error" data-testid="members-state" role="alert">{errorMessage || "Không thể tải nhóm. Hãy thử lại."}</div> : null}
-      {state === "ready" && members.length === 0 ? <div className="members-panel__state" data-state="empty" data-testid="members-state">Chưa có thành viên nào khác trong chuyến đi.</div> : null}
+      {state === "loading" ? <div className="members-panel__state" data-state="loading" data-testid="members-state" role="status">Loading members…</div> : null}
+      {state === "error" ? <div className="members-panel__state members-panel__state--error" data-state="error" data-testid="members-state" role="alert">{errorMessage || "Unable to load members. Try again."}</div> : null}
+      {state === "ready" && members.length === 0 ? <div className="members-panel__state" data-state="empty" data-testid="members-state">No other members are in this trip yet.</div> : null}
 
-      {state === "ready" && members.length > 0 ? <div className="members-panel__table-wrap" role="region" aria-label="Danh sách thành viên">
-        <div className="members-panel__table-head" aria-hidden="true"><span>Thành viên</span><span>Trách nhiệm</span><span>Thao tác</span></div>
-        <ul aria-label="Danh sách thành viên" className="members-panel__list">
+      {state === "ready" && members.length > 0 ? <div className="members-panel__table-wrap" role="region" aria-label="Member list">
+        <div className="members-panel__table-head" aria-hidden="true"><span>Member</span><span>Responsibility</span><span>Actions</span></div>
+        <ul aria-label="Member list" className="members-panel__list">
         {visibleMembers.map((member) => {
           const mayEdit = canEditResponsibility(currentUserId, member);
           const mayRemove = canRemoveMember(currentUserId, currentMember?.role, member);
@@ -163,39 +163,39 @@ export function MembersPanel({
             <div className="members-panel__identity">
               <span aria-hidden="true" className="members-panel__avatar">{member.displayName.slice(0, 1).toUpperCase()}</span>
               <div><h3>{member.displayName}</h3><p>{member.email}</p></div>
-              <span className={`members-panel__role members-panel__role--${member.role}`}>{member.role === "lead" ? "Lead" : "Thành viên"}</span>
+              <span className={`members-panel__role members-panel__role--${member.role}`}>{member.role === "lead" ? "Lead" : "Member"}</span>
             </div>
-            <label className="members-panel__responsibility">Trách nhiệm
-              <input aria-label={`Trách nhiệm của ${member.displayName}`} disabled={!mayEdit || memberFeedback === "saving"} onChange={(event) => setDrafts((value) => ({ ...value, [member.uid]: event.target.value }))} value={draft} />
+            <label className="members-panel__responsibility">Responsibility
+              <input aria-label={`${member.displayName}'s responsibility`} disabled={!mayEdit || memberFeedback === "saving"} onChange={(event) => setDrafts((value) => ({ ...value, [member.uid]: event.target.value }))} value={draft} />
             </label>
             <div className="members-panel__actions">
-              {mayEdit ? <button disabled={memberFeedback === "saving" || draft.trim() === member.responsibility} onClick={() => void updateResponsibility(member)} type="button">Lưu trách nhiệm</button> : <span className="members-panel__locked">Chỉ thành viên này có thể sửa</span>}
-              {mayRemove ? <button aria-label={`Xóa ${member.displayName} khỏi chuyến đi`} className="members-panel__remove" disabled={memberFeedback === "saving"} onClick={() => setPendingRemoval(member)} type="button">Gỡ khỏi nhóm</button> : null}
+              {mayEdit ? <button disabled={memberFeedback === "saving" || draft.trim() === member.responsibility} onClick={() => void updateResponsibility(member)} type="button">Save responsibility</button> : <span className="members-panel__locked">Only this member can edit it</span>}
+              {mayRemove ? <button aria-label={`Remove ${member.displayName} from this trip`} className="members-panel__remove" disabled={memberFeedback === "saving"} onClick={() => setPendingRemoval(member)} type="button">Remove from trip</button> : null}
             </div>
-            {memberFeedback !== "idle" ? <p className="members-panel__feedback" data-state={memberFeedback} data-testid={`responsibility-status-${member.uid}`} role="status">{memberFeedback === "saving" ? "Đang lưu trách nhiệm…" : memberFeedback === "saved" ? "Đã lưu trách nhiệm" : "Không thể lưu trách nhiệm. Thử lại nhé."}</p> : null}
+            {memberFeedback !== "idle" ? <p className="members-panel__feedback" data-state={memberFeedback} data-testid={`responsibility-status-${member.uid}`} role="status">{memberFeedback === "saving" ? "Saving responsibility…" : memberFeedback === "saved" ? "Responsibility saved" : "Unable to save responsibility. Try again."}</p> : null}
           </li>;
         })}
         {visibleMembers.length === 0 ? (
           <li className="members-panel__filtered-empty">
-            Không có thành viên phù hợp bộ lọc.
+            No members match this filter.
           </li>
         ) : null}
         </ul>
       </div> : null}
 
-      <aside aria-label="Ngữ cảnh thành viên" className="members-panel__context">
+      <aside aria-label="Member context" className="members-panel__context">
         <div>
           <span className="members-panel__eyebrow">Workspace context</span>
-          <h3>Ngữ cảnh thành viên</h3>
-          <p>Dữ liệu thật đang có trong chuyến đi, không tạo activity giả.</p>
+          <h3>Member context</h3>
+          <p>Only real records in this trip are shown; no fabricated activity is added.</p>
         </div>
         <dl className="members-panel__context-metrics">
-          <div><dt>Tổng thành viên</dt><dd>{members.length}</dd></div>
-          <div><dt>Số Lead</dt><dd>{members.filter((member) => member.role === "lead").length}</dd></div>
+          <div><dt>Total members</dt><dd>{members.length}</dd></div>
+          <div><dt>Leads</dt><dd>{members.filter((member) => member.role === "lead").length}</dd></div>
         </dl>
         <section>
           <div className="members-panel__context-heading">
-            <span>Khoản chi gần đây</span>
+            <span>Recent expenses</span>
             <b>{recentExpenses.length}</b>
           </div>
           {recentExpenses.length > 0 ? (
@@ -205,7 +205,7 @@ export function MembersPanel({
                   <div>
                     <strong>{expense.title}</strong>
                     <span>
-                      {expense.status === "settled" ? "Đã chốt" : "Chờ chốt"} ·{" "}
+                      {expense.status === "settled" ? "Settled" : "Pending"} ·{" "}
                       {members.find((member) => member.uid === expense.paidBy)?.displayName ??
                         expense.paidBy}
                     </span>
@@ -215,31 +215,31 @@ export function MembersPanel({
               ))}
             </ul>
           ) : (
-            <p>Chưa có khoản chi để hiển thị.</p>
+            <p>No expenses to display yet.</p>
           )}
         </section>
       </aside>
 
       {state === "ready" && members.length > 0 ? <PermissionMatrix /> : null}
 
-      {pendingRemoval ? <div aria-label="Xác nhận xóa thành viên" aria-modal="true" className="members-panel__dialog-backdrop" role="dialog"><section className="members-panel__dialog"><h3>Xóa {pendingRemoval.displayName} khỏi chuyến đi?</h3><p>Người này sẽ mất quyền truy cập vào lịch trình và chi phí của chuyến đi.</p><div><button disabled={Boolean(removingMemberId)} onClick={() => setPendingRemoval(null)} type="button">Hủy</button><button aria-label="Xác nhận xóa" className="members-panel__remove" disabled={Boolean(removingMemberId)} onClick={() => void confirmRemoval()} type="button">Xác nhận xóa</button></div></section></div> : null}
+      {pendingRemoval ? <div aria-label="Confirm member removal" aria-modal="true" className="members-panel__dialog-backdrop" role="dialog"><section className="members-panel__dialog"><h3>Remove {pendingRemoval.displayName} from this trip?</h3><p>They will lose access to this trip’s timeline and expenses.</p><div><button disabled={Boolean(removingMemberId)} onClick={() => setPendingRemoval(null)} type="button">Cancel</button><button aria-label="Confirm removal" className="members-panel__remove" disabled={Boolean(removingMemberId)} onClick={() => void confirmRemoval()} type="button">Confirm removal</button></div></section></div> : null}
     </section>
   );
 }
 
 function PermissionMatrix() {
   const rows = [
-    ["Duyệt / hủy activity", "Lead only", "Không cho phép"],
-    ["Sắp xếp timeline", "Trưởng nhóm", "Không cho phép"],
-    ["Chốt khoản chi", "Trưởng nhóm", "Không cho phép"],
-    ["Sửa trách nhiệm cá nhân", "Bản thân", "Bản thân"],
-    ["Sửa / xoá khoản chi", "Mọi khoản", "Khoản do mình tạo"],
+    ["Approve / cancel items", "Lead only", "Not allowed"],
+    ["Reorder timeline", "Lead", "Not allowed"],
+    ["Settle expenses", "Lead", "Not allowed"],
+    ["Edit own responsibility", "Self", "Self"],
+    ["Edit / delete expenses", "All expenses", "Expenses you created"],
   ] as const;
 
   return <section className="members-panel__permissions">
-    <div className="members-panel__permissions-heading"><div><span className="members-panel__eyebrow">Quyền thao tác</span><h3>Ma trận quyền trong workspace</h3></div><p>Firebase Security Rules là lớp quyết định cuối cùng; bảng này chỉ mô tả luồng giao diện.</p></div>
+    <div className="members-panel__permissions-heading"><div><span className="members-panel__eyebrow">Permissions</span><h3>Workspace permission matrix</h3></div><p>Firebase Security Rules are the final authority; this table only describes the UI workflow.</p></div>
     <div aria-label="Permission matrix" className="members-panel__permission-table" role="table">
-      <div className="members-panel__permission-row members-panel__permission-row--head" role="row"><span role="columnheader">Hành động</span><span role="columnheader">Trưởng nhóm</span><span role="columnheader">Member</span></div>
+      <div className="members-panel__permission-row members-panel__permission-row--head" role="row"><span role="columnheader">Action</span><span role="columnheader">Lead</span><span role="columnheader">Member</span></div>
       {rows.map(([action, lead, member]) => <div className="members-panel__permission-row" key={action} role="row"><span role="cell">{action}</span><span role="cell">{lead}</span><span role="cell">{member}</span></div>)}
     </div>
   </section>;

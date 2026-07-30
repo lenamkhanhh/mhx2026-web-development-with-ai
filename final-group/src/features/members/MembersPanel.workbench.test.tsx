@@ -23,7 +23,7 @@ describe("MembersPanel workbench", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
     render(panel());
-    await user.click(screen.getByRole("button", { name: "Sao chép mã gia nhập" }));
+    await user.click(screen.getByRole("button", { name: "Copy join code" }));
     expect(writeText).toHaveBeenCalledWith("DALAT26");
     expect((screen.getByTestId("join-code-status") as HTMLElement).dataset.state).toBe("copied");
   });
@@ -34,12 +34,12 @@ describe("MembersPanel workbench", () => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
     const { rerender } = render(panel());
 
-    await user.click(screen.getByRole("button", { name: "Sao chép mã gia nhập" }));
+    await user.click(screen.getByRole("button", { name: "Copy join code" }));
     expect((screen.getByTestId("join-code-status") as HTMLElement).dataset.state).toBe("copied");
 
     rerender(panel({ trip: { id: "trip-hue", joinCode: "HUE27" } }));
     expect((screen.getByTestId("join-code-status") as HTMLElement).dataset.state).toBe("idle");
-    expect(screen.getByTestId("join-code-status").textContent).toContain("Chỉ chia sẻ");
+    expect(screen.getByTestId("join-code-status").textContent).toContain("Only share");
   });
 
   it("keeps join-by-code visibly fail-closed and renders the permission matrix", () => {
@@ -49,7 +49,7 @@ describe("MembersPanel workbench", () => {
     expect(verification.textContent).toContain("Server verification required");
 
     const matrix = screen.getByRole("table", { name: "Permission matrix" });
-    expect(within(matrix).getByText("Duyệt / hủy activity")).toBeTruthy();
+    expect(within(matrix).getByText("Approve / cancel items")).toBeTruthy();
     expect(within(matrix).getByText("Lead only")).toBeTruthy();
   });
 
@@ -59,8 +59,8 @@ describe("MembersPanel workbench", () => {
     render(panel({ onRemoveMember }));
     await user.click(screen.getByRole("button", { name: /Minh/ }));
     expect(onRemoveMember).not.toHaveBeenCalled();
-    expect(screen.getByRole("dialog", { name: "Xác nhận xóa thành viên" })).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Xác nhận xóa" }));
+    expect(screen.getByRole("dialog", { name: "Confirm member removal" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Confirm removal" }));
     expect(onRemoveMember).toHaveBeenCalledWith("member-1");
   });
 
@@ -70,7 +70,7 @@ describe("MembersPanel workbench", () => {
     render(panel({ onRemoveMember }));
 
     await user.click(screen.getByRole("button", { name: /Minh/ }));
-    const confirmButton = screen.getByRole("button", { name: "Xác nhận xóa" });
+    const confirmButton = screen.getByRole("button", { name: "Confirm removal" });
     await user.click(confirmButton);
 
     expect((confirmButton as HTMLButtonElement).disabled).toBe(true);
@@ -87,7 +87,7 @@ describe("MembersPanel workbench", () => {
     const input = screen.getByRole("textbox", { name: /Minh/ });
     await user.clear(input);
     await user.type(input, "Video");
-    await user.click(screen.getByRole("button", { name: /L.u tr.ch nhi.m/ }));
+    await user.click(screen.getByRole("button", { name: "Save responsibility" }));
     expect((screen.getByTestId("responsibility-status-member-1") as HTMLElement).dataset.state).toBe("saving");
     resolveSave?.();
     expect((await screen.findByTestId("responsibility-status-member-1") as HTMLElement).dataset.state).toBe("saved");
@@ -96,7 +96,7 @@ describe("MembersPanel workbench", () => {
     const retryInput = screen.getByRole("textbox", { name: /Minh/ });
     await user.clear(retryInput);
     await user.type(retryInput, "Retry");
-    await user.click(screen.getByRole("button", { name: /L.u tr.ch nhi.m/ }));
+    await user.click(screen.getByRole("button", { name: "Save responsibility" }));
     expect((await screen.findByTestId("responsibility-status-member-1") as HTMLElement).dataset.state).toBe("error");
   });
 
@@ -105,7 +105,7 @@ describe("MembersPanel workbench", () => {
     const onUpdateResponsibility = vi.fn().mockResolvedValue(undefined);
     render(panel({ currentUserId: "member-1", onUpdateResponsibility }));
     const input = screen.getByRole("textbox", { name: /Minh/ });
-    const saveButton = screen.getByRole("button", { name: /L.u tr.ch nhi.m/ });
+    const saveButton = screen.getByRole("button", { name: "Save responsibility" });
 
     await user.clear(input);
     await user.type(input, "  Photography  ");
