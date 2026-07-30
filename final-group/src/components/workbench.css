@@ -732,7 +732,7 @@
 }
 
 .workbench-table-frame {
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid var(--wb-line);
   border-radius: 6px;
   background: var(--wb-panel);
@@ -740,6 +740,7 @@
 
 .workbench-table {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -768,19 +769,27 @@
 }
 
 .workbench-table th:nth-child(2) {
-  width: 32%;
+  width: 25%;
 }
 
 .workbench-table th:nth-child(3) {
-  width: 19%;
+  width: 13%;
 }
 
 .workbench-table th:nth-child(4) {
-  width: 19%;
+  width: 17%;
 }
 
 .workbench-table th:nth-child(5) {
-  width: 112px;
+  width: 68px;
+}
+
+.workbench-table th:nth-child(6) {
+  width: 86px;
+}
+
+.workbench-table th:nth-child(7) {
+  width: 68px;
 }
 
 .workbench-table th:last-child {
@@ -844,6 +853,19 @@
   font-size: 10px;
 }
 
+.workbench-location-cell,
+.workbench-empty-cell {
+  color: #596675;
+  font-size: 10px;
+}
+
+.workbench-location-cell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .workbench-participants {
   display: flex;
   align-items: center;
@@ -851,11 +873,13 @@
 }
 
 .workbench-mini-avatar {
+  display: grid;
   width: 23px;
   height: 23px;
   margin-left: -5px;
   border: 2px solid #fff;
   border-radius: 5px;
+  place-items: center;
   color: #075bc4;
   background: #eaf3ff;
   font-size: 8px;
@@ -905,6 +929,27 @@
   color: #c32727;
   background: #fff6f6;
 }
+
+.workbench-event-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #5f6b77;
+  font-size: 9px;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+.workbench-event-priority::before {
+  width: 7px;
+  height: 1px;
+  content: "";
+  background: currentColor;
+}
+
+.workbench-event-priority.high { color: #c42929; }
+.workbench-event-priority.medium { color: #b26a00; }
+.workbench-event-priority.low { color: #25844a; }
 
 .workbench-row-action {
   display: grid;
@@ -1200,7 +1245,11 @@
   }
 
   .workbench-table th:nth-child(4),
-  .workbench-table td:nth-child(4) {
+  .workbench-table td:nth-child(4),
+  .workbench-table th:nth-child(5),
+  .workbench-table td:nth-child(5),
+  .workbench-table th:nth-child(7),
+  .workbench-table td:nth-child(7) {
     display: none;
   }
 
