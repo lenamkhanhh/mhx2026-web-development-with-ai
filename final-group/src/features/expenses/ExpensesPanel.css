@@ -216,8 +216,13 @@
 .expense-workbench__ledger {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  grid-template-areas:
+    "register balances"
+    "register settlements"
+    "register detail";
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 300px);
   align-content: start;
+  align-items: start;
   gap: 12px;
   min-width: 0;
 }
@@ -232,7 +237,11 @@
 }
 
 .expense-workbench__ledger > .panel-card:first-child {
-  grid-column: 1 / -1;
+  grid-area: balances;
+}
+
+.expense-workbench__ledger > .panel-card:nth-child(2) {
+  grid-area: register;
 }
 
 .expense-workbench__ledger .section-heading {
@@ -314,11 +323,9 @@
 }
 
 .expense-workbench__detail {
-  position: sticky;
-  top: 82px;
+  position: static;
   display: grid;
-  grid-column: 2;
-  grid-row: 3;
+  grid-area: detail;
   align-content: start;
   gap: 10px;
   min-width: 0;
@@ -454,6 +461,7 @@
 }
 
 .expense-workbench__settlement-rail {
+  grid-area: settlements;
   display: grid;
   align-content: start;
   gap: 9px;
@@ -535,13 +543,21 @@
   margin-top: 14px;
 }
 
-@media (max-width: 1320px) {
+@media (max-width: 1120px) {
   .expense-workbench__ledger {
+    grid-template-areas: none;
     grid-template-columns: 1fr;
+  }
+
+  .expense-workbench__ledger > .panel-card:first-child,
+  .expense-workbench__ledger > .panel-card:nth-child(2),
+  .expense-workbench__settlement-rail {
+    grid-area: auto;
   }
 
   .expense-workbench__detail {
     position: static;
+    grid-area: auto;
     grid-column: 1;
     grid-row: auto;
   }

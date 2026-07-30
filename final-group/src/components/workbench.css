@@ -620,7 +620,7 @@
 .workbench-overview {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr) 314px;
+  grid-template-columns: minmax(0, 1fr) 292px;
   gap: 12px;
 }
 
@@ -747,7 +747,7 @@
 
 .workbench-table th,
 .workbench-table td {
-  padding: 7px 10px;
+  padding: 8px 10px;
   border-bottom: 1px solid #e6e9ed;
   vertical-align: middle;
 }
@@ -836,7 +836,7 @@
 
 .workbench-event-cell strong {
   overflow: hidden;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1224,21 +1224,9 @@
 /* A 1280px viewport still has the sidebar, top controls, and two work areas.
    Give the itinerary table the full reading width before collapsing the whole
    application to its tablet layout. */
-@media (max-width: 1320px) {
-  .workbench-overview {
-    grid-template-columns: 1fr;
-  }
-
-  .workbench-context-rail {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .workbench-current-role {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 1180px) {
+/* Keep the contextual rail at common laptop widths.  The columns still fit
+   beside the compact 234px sidebar; below this point the table gets priority. */
+@media (max-width: 1160px) {
   .workbench-overview {
     grid-template-columns: 1fr;
   }

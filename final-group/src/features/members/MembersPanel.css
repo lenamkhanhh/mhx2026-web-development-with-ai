@@ -6,12 +6,24 @@
   color: #20262e;
 }
 
-.members-panel__header {
+.members-panel__main {
   display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
-  align-items: start;
+  grid-column: 1;
+  align-content: start;
   gap: 12px;
+  min-width: 0;
+}
+
+.members-panel__rail {
+  display: grid;
+  grid-column: 2;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.members-panel__header {
+  display: block;
 }
 
 .members-panel__toolbar {
@@ -96,9 +108,13 @@
 }
 
 .members-panel__join-card {
+  grid-column: auto;
+  grid-row: auto;
+  order: 1;
+  align-self: start;
   display: grid;
-  gap: 8px;
-  padding: 13px;
+  gap: 7px;
+  padding: 12px;
   border: 1px solid #dbe1e8;
   border-radius: 6px;
   background: #fff;
@@ -110,13 +126,13 @@
 }
 
 .members-panel__join-card code {
-  padding: 7px 8px;
+  padding: 6px 8px;
   border: 1px dashed #bfc9d4;
   border-radius: 5px;
   color: #2d3946;
   background: #fbfcfd;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .1em;
   text-align: center;
@@ -132,6 +148,11 @@
   background: #0866ed;
   font-size: 10px;
   font-weight: 750;
+}
+
+.members-panel__copy {
+  min-width: 96px;
+  justify-self: start;
 }
 
 .members-panel__copy:hover,
@@ -156,7 +177,6 @@
 }
 
 .members-panel__table-wrap {
-  grid-column: 1;
   overflow: hidden;
   border: 1px solid #dbe1e8;
   border-radius: 6px;
@@ -348,7 +368,6 @@
 
 .members-panel__permissions {
   display: grid;
-  grid-column: 1;
   gap: 10px;
   padding: 13px;
   border: 1px solid #dbe1e8;
@@ -357,12 +376,11 @@
 }
 
 .members-panel__context {
-  position: sticky;
-  top: 82px;
+  position: static;
   display: grid;
-  grid-column: 2;
-  grid-row: 2 / span 4;
-  align-self: start;
+  grid-column: auto;
+  grid-row: auto;
+  order: 2;
   gap: 12px;
   padding: 13px;
   border: 1px solid #dbe1e8;
@@ -557,13 +575,20 @@
   margin-top: 14px;
 }
 
-@media (max-width: 1320px) {
+@media (max-width: 1120px) {
   .members-panel {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .members-panel__header {
-    grid-template-columns: 1fr;
+    display: block;
+  }
+
+  .members-panel__main,
+  .members-panel__rail,
+  .members-panel__join-card {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .members-panel__context {

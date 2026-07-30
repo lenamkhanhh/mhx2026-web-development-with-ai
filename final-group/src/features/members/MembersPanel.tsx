@@ -102,21 +102,13 @@ export function MembersPanel({
 
   return (
     <section aria-labelledby="members-heading" className="members-panel">
+      <div className="members-panel__main">
       <header className="members-panel__header">
         <div>
           <p className="members-panel__eyebrow">TripFlow / shared workspace</p>
           <h2 id="members-heading">Members</h2>
           <p>Clarify ownership, update your responsibility, and keep the group aligned.</p>
         </div>
-        <aside aria-label="Join information" className="members-panel__join-card">
-          <span>Trip ID</span><strong>{trip.id}</strong>
-          <span>Join code</span><code>{trip.joinCode}</code>
-          <p className="members-panel__verification" data-state="required" data-testid="join-code-verification">Server verification required — this code does not prove membership by itself.</p>
-          <button aria-label="Copy join code" className="members-panel__copy" onClick={() => void copyJoinCode()} type="button">Copy code</button>
-           <p data-state={displayedCopyState} data-testid="join-code-status" role="status">
-             {displayedCopyState === "copied" ? "Join code copied" : displayedCopyState === "error" ? "Unable to copy the code" : "Only share with people you trust"}
-          </p>
-        </aside>
       </header>
 
       <div className="members-panel__toolbar">
@@ -183,6 +175,10 @@ export function MembersPanel({
         </ul>
       </div> : null}
 
+      {state === "ready" && members.length > 0 ? <PermissionMatrix /> : null}
+      </div>
+
+      <div className="members-panel__rail">
       <aside aria-label="Member context" className="members-panel__context">
         <div>
           <span className="members-panel__eyebrow">Workspace context</span>
@@ -220,9 +216,18 @@ export function MembersPanel({
         </section>
       </aside>
 
-      {state === "ready" && members.length > 0 ? <PermissionMatrix /> : null}
+      <aside aria-label="Join information" className="members-panel__join-card">
+        <span>Trip ID</span><strong>{trip.id}</strong>
+        <span>Join code</span><code>{trip.joinCode}</code>
+        <p className="members-panel__verification" data-state="required" data-testid="join-code-verification">Server verification required. This code does not prove membership by itself.</p>
+        <button aria-label="Copy join code" className="members-panel__copy" onClick={() => void copyJoinCode()} type="button">Copy code</button>
+        <p data-state={displayedCopyState} data-testid="join-code-status" role="status">
+          {displayedCopyState === "copied" ? "Join code copied" : displayedCopyState === "error" ? "Unable to copy the code" : "Only share with people you trust"}
+        </p>
+      </aside>
 
       {pendingRemoval ? <div aria-label="Confirm member removal" aria-modal="true" className="members-panel__dialog-backdrop" role="dialog"><section className="members-panel__dialog"><h3>Remove {pendingRemoval.displayName} from this trip?</h3><p>They will lose access to this trip’s timeline and expenses.</p><div><button disabled={Boolean(removingMemberId)} onClick={() => setPendingRemoval(null)} type="button">Cancel</button><button aria-label="Confirm removal" className="members-panel__remove" disabled={Boolean(removingMemberId)} onClick={() => void confirmRemoval()} type="button">Confirm removal</button></div></section></div> : null}
+      </div>
     </section>
   );
 }

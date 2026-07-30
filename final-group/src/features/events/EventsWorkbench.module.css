@@ -251,7 +251,7 @@
 .timelineWorkspace {
   display: grid;
   order: 1;
-  grid-template-columns: minmax(0, 1fr) minmax(255px, 310px);
+  grid-template-columns: minmax(0, 1fr) minmax(242px, 292px);
   gap: 12px;
   min-width: 0;
 }
@@ -450,21 +450,24 @@
 
 .rightControls {
   flex-wrap: wrap;
+  gap: 6px;
 }
 
 .actions button {
-  min-width: 29px;
-  min-height: 27px;
-  padding: 0 6px;
+  min-width: 27px;
+  min-height: 26px;
+  padding: 0 5px;
+  color: #5d6875;
+  background: #fff;
   font-size: 9px;
 }
 
 .detailButton {
-  min-height: 26px;
-  border: 1px solid #cdd5df;
+  min-height: 27px;
+  border: 1px solid #9fc6ff;
   padding: 0 7px;
   color: #0866ed;
-  background: #fff;
+  background: #f8fbff;
   font-size: 10px;
 }
 
@@ -699,7 +702,7 @@
   font-size: 11px;
 }
 
-@media (max-width: 1320px) {
+@media (max-width: 1120px) {
   .timelineWorkspace {
     grid-template-columns: 1fr;
   }
