@@ -87,7 +87,7 @@ export function decodeEventRecord(id: string, data: DocumentData): EventRecord {
   if (typeof order !== "number" || !Number.isSafeInteger(order) || order < 0) {
     throw new FirestoreDataError("Expected order to be a non-negative integer.");
   }
-  return { id, order, title: stringValue(data, "title"), category: enumValue(data, "category", EVENT_CATEGORIES), startAt: isoDateTime(data, "startAt"), endAt: isoDateTime(data, "endAt"), status: enumValue(data, "status", EVENT_STATUSES), participantIds: stringList(data, "participantIds"), createdBy: stringValue(data, "createdBy"), approvedBy };
+  return { id, order, title: stringValue(data, "title"), category: enumValue(data, "category", EVENT_CATEGORIES), startAt: isoDateTime(data, "startAt"), endAt: isoDateTime(data, "endAt"), status: enumValue(data, "status", EVENT_STATUSES), participantIds: stringList(data, "participantIds"), createdBy: stringValue(data, "createdBy"), approvedBy, createdAt: optionalTimestamp(data, "createdAt"), updatedAt: optionalTimestamp(data, "updatedAt") };
 }
 
 export function decodeExpenseRecord(id: string, data: DocumentData): ExpenseRecord {
@@ -95,7 +95,7 @@ export function decodeExpenseRecord(id: string, data: DocumentData): ExpenseReco
   if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount < 0) throw new FirestoreDataError("Expense amount must be a non-negative integer VND amount.");
   const status = stringValue(data, "status");
   if (status !== "pending" && status !== "settled") throw new FirestoreDataError(`Unexpected expense status: ${status}.`);
-  return { id, title: stringValue(data, "title"), amount, paidBy: stringValue(data, "paidBy"), splitAmong: stringList(data, "splitAmong"), status, createdBy: stringValue(data, "createdBy") };
+  return { id, title: stringValue(data, "title"), amount, paidBy: stringValue(data, "paidBy"), splitAmong: stringList(data, "splitAmong"), status, createdBy: stringValue(data, "createdBy"), createdAt: optionalTimestamp(data, "createdAt"), updatedAt: optionalTimestamp(data, "updatedAt") };
 }
 
 export function resolveFirebaseConfig(environment: Environment): FirebaseClientConfig {
@@ -126,6 +126,19 @@ function isoDateTime(data: DocumentData, key: string): string {
   const result = stringValue(data, key);
   if (!isDateTime(result)) throw new FirestoreDataError(`Expected ${key} to be an ISO datetime.`);
   return result;
+}
+function optionalTimestamp(data: DocumentData, key: string): string | undefined {
+  const result = value(data, key);
+  if (result === undefined || result === null) return undefined;
+  if (typeof result === "string" && isDateTime(result)) return new Date(result).toISOString();
+  if (typeof result === "object" && result !== null && "toDate" in result) {
+    const toDate = (result as { toDate?: unknown }).toDate;
+    if (typeof toDate === "function") {
+      const parsed = (toDate as () => Date)();
+      if (parsed instanceof Date && Number.isFinite(parsed.getTime())) return parsed.toISOString();
+    }
+  }
+  throw new FirestoreDataError(`Expected ${key} to be a Firestore timestamp.`);
 }
 function isDateTime(value: string): boolean { return Number.isFinite(Date.parse(value)) && value.includes("T"); }
 function isIsoDate(value: string): boolean { return /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(`${value}T00:00:00.000Z`)); }

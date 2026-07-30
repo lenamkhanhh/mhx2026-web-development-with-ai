@@ -102,6 +102,20 @@ function enumValue<T extends string>(data: DocumentData, key: string, valid: Set
   return result;
 }
 
+function optionalTimestamp(data: DocumentData, key: string): string | undefined {
+  const result = value(data, key);
+  if (result === undefined || result === null) return undefined;
+  if (typeof result === "string" && isDateTime(result)) return new Date(result).toISOString();
+  if (typeof result === "object" && result !== null && "toDate" in result) {
+    const toDate = (result as { toDate?: unknown }).toDate;
+    if (typeof toDate === "function") {
+      const parsed = (toDate as () => Date)();
+      if (parsed instanceof Date && Number.isFinite(parsed.getTime())) return parsed.toISOString();
+    }
+  }
+  throw new FirestoreDataError(`Expected ${key} to be a Firestore timestamp.`);
+}
+
 export function createTripRecord(
   input: CreateTripInput,
   leadId: string,
@@ -140,6 +154,8 @@ export function decodeEventRecord(id: string, data: DocumentData): EventRecord {
     participantIds: stringList(data, "participantIds"),
     createdBy: stringValue(data, "createdBy"),
     approvedBy,
+    createdAt: optionalTimestamp(data, "createdAt"),
+    updatedAt: optionalTimestamp(data, "updatedAt"),
   };
 }
 
@@ -160,6 +176,8 @@ export function decodeExpenseRecord(id: string, data: DocumentData): ExpenseReco
     splitAmong: stringList(data, "splitAmong"),
     status,
     createdBy: stringValue(data, "createdBy"),
+    createdAt: optionalTimestamp(data, "createdAt"),
+    updatedAt: optionalTimestamp(data, "updatedAt"),
   };
 }
 

@@ -61,6 +61,9 @@ export interface EventRecord {
   participantIds: string[];
   createdBy: string;
   approvedBy: string | null;
+  /** Firestore server timestamps exposed as ISO strings when available. */
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ExpenseRecord {
@@ -72,6 +75,9 @@ export interface ExpenseRecord {
   splitAmong: string[];
   status: ExpenseStatus;
   createdBy: string;
+  /** Firestore server timestamps exposed as ISO strings when available. */
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TripSnapshot {
