@@ -155,6 +155,17 @@ export interface CreateEventInput {
   priority?: FirestoreEventPriority;
 }
 
+/**
+ * Optional event metadata is stored as an absent Firestore field. `null` is
+ * therefore an explicit clear instruction at the repository boundary, not a
+ * value persisted in the document.
+ */
+export type UpdateEventInput = Omit<Partial<CreateEventInput>, "location" | "assigneeUid" | "priority"> & {
+  location?: string | null;
+  assigneeUid?: string | null;
+  priority?: FirestoreEventPriority | null;
+};
+
 export interface CreateExpenseInput {
   title: string;
   amount: number;
@@ -186,7 +197,7 @@ export interface TripBackend {
   updateResponsibility(tripId: string, uid: string, responsibility: string): Promise<void>;
   removeMember(tripId: string, uid: string): Promise<void>;
   createEvent(tripId: string, input: CreateEventInput, actor: AuthenticatedUser): Promise<EventRecord>;
-  updateEvent(tripId: string, eventId: string, patch: Partial<CreateEventInput>): Promise<void>;
+  updateEvent(tripId: string, eventId: string, patch: UpdateEventInput): Promise<void>;
   approveEvent(tripId: string, eventId: string, status: Exclude<FirestoreEventStatus, "pending">): Promise<void>;
   deleteEvent(tripId: string, eventId: string): Promise<void>;
   reorderEvents(tripId: string, eventIds: string[]): Promise<void>;

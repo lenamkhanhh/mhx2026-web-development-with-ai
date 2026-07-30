@@ -14,6 +14,7 @@ import type {
   TripActivity,
   TripRecord,
   TripSnapshot,
+  UpdateEventInput,
   UserRecord,
 } from "../firebase/contracts";
 
@@ -302,18 +303,13 @@ class LocalDemoTripBackend implements TripBackend {
   async updateEvent(
     tripId: string,
     eventId: string,
-    patch: Partial<CreateEventInput>,
+    patch: UpdateEventInput,
   ): Promise<void> {
     this.updateSnapshot(tripId, (snapshot) => ({
       ...snapshot,
       events: snapshot.events.map((event) =>
         event.id === eventId
-          ? {
-              ...event,
-              ...patch,
-              ...(patch.participantIds ? { participantIds: [...patch.participantIds] } : {}),
-              updatedAt: nowIso(),
-            }
+          ? applyEventPatch(event, patch)
           : event,
       ),
     }));
@@ -513,6 +509,29 @@ class LocalDemoTripBackend implements TripBackend {
     this.idSequence += 1;
     return `${prefix}-${this.idSequence}`;
   }
+}
+
+function applyEventPatch(event: EventRecord, patch: UpdateEventInput): EventRecord {
+  const { assigneeUid, location, priority, participantIds, ...fields } = patch;
+  const next: EventRecord = {
+    ...event,
+    ...fields,
+    ...(participantIds ? { participantIds: [...participantIds] } : {}),
+    updatedAt: nowIso(),
+  };
+  if (location !== undefined) {
+    if (location === null) delete next.location;
+    else next.location = location;
+  }
+  if (assigneeUid !== undefined) {
+    if (assigneeUid === null) delete next.assigneeUid;
+    else next.assigneeUid = assigneeUid;
+  }
+  if (priority !== undefined) {
+    if (priority === null) delete next.priority;
+    else next.priority = priority;
+  }
+  return next;
 }
 
 function createInitialSnapshots(): TripSnapshot[] {

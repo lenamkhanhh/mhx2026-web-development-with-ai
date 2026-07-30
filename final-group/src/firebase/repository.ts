@@ -13,6 +13,7 @@ import {
   collection,
   connectFirestoreEmulator,
   type DocumentData,
+  deleteField,
   deleteDoc,
   doc,
   type Firestore,
@@ -46,6 +47,7 @@ import type {
   TripActivity,
   TripRecord,
   TripSnapshot,
+  UpdateEventInput,
   UserRecord,
 } from "./contracts";
 
@@ -448,7 +450,7 @@ export class FirebaseTripBackend implements TripBackend {
     return event;
   }
 
-  async updateEvent(tripId: string, eventId: string, patch: Partial<CreateEventInput>): Promise<void> {
+  async updateEvent(tripId: string, eventId: string, patch: UpdateEventInput): Promise<void> {
     validateEventPatch(patch);
     const eventRef = doc(this.firestore, "trips", tripId, "events", eventId);
     const existing = await getDoc(eventRef);
@@ -460,11 +462,17 @@ export class FirebaseTripBackend implements TripBackend {
       startAt: patch.startAt ?? current.startAt,
       endAt: patch.endAt ?? current.endAt,
       participantIds: patch.participantIds ?? current.participantIds,
-      location: patch.location ?? current.location,
-      assigneeUid: patch.assigneeUid ?? current.assigneeUid,
-      priority: patch.priority ?? current.priority,
+      location: patch.location === null ? undefined : patch.location ?? current.location,
+      assigneeUid: patch.assigneeUid === null ? undefined : patch.assigneeUid ?? current.assigneeUid,
+      priority: patch.priority === null ? undefined : patch.priority ?? current.priority,
     });
-    await updateDoc(eventRef, { ...patch, updatedAt: serverTimestamp() });
+    await updateDoc(eventRef, {
+      ...patch,
+      ...(patch.location === null ? { location: deleteField() } : {}),
+      ...(patch.assigneeUid === null ? { assigneeUid: deleteField() } : {}),
+      ...(patch.priority === null ? { priority: deleteField() } : {}),
+      updatedAt: serverTimestamp(),
+    });
   }
 
   approveEvent(tripId: string, eventId: string, status: Exclude<FirestoreEventStatus, "pending">): Promise<void> {
@@ -648,15 +656,15 @@ function validateEventInput(input: CreateEventInput): void {
   if (input.priority !== undefined && !EVENT_PRIORITIES.has(input.priority)) throw new FirestoreDataError("Invalid event priority.");
 }
 
-function validateEventPatch(patch: Partial<CreateEventInput>): void {
+function validateEventPatch(patch: UpdateEventInput): void {
   if (patch.title !== undefined && !patch.title.trim()) throw new FirestoreDataError("Event title is required.");
   if (patch.category !== undefined && !EVENT_CATEGORIES.has(patch.category)) throw new FirestoreDataError("Invalid event category.");
   if (patch.startAt !== undefined && !isDateTime(patch.startAt)) throw new FirestoreDataError("Invalid event start time.");
   if (patch.endAt !== undefined && !isDateTime(patch.endAt)) throw new FirestoreDataError("Invalid event end time.");
   if (patch.participantIds !== undefined && patch.participantIds.length === 0) throw new FirestoreDataError("An event needs participants.");
-  if (patch.location !== undefined && !patch.location.trim()) throw new FirestoreDataError("Event location cannot be blank.");
-  if (patch.assigneeUid !== undefined && !patch.assigneeUid.trim()) throw new FirestoreDataError("Event assignee cannot be blank.");
-  if (patch.priority !== undefined && !EVENT_PRIORITIES.has(patch.priority)) throw new FirestoreDataError("Invalid event priority.");
+  if (patch.location !== undefined && patch.location !== null && !patch.location.trim()) throw new FirestoreDataError("Event location cannot be blank.");
+  if (patch.assigneeUid !== undefined && patch.assigneeUid !== null && !patch.assigneeUid.trim()) throw new FirestoreDataError("Event assignee cannot be blank.");
+  if (patch.priority !== undefined && patch.priority !== null && !EVENT_PRIORITIES.has(patch.priority)) throw new FirestoreDataError("Invalid event priority.");
 }
 
 function validateExpenseInput(input: CreateExpenseInput): void {

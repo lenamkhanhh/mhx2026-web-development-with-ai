@@ -5,9 +5,11 @@ import type {
   EventRecord,
   EventSubitem,
   FirestoreEventCategory,
+  FirestoreEventPriority,
   FirestoreEventStatus,
   FirestoreMemberRole,
   MemberRecord,
+  UpdateEventInput,
 } from "../../firebase/contracts";
 import styles from "./EventsWorkbench.module.css";
 
@@ -18,6 +20,7 @@ const STATUS_LABELS: Record<FirestoreEventStatus, string> = {
   pending: "In review", approved: "Open", happening: "In progress", completed: "Done", cancelled: "Cancelled",
 };
 const CATEGORIES = Object.keys(CATEGORY_LABELS) as FirestoreEventCategory[];
+const PRIORITIES: Array<FirestoreEventPriority> = ["low", "medium", "high"];
 type Feedback = { kind: "saving" | "success" | "error"; message: string } | null;
 
 export interface EventsWorkbenchProps {
@@ -32,7 +35,7 @@ export interface EventsWorkbenchProps {
   onDelete: (eventId: string) => Promise<void>;
   onMove: (eventId: string, direction: "up" | "down") => Promise<void>;
   onSync: () => Promise<void>;
-  onUpdate: (eventId: string, patch: Partial<CreateEventInput>) => Promise<void>;
+  onUpdate: (eventId: string, patch: UpdateEventInput) => Promise<void>;
   notes: EventNote[];
   subitems: EventSubitem[];
   onCreateNote: (eventId: string, body: string) => Promise<void>;
@@ -44,7 +47,7 @@ export interface EventsWorkbenchProps {
 
 export function EventsWorkbench(props: EventsWorkbenchProps) {
   const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate, notes, subitems, onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem } = props;
-  const [draft, setDraft] = useState({ title: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[] });
+  const [draft, setDraft] = useState({ title: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[], location: "", assigneeUid: "", priority: "" as FirestoreEventPriority | "" });
   const [composerOpen, setComposerOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<FirestoreEventStatus | "all">("all");
   const [fromDate, setFromDate] = useState("");
@@ -99,12 +102,21 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
       setFeedback({ kind: "error", message: "Provide a title, time range, and at least one participant." });
       return;
     }
-    const input: CreateEventInput = { title, category: draft.category, startAt: new Date(draft.startAt).toISOString(), endAt: new Date(draft.endAt).toISOString(), participantIds: draft.participantIds };
+    const input: CreateEventInput = {
+      title,
+      category: draft.category,
+      startAt: new Date(draft.startAt).toISOString(),
+      endAt: new Date(draft.endAt).toISOString(),
+      participantIds: draft.participantIds,
+      ...(draft.location.trim() ? { location: draft.location.trim() } : {}),
+      ...(draft.assigneeUid ? { assigneeUid: draft.assigneeUid } : {}),
+      ...(draft.priority ? { priority: draft.priority } : {}),
+    };
     setSaving(true);
     setFeedback({ kind: "saving", message: `Adding “${title}” to the timeline…` });
     try {
       await onCreate(input);
-      setDraft({ title: "", category: "activity", startAt: "", endAt: "", participantIds: [] });
+      setDraft({ title: "", category: "activity", startAt: "", endAt: "", participantIds: [], location: "", assigneeUid: "", priority: "" });
       setFeedback({ kind: "success", message: "Item sent. Waiting for the realtime update." });
     } catch (error) {
       setFeedback({ kind: "error", message: rollbackMessage(error, "Unable to save the item.") });
@@ -145,6 +157,9 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
       <label>Category<select disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value as FirestoreEventCategory }))} value={draft.category}>{CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}</select></label>
       <label>Start<input disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, startAt: event.target.value }))} required type="datetime-local" value={draft.startAt} /></label>
       <label>End<input disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, endAt: event.target.value }))} required type="datetime-local" value={draft.endAt} /></label>
+      <label>Location<input disabled={saving} maxLength={160} onChange={(event) => setDraft((current) => ({ ...current, location: event.target.value }))} placeholder="Optional place or address" value={draft.location} /></label>
+      <label>Assignee<select disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, assigneeUid: event.target.value }))} value={draft.assigneeUid}><option value="">Unassigned</option>{members.map((member) => <option key={member.uid} value={member.uid}>{member.displayName}</option>)}</select></label>
+      <label>Priority<select disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, priority: event.target.value as FirestoreEventPriority | "" }))} value={draft.priority}><option value="">Not set</option>{PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select></label>
       <fieldset className={styles.participants} disabled={saving}><legend>Participants</legend>{members.map((member) => <label key={member.uid}><input checked={draft.participantIds.includes(member.uid)} disabled={saving} onChange={() => toggleParticipant(member.uid)} type="checkbox" />{member.displayName}</label>)}</fieldset>
       <button className={styles.createButton} disabled={saving} type="submit">{saving ? "Saving item…" : "Add to timeline"}</button>
     </form> : null}
@@ -208,12 +223,15 @@ interface EventDetailPanelProps {
   onCreateSubitem: (eventId: string, title: string) => Promise<void>;
   onToggleSubitem: (subitemId: string, completed: boolean) => Promise<void>;
   onDeleteSubitem: (subitemId: string) => Promise<void>;
-  onUpdate: (eventId: string, patch: Partial<CreateEventInput>) => Promise<void>;
+  onUpdate: (eventId: string, patch: UpdateEventInput) => Promise<void>;
 }
 
 function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, event, members, notes, subitems, onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem, onUpdate }: EventDetailPanelProps) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(event.title);
+  const [location, setLocation] = useState(event.location ?? "");
+  const [assigneeUid, setAssigneeUid] = useState(event.assigneeUid ?? "");
+  const [priority, setPriority] = useState<FirestoreEventPriority | "">(event.priority ?? "");
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [activeTab, setActiveTab] = useState<"details" | "notes" | "subitems">("details");
@@ -227,6 +245,9 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
 
   function beginEdit() {
     setTitle(event.title);
+    setLocation(event.location ?? "");
+    setAssigneeUid(event.assigneeUid ?? "");
+    setPriority(event.priority ?? "");
     setFeedback(null);
     setEditing(true);
   }
@@ -238,14 +259,21 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
       setFeedback({ kind: "error", message: "Item title is required." });
       return;
     }
-    if (nextTitle === event.title) {
+    const nextLocation = location.trim();
+    const patch: UpdateEventInput = {
+      ...(nextTitle !== event.title ? { title: nextTitle } : {}),
+      ...(nextLocation !== (event.location ?? "") ? { location: nextLocation || null } : {}),
+      ...(assigneeUid !== (event.assigneeUid ?? "") ? { assigneeUid: assigneeUid || null } : {}),
+      ...(priority !== (event.priority ?? "") ? { priority: priority || null } : {}),
+    };
+    if (Object.keys(patch).length === 0) {
       setEditing(false);
       return;
     }
     setSaving(true);
     setFeedback({ kind: "saving", message: "Saving changes…" });
     try {
-      await onUpdate(event.id, { title: nextTitle });
+      await onUpdate(event.id, patch);
       setEditing(false);
       setFeedback({ kind: "success", message: "Changes sent. Waiting for the realtime update." });
     } catch (error) {
@@ -309,11 +337,17 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
       <div><dt>Category</dt><dd>{CATEGORY_LABELS[event.category]}</dd></div>
       <div><dt>Time</dt><dd>{formatDateTime(event.startAt)} — {formatDateTime(event.endAt)}</dd></div>
       <div><dt>Participants</dt><dd>{participants}</dd></div>
+      <div><dt>Location</dt><dd>{event.location ?? "Not set"}</dd></div>
+      <div><dt>Assignee</dt><dd>{event.assigneeUid ? members.find((member) => member.uid === event.assigneeUid)?.displayName ?? event.assigneeUid : "Unassigned"}</dd></div>
+      <div><dt>Priority</dt><dd>{event.priority ?? "Not set"}</dd></div>
       <div><dt>Edit access</dt><dd>{canEdit ? "You can update this item." : "Only the lead or author of a pending item can edit it."}</dd></div>
     </dl>
     {feedback ? <p className={`${styles.detailFeedback} ${styles[feedback.kind]}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.message}</p> : null}
     {canEdit ? editing ? <form className={styles.editForm} onSubmit={(eventForm) => void save(eventForm)}>
       <label>Activity title<input aria-label="Activity title" disabled={saving} maxLength={120} onChange={(eventInput) => setTitle(eventInput.target.value)} required value={title} /></label>
+      <label>Location<input aria-label="Location" disabled={saving} maxLength={160} onChange={(eventInput) => setLocation(eventInput.target.value)} value={location} /></label>
+      <label>Assignee<select aria-label="Assignee" disabled={saving} onChange={(eventInput) => setAssigneeUid(eventInput.target.value)} value={assigneeUid}><option value="">Unassigned</option>{members.map((member) => <option key={member.uid} value={member.uid}>{member.displayName}</option>)}</select></label>
+      <label>Priority<select aria-label="Priority" disabled={saving} onChange={(eventInput) => setPriority(eventInput.target.value as FirestoreEventPriority | "")} value={priority}><option value="">Not set</option>{PRIORITIES.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
       <div className={styles.detailActions}>
         <button className={styles.saveButton} disabled={saving} type="submit">{saving ? "Saving changes…" : "Save changes"}</button>
         <button disabled={saving} onClick={() => { setEditing(false); setFeedback(null); }} type="button">Cancel edit</button>

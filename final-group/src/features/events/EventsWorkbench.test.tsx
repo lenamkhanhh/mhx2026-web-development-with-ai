@@ -211,7 +211,7 @@ describe("EventsWorkbench", () => {
     const { container, props } = renderWorkbench({ onCreate: vi.fn(() => save.promise) });
     await openComposer(user);
     const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
-    await user.type(screen.getByRole("textbox"), "Sunrise");
+    await user.type(screen.getByLabelText("Item title"), "Sunrise");
     await user.selectOptions(screen.getByRole("combobox", { name: "Category" }), "transport");
     await user.type(dateInputs[0], "2026-07-30T06:00"); await user.type(dateInputs[1], "2026-07-30T07:00");
     await user.click(screen.getAllByRole("checkbox")[0]); await user.click(container.querySelector('button[type="submit"]')!);
@@ -225,7 +225,7 @@ describe("EventsWorkbench", () => {
       participantIds: ["lead-1"],
     });
     save.resolve(); await waitFor(() => expect(props.onCreate).toHaveBeenCalledTimes(1));
-    expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+    expect((screen.getByLabelText("Item title") as HTMLInputElement).value).toBe("");
   });
 
   it("locks every composer control while an event save is pending", async () => {
@@ -265,11 +265,11 @@ describe("EventsWorkbench", () => {
     const user = userEvent.setup(); const { container, props } = renderWorkbench({ onCreate: vi.fn().mockRejectedValue(new Error("offline")) });
     await openComposer(user);
     const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
-    await user.type(screen.getByRole("textbox"), "Night market");
+    await user.type(screen.getByLabelText("Item title"), "Night market");
     await user.type(dateInputs[0], "2026-07-30T18:00"); await user.type(dateInputs[1], "2026-07-30T19:00");
     await user.click(screen.getAllByRole("checkbox")[0]); await user.click(container.querySelector('button[type="submit"]')!);
     await waitFor(() => expect(screen.getByRole("alert").textContent?.length).toBeGreaterThan(0));
-    expect((screen.getByRole("textbox") as HTMLInputElement).value.length).toBeGreaterThan(0); expect(props.onCreate).toHaveBeenCalledTimes(1);
+    expect((screen.getByLabelText("Item title") as HTMLInputElement).value.length).toBeGreaterThan(0); expect(props.onCreate).toHaveBeenCalledTimes(1);
   });
 
   it("applies an optimistic lead-only move then rolls back after rejected reorder", async () => {
