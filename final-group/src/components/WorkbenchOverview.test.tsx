@@ -24,6 +24,14 @@ const snapshot: TripSnapshot = {
       responsibility: "Lịch trình",
       isDemo: false,
     },
+    {
+      uid: "user-2",
+      displayName: "Minh",
+      email: "minh@example.com",
+      role: "member",
+      responsibility: "Chi phí",
+      isDemo: false,
+    },
   ],
   events: [
     {
@@ -38,12 +46,34 @@ const snapshot: TripSnapshot = {
       createdBy: "user-1",
       approvedBy: "user-1",
     },
+    {
+      id: "event-2",
+      order: 1,
+      title: "Tham quan vườn hoa",
+      category: "activity",
+      startAt: "2026-08-01T10:00:00.000Z",
+      endAt: "2026-08-01T11:00:00.000Z",
+      status: "pending",
+      participantIds: ["user-1", "user-2"],
+      createdBy: "user-2",
+      approvedBy: null,
+    },
   ],
-  expenses: [],
+  expenses: [
+    {
+      id: "expense-1",
+      title: "Khách sạn",
+      amount: 1_800_000,
+      paidBy: "user-1",
+      splitAmong: ["user-1", "user-2"],
+      status: "settled",
+      createdBy: "user-1",
+    },
+  ],
 };
 
 describe("WorkbenchOverview", () => {
-  it("summarizes the current trip and exposes next actions", () => {
+  it("renders a table-first command center using real trip data", () => {
     const onOpenSchedule = vi.fn();
     const onOpenExpenses = vi.fn();
     render(
@@ -55,11 +85,34 @@ describe("WorkbenchOverview", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Đà Lạt cuối tuần" })).toBeTruthy();
-    expect(screen.getByText("Nhận phòng")).toBeTruthy();
-    expect(screen.getByText("1 hoạt động")).toBeTruthy();
-    expect(screen.getByText("1 thành viên")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Mở lịch trình" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Thêm khoản chi" })).toBeTruthy();
+    const table = screen.getByRole("table", { name: "Danh sách hoạt động" });
+    expect(table).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Hoạt động" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Ngày & giờ" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Người tham gia" })).toBeTruthy();
+    expect(within(table).getByText("Nhận phòng")).toBeTruthy();
+    expect(within(table).getByText("Tham quan vườn hoa")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Đang mở 1" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Chờ duyệt 1" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Hoàn tất 0" })).toBeTruthy();
+  });
+
+  it("provides a contextual right rail for pending work and real expenses", () => {
+    render(
+      <WorkbenchOverview
+        currentUserId="user-1"
+        onOpenExpenses={vi.fn()}
+        onOpenSchedule={vi.fn()}
+        snapshot={snapshot}
+      />,
+    );
+
+    const context = screen.getByRole("complementary", { name: "Ngữ cảnh chuyến đi" });
+    expect(within(context).getByText("Hàng chờ duyệt")).toBeTruthy();
+    expect(within(context).getByText("Tham quan vườn hoa")).toBeTruthy();
+    expect(within(context).getByText("Tổng chi")).toBeTruthy();
+    expect(within(context).getAllByText("1.800.000 ₫").length).toBeGreaterThan(0);
+    expect(within(context).getByText("Chi gần đây")).toBeTruthy();
+    expect(within(context).getByText("Khách sạn")).toBeTruthy();
   });
 });
