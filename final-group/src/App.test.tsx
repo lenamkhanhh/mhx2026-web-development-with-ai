@@ -65,13 +65,13 @@ describe("TripFlow App composition", () => {
     );
 
     expect(screen.getByTestId("local-demo-notice").textContent).toContain(
-      "Dữ liệu minh họa local",
+      "Local demo data",
     );
   });
 
   it("renders persisted labels, expense actions, and the remaining fail-closed control", async () => {
     await render(<App backend={makeBackend(user, snapshot.trip, [snapshot.trip], snapshot)} />);
-    expect(container?.textContent).toContain("Đang diễn ra");
+    expect(container?.textContent).toContain("In progress");
 
     await openWorkbenchView("schedule");
     expect(screen.getByTestId("events-workbench")).toBeTruthy();
@@ -143,12 +143,12 @@ describe("TripFlow App composition", () => {
 
     await render(<App backend={backend} />);
     await actor.selectOptions(
-      screen.getByLabelText("Chuyến đi đang mở"),
+      screen.getByLabelText("Current trip"),
       secondTrip.id,
     );
 
     await waitFor(() => {
-      expect(container?.textContent).toContain("Đang tải bảng điều khiển chuyến đi");
+      expect(container?.textContent).toContain("Loading the trip workbench");
     });
     expect(container?.textContent).not.toContain("Nhận phòng");
   });

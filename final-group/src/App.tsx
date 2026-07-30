@@ -19,19 +19,19 @@ import type {
 } from "./firebase/contracts";
 
 const CATEGORY_LABELS: Record<FirestoreEventCategory, string> = {
-  transport: "Di chuyển",
-  stay: "Lưu trú",
-  food: "Ăn uống",
-  activity: "Hoạt động",
-  other: "Khác",
+  transport: "Transport",
+  stay: "Stay",
+  food: "Food & drinks",
+  activity: "Activity",
+  other: "Other",
 };
 
 const STATUS_LABELS: Record<FirestoreEventStatus, string> = {
-  pending: "Chờ duyệt",
-  approved: "Đã duyệt",
-  happening: "Đang diễn ra",
-  completed: "Đã hoàn thành",
-  cancelled: "Đã huỷ",
+  pending: "In review",
+  approved: "Open",
+  happening: "In progress",
+  completed: "Done",
+  cancelled: "Cancelled",
 };
 
 export function categoryLabel(category: FirestoreEventCategory): string {
@@ -80,11 +80,11 @@ export function App({ backend, demoMode = false }: AppProps) {
         setProfile({
           uid: nextUser.uid,
           email: nextUser.email ?? "",
-          displayName: nextUser.displayName ?? nextUser.email ?? "Người dùng",
+          displayName: nextUser.displayName ?? nextUser.email ?? "User",
           tripIds: [],
         });
       } catch (cause) {
-        if (active) setError(toMessage(cause, "Không thể tải hồ sơ người dùng."));
+        if (active) setError(toMessage(cause, "Unable to load the user profile."));
       }
     }
 
@@ -128,7 +128,7 @@ export function App({ backend, demoMode = false }: AppProps) {
         // stream becomes unavailable, stop rendering the stale snapshot.
         setSnapshot(null);
         setTripId(null);
-        setError(toMessage(cause, "Không thể đồng bộ chuyến đi."));
+        setError(toMessage(cause, "Unable to sync this trip."));
       },
     );
   }, [backend, tripId]);
@@ -182,7 +182,7 @@ export function App({ backend, demoMode = false }: AppProps) {
     try {
       await backend.logout();
     } catch (cause) {
-      setError(toMessage(cause, "Không thể đăng xuất."));
+      setError(toMessage(cause, "Unable to sign out."));
     }
   }
 
@@ -191,7 +191,7 @@ export function App({ backend, demoMode = false }: AppProps) {
     setTripId(created.id);
     setActiveView("overview");
     setError("");
-    setNotice("Đã tạo chuyến đi. Đang đồng bộ dữ liệu nhóm.");
+    setNotice("Trip created. Syncing the team workspace.");
   }
 
   function handleTripChange(nextTripId: string) {
@@ -213,9 +213,9 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!eventFeature) return;
     try {
       await eventFeature.create(input);
-      setNotice("Đã gửi hoạt động để đồng bộ.");
+      setNotice("Item sent for sync.");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể tạo hoạt động.");
+      throwMutationFailure(cause, "Unable to create the item.");
     }
   }
 
@@ -223,10 +223,10 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!eventFeature) return;
     try {
       await eventFeature.update(eventId, patch);
-      setNotice("Đã gửi thay đổi hoạt động để đồng bộ.");
+      setNotice("Item changes sent for sync.");
       setError("");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể cập nhật hoạt động.");
+      throwMutationFailure(cause, "Unable to update the item.");
     }
   }
 
@@ -234,9 +234,9 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!eventFeature) return;
     try {
       await eventFeature.approve(eventId);
-      setNotice("Đã duyệt hoạt động.");
+      setNotice("Item approved.");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể duyệt hoạt động.");
+      throwMutationFailure(cause, "Unable to approve the item.");
     }
   }
 
@@ -244,9 +244,9 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!eventFeature) return;
     try {
       await eventFeature.cancel(eventId);
-      setNotice("Đã huỷ hoạt động.");
+      setNotice("Item cancelled.");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể huỷ hoạt động.");
+      throwMutationFailure(cause, "Unable to cancel the item.");
     }
   }
 
@@ -254,9 +254,9 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!eventFeature) return;
     try {
       await eventFeature.delete(eventId);
-      setNotice("Đã xoá hoạt động.");
+      setNotice("Item deleted.");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể xoá hoạt động.");
+      throwMutationFailure(cause, "Unable to delete the item.");
     }
   }
 
@@ -264,9 +264,9 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!eventFeature) return;
     try {
       await eventFeature.syncStatuses();
-      setNotice("Đã yêu cầu đồng bộ trạng thái lịch trình.");
+      setNotice("Timeline status sync requested.");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể đồng bộ trạng thái.");
+      throwMutationFailure(cause, "Unable to sync statuses.");
     }
   }
 
@@ -274,10 +274,10 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!eventFeature) return;
     try {
       await eventFeature.reorder(eventId, direction);
-      setNotice("Đã cập nhật thứ tự lịch trình.");
+      setNotice("Timeline order updated.");
       setError("");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể đổi thứ tự lịch trình.");
+      throwMutationFailure(cause, "Unable to reorder the timeline.");
     }
   }
 
@@ -285,10 +285,10 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!expenseFeature) return;
     try {
       await expenseFeature.create(input);
-      setNotice("Đã thêm khoản chi.");
+      setNotice("Expense added.");
       setError("");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể thêm khoản chi.");
+      throwMutationFailure(cause, "Unable to add the expense.");
     }
   }
 
@@ -296,10 +296,10 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!expenseFeature) return;
     try {
       await expenseFeature.update(expenseId, patch);
-      setNotice("Đã gửi thay đổi khoản chi để đồng bộ.");
+      setNotice("Expense changes sent for sync.");
       setError("");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể cập nhật khoản chi.");
+      throwMutationFailure(cause, "Unable to update the expense.");
     }
   }
 
@@ -307,10 +307,10 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!expenseFeature) return;
     try {
       await expenseFeature.delete(expenseId);
-      setNotice("Đã xoá khoản chi.");
+      setNotice("Expense deleted.");
       setError("");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể xoá khoản chi.");
+      throwMutationFailure(cause, "Unable to delete the expense.");
     }
   }
 
@@ -318,14 +318,14 @@ export function App({ backend, demoMode = false }: AppProps) {
     if (!expenseFeature) return;
     try {
       await expenseFeature.settle(expenseId);
-      setNotice("Đã chốt khoản chi.");
+      setNotice("Expense settled.");
       setError("");
     } catch (cause) {
-      throwMutationFailure(cause, "Không thể chốt khoản chi.");
+      throwMutationFailure(cause, "Unable to settle the expense.");
     }
   }
 
-  if (loading) return <ScreenMessage title="Đang kiểm tra phiên đăng nhập…" />;
+  if (loading) return <ScreenMessage title="Checking your session…" />;
   if (!user || !profile) {
     return <AuthFlow backend={backend} onAuthenticated={(session) => void handleAuthenticated(session)} />;
   }
@@ -339,12 +339,12 @@ export function App({ backend, demoMode = false }: AppProps) {
     );
   }
   if (!selectedSnapshot || !currentMember || !role || !eventFeature || !membersFeature || !expenseFeature) {
-    return <ScreenMessage title="Đang tải bảng điều khiển chuyến đi…" />;
+    return <ScreenMessage title="Loading the trip workbench…" />;
   }
   const shareTrip = selectedSnapshot.trip;
 
   async function handleShareTrip() {
-    const shareText = `${shareTrip.name} · Mã tham gia ${shareTrip.joinCode}`;
+    const shareText = `${shareTrip.name} · Join code ${shareTrip.joinCode}`;
     try {
       if (navigator.share) {
         await navigator.share({
@@ -357,11 +357,11 @@ export function App({ backend, demoMode = false }: AppProps) {
       } else {
         throw new Error("Clipboard unavailable");
       }
-      setNotice("Đã chuẩn bị thông tin chia sẻ chuyến đi.");
+      setNotice("Trip sharing information is ready.");
       setError("");
     } catch (cause) {
       if (cause instanceof DOMException && cause.name === "AbortError") return;
-      setError("Không thể chia sẻ tự động. Bạn có thể sao chép mã trong màn Thành viên.");
+      setError("Unable to share automatically. You can copy the join code in Members.");
     }
   }
 
@@ -427,8 +427,8 @@ export function App({ backend, demoMode = false }: AppProps) {
       role={role}
       topbarAction={
         <label className="workbench-trip-switcher">
-          <span>Chuyến đi</span>
-          <select aria-label="Chuyến đi đang mở" value={tripId} onChange={(event) => handleTripChange(event.target.value)}>
+          <span>Trip</span>
+          <select aria-label="Current trip" value={tripId} onChange={(event) => handleTripChange(event.target.value)}>
             {trips.map((trip) => <option key={trip.id} value={trip.id}>{trip.name}</option>)}
           </select>
         </label>
@@ -438,8 +438,8 @@ export function App({ backend, demoMode = false }: AppProps) {
       <div className="workbench-screen-stack">
         {demoMode ? (
           <p className="local-demo-notice" data-testid="local-demo-notice" role="status">
-            <strong>Dữ liệu minh họa local</strong>
-            <span> Chỉ dùng để trải nghiệm; mọi thay đổi sẽ reset khi tải lại.</span>
+            <strong>Local demo data</strong>
+            <span> For preview only; every change resets on reload.</span>
           </p>
         ) : null}
         {error ? <p className="app-alert error" role="alert">{error}</p> : null}
