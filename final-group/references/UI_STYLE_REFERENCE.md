@@ -1,8 +1,8 @@
 # TripFlow Workbench UI style reference
 
-Status: approved visual reference from the user on 2026-07-29.
+Status: approved visual reference from the user on 2026-07-29 and 2026-07-30.
 
-The five reference captures in [`ui/`](./ui/) are the source of truth for the
+The six reference captures in [`ui/`](./ui/) are the source of truth for the
 TripFlow final-group interface:
 
 1. [`01-timeline-workbench.png`](./ui/01-timeline-workbench.png) — timeline
@@ -11,6 +11,8 @@ TripFlow final-group interface:
 4. [`04-auth-workbench.png`](./ui/04-auth-workbench.png) — authentication
 5. [`05-onboarding-workbench.png`](./ui/05-onboarding-workbench.png) —
    first-trip onboarding
+6. [`06-overview-workbench.png`](./ui/06-overview-workbench.png) — overview
+   dashboard
 
 ## Design read
 
@@ -31,6 +33,9 @@ planning and operating a real trip.
   review/pending, blue for open/selected, red only for negative balances.
 - Information density comes from tables, timelines, metadata rows, compact
   cards, right-side detail panels, and visible audit/activity context.
+- Overview is a table-first command center: status counters above the table,
+  sortable/filterable itinerary rows in the center, activity feed at right,
+  and expense summary/recent expenses stacked below it.
 - Icons are small line icons with consistent weight; they support scanning and
   must not become decoration.
 - Auth and onboarding use the same system: white bordered cards, Vietnamese

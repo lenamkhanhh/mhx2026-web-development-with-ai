@@ -35,7 +35,7 @@ When implementing from a selected generated mock, treat that image as the source
 
 ## TripFlow final-group decisions
 
-- UI reference captures (2026-07-29): the user approved the five TripFlow
+- UI reference captures (2026-07-29, updated 2026-07-30): the user approved the six TripFlow
   Workbench renders stored under `final-group/references/ui/` as the visual
   source of truth. Preserve their dense operations-workbench language: warm
   light field, compact charcoal sidebar, oversized dark editorial headings,
