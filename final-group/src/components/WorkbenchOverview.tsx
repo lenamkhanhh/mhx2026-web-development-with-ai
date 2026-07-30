@@ -32,11 +32,11 @@ const CATEGORY_META: Record<
   FirestoreEventCategory,
   { icon: ComponentType<{ "aria-hidden"?: boolean; size?: number }>; label: string }
 > = {
-  transport: { icon: AirplaneTilt, label: "Di chuyển" },
-  stay: { icon: Bed, label: "Lưu trú" },
-  food: { icon: ForkKnife, label: "Ăn uống" },
-  activity: { icon: MapPinLine, label: "Hoạt động" },
-  other: { icon: SquaresFour, label: "Khác" },
+  transport: { icon: AirplaneTilt, label: "Transport" },
+  stay: { icon: Bed, label: "Stay" },
+  food: { icon: ForkKnife, label: "Food & drinks" },
+  activity: { icon: MapPinLine, label: "Activity" },
+  other: { icon: SquaresFour, label: "Other" },
 };
 
 export function WorkbenchOverview({
@@ -78,56 +78,56 @@ export function WorkbenchOverview({
 
   return (
     <div className="workbench-overview">
-      <section className="workbench-overview-main" aria-label="Trung tâm điều hành chuyến đi">
+      <section className="workbench-overview-main" aria-label="Trip operations center">
         <div className="workbench-overview-toolbar">
-          <div className="workbench-status-counters" aria-label="Bộ lọc trạng thái">
+          <div className="workbench-status-counters" aria-label="Status filters">
             <StatusFilter
               active={filter === "open"}
               count={counts.open}
-              label="Đang mở"
+              label="Open"
               onClick={() => setFilter(filter === "open" ? "all" : "open")}
               tone="open"
             />
             <StatusFilter
               active={filter === "pending"}
               count={counts.pending}
-              label="Chờ duyệt"
+              label="In review"
               onClick={() => setFilter(filter === "pending" ? "all" : "pending")}
               tone="pending"
             />
             <StatusFilter
               active={filter === "done"}
               count={counts.done}
-              label="Hoàn tất"
+              label="Done"
               onClick={() => setFilter(filter === "done" ? "all" : "done")}
               tone="done"
             />
           </div>
           <div className="workbench-table-toolbar-actions">
             <label className="workbench-sort-control">
-              <span>Sắp xếp</span>
-              <select aria-label="Sắp xếp hoạt động" onChange={(event) => setSort(event.target.value as OverviewSort)} value={sort}>
-                <option value="time-asc">Theo thời gian</option>
-                <option value="time-desc">Mới nhất trước</option>
-                <option value="title">Theo tên</option>
+              <span>Sort</span>
+              <select aria-label="Sort itinerary" onChange={(event) => setSort(event.target.value as OverviewSort)} value={sort}>
+                <option value="time-asc">Time ascending</option>
+                <option value="time-desc">Newest first</option>
+                <option value="title">Title</option>
               </select>
             </label>
             <button className="workbench-table-add" onClick={() => onOpenSchedule()} type="button">
-              <Plus aria-hidden="true" size={16} /> Thêm hoạt động
+              <Plus aria-hidden="true" size={16} /> Add item
             </button>
           </div>
         </div>
 
         <div className="workbench-table-frame">
-          <table aria-label="Danh sách hoạt động" className="workbench-table">
+          <table aria-label="Trip itinerary" className="workbench-table">
             <thead>
               <tr>
-                <th aria-label="Số thứ tự">#</th>
-                <th>Hoạt động</th>
-                <th>Ngày &amp; giờ</th>
-                <th>Người tham gia</th>
-                <th>Trạng thái</th>
-                <th aria-label="Thao tác" />
+                <th aria-label="Row number">#</th>
+                <th>Item</th>
+                <th>Date &amp; time</th>
+                <th>Participants</th>
+                <th>Status</th>
+                <th aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -153,7 +153,7 @@ export function WorkbenchOverview({
                       <span className="workbench-date-cell">{formatEventDate(event.startAt)}</span>
                     </td>
                     <td>
-                      <div className="workbench-participants" aria-label={`${participants.length} người tham gia`}>
+                      <div className="workbench-participants" aria-label={`${participants.length} participants`}>
                         {participants.slice(0, 3).map((member) => (
                           <span aria-label={member.displayName} className="workbench-mini-avatar" key={member.uid}>
                             {initials(member.displayName)}
@@ -165,7 +165,7 @@ export function WorkbenchOverview({
                     <td><EventStatus status={event.status} /></td>
                     <td>
                       <button
-                        aria-label={`Mở ${event.title} trong lịch trình`}
+                        aria-label={`Open ${event.title} in Timeline`}
                         className="workbench-row-action"
                         onClick={() => onOpenSchedule(event.id)}
                         type="button"
@@ -178,27 +178,27 @@ export function WorkbenchOverview({
               }) : (
                 <tr>
                   <td className="workbench-table-empty" colSpan={6}>
-                    Không có hoạt động ở trạng thái này.
+                    No items match this status.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
           <div className="workbench-table-footer">
-            <button onClick={() => onOpenSchedule()} type="button"><Plus aria-hidden="true" size={15} /> Thêm hoạt động</button>
-            <span>{visibleEvents.length} mục</span>
+            <button onClick={() => onOpenSchedule()} type="button"><Plus aria-hidden="true" size={15} /> Add item</button>
+            <span>{visibleEvents.length} items</span>
             <button className="workbench-table-reorder-link" onClick={() => onOpenSchedule()} type="button">
-              <ArrowsDownUp aria-hidden="true" size={14} /> Sắp xếp lại ở Lịch trình
+              <ArrowsDownUp aria-hidden="true" size={14} /> Reorder in Timeline
             </button>
           </div>
         </div>
       </section>
 
-      <aside aria-label="Ngữ cảnh chuyến đi" className="workbench-context-rail">
+      <aside aria-label="Trip context" className="workbench-context-rail">
         <ContextPanel
-          action={pendingEvents.length ? "Mở lịch trình" : undefined}
+          action={pendingEvents.length ? "Open Timeline" : undefined}
           onAction={pendingEvents.length ? onOpenSchedule : undefined}
-          title="Hàng chờ duyệt"
+          title="Review queue"
         >
           {pendingEvents.length ? (
             <ul className="workbench-context-list">
@@ -212,12 +212,12 @@ export function WorkbenchOverview({
           ) : (
             <div className="workbench-context-empty">
               <Check aria-hidden="true" size={17} />
-              <span>Mọi đề xuất đã được xử lý.</span>
+              <span>All proposed items have been reviewed.</span>
             </div>
           )}
         </ContextPanel>
 
-        <ContextPanel action="Xem chi phí" onAction={onOpenExpenses} title="Tổng chi">
+        <ContextPanel action="View expenses" onAction={onOpenExpenses} title="Expense summary">
           <div className="workbench-expense-total">
             <strong>{formatVnd(totalExpenses)}</strong>
             <small>{snapshot.expenses.length} khoản chi</small>
@@ -226,12 +226,12 @@ export function WorkbenchOverview({
             <span style={{ width: `${totalExpenses ? Math.round((settledExpenses / totalExpenses) * 100) : 0}%` }} />
           </div>
           <dl className="workbench-expense-breakdown">
-            <div><dt>Đã đối soát</dt><dd>{formatVnd(settledExpenses)}</dd></div>
-            <div><dt>Đang chờ</dt><dd>{formatVnd(pendingExpenses)}</dd></div>
+            <div><dt>Settled</dt><dd>{formatVnd(settledExpenses)}</dd></div>
+            <div><dt>Pending</dt><dd>{formatVnd(pendingExpenses)}</dd></div>
           </dl>
         </ContextPanel>
 
-        <ContextPanel action="Xem tất cả" onAction={onOpenExpenses} title="Chi gần đây">
+        <ContextPanel action="View all" onAction={onOpenExpenses} title="Recent expenses">
           {recentExpenses.length ? (
             <ul className="workbench-context-list expenses">
               {recentExpenses.map((expense) => (
@@ -241,21 +241,21 @@ export function WorkbenchOverview({
                   </span>
                   <span>
                     <strong>{expense.title}</strong>
-                    <small>{memberById.get(expense.paidBy)?.displayName ?? "Thành viên"}</small>
+                    <small>{memberById.get(expense.paidBy)?.displayName ?? "Member"}</small>
                   </span>
                   <b>{formatVnd(expense.amount)}</b>
                 </li>
               ))}
             </ul>
-          ) : <p className="workbench-context-note">Chưa có khoản chi nào.</p>}
+          ) : <p className="workbench-context-note">No expenses yet.</p>}
           <button className="workbench-context-create" onClick={onOpenExpenses} type="button">
-            <Plus aria-hidden="true" size={15} /> Thêm khoản chi
+            <Plus aria-hidden="true" size={15} /> Add expense
           </button>
         </ContextPanel>
 
         <div className="workbench-current-role">
           <UsersThree aria-hidden="true" size={16} />
-          <span>{currentMember?.role === "lead" ? "Bạn đang điều hành chuyến đi" : "Bạn là thành viên chuyến đi"}</span>
+          <span>{currentMember?.role === "lead" ? "You lead this trip" : "You are a trip member"}</span>
         </div>
       </aside>
     </div>
@@ -316,7 +316,7 @@ function EventStatus({ status }: { status: EventRecord["status"] }) {
 }
 
 function formatEventDate(value: string): string {
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
@@ -332,14 +332,14 @@ function initials(value: string): string {
 function statusLabel(status: EventRecord["status"]): string {
   switch (status) {
     case "pending":
-      return "Chờ duyệt";
+      return "In review";
     case "approved":
-      return "Đang mở";
+      return "Open";
     case "happening":
-      return "Đang diễn ra";
+      return "In progress";
     case "completed":
-      return "Hoàn tất";
+      return "Done";
     case "cancelled":
-      return "Đã huỷ";
+      return "Cancelled";
   }
 }
