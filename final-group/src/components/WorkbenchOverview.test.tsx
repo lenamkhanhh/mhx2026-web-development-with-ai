@@ -48,6 +48,7 @@ const snapshot: TripSnapshot = {
       participantIds: ["user-1"],
       createdBy: "user-1",
       approvedBy: "user-1",
+      createdAt: "2026-08-01T07:30:00.000Z",
     },
     {
       id: "event-2",
@@ -60,6 +61,7 @@ const snapshot: TripSnapshot = {
       participantIds: ["user-1", "user-2"],
       createdBy: "user-2",
       approvedBy: null,
+      createdAt: "2026-08-01T07:45:00.000Z",
     },
   ],
   expenses: [
@@ -71,6 +73,7 @@ const snapshot: TripSnapshot = {
       splitAmong: ["user-1", "user-2"],
       status: "settled",
       createdBy: "user-1",
+      createdAt: "2026-08-01T07:50:00.000Z",
     },
   ],
 };
@@ -100,7 +103,7 @@ describe("WorkbenchOverview", () => {
     expect(screen.getByRole("button", { name: "Done 0" })).toBeTruthy();
   });
 
-  it("provides a contextual right rail for pending work and real expenses", () => {
+  it("provides a truthful activity feed and real expense context", () => {
     render(
       <WorkbenchOverview
         currentUserId="user-1"
@@ -111,8 +114,8 @@ describe("WorkbenchOverview", () => {
     );
 
     const context = screen.getByRole("complementary", { name: "Trip context" });
-    expect(within(context).getByText("Review queue")).toBeTruthy();
-    expect(within(context).getByText("Tham quan vườn hoa")).toBeTruthy();
+    expect(within(context).getByText("Activity feed")).toBeTruthy();
+    expect(within(context).getByText("Added item “Nhận phòng”")).toBeTruthy();
     expect(within(context).getByText("Expense summary")).toBeTruthy();
     expect(within(context).getAllByText("1.800.000 ₫").length).toBeGreaterThan(0);
     expect(within(context).getByText("Recent expenses")).toBeTruthy();
