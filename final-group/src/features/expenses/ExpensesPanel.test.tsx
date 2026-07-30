@@ -29,8 +29,8 @@ describe("ExpensesPanel", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Chi phí & chia tiền" })).toBeTruthy();
-    expect(screen.getByLabelText("Bảng công nợ")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Expenses & settlement" })).toBeTruthy();
+    expect(screen.getByLabelText("Balance table")).toBeTruthy();
     expect(screen.getByText("+100.000 ₫")).toBeTruthy();
     expect(screen.getByText("−100.000 ₫")).toBeTruthy();
     expect(screen.getByText("Xe di chuyển")).toBeTruthy();
@@ -65,10 +65,10 @@ describe("ExpensesPanel", () => {
       />,
     );
 
-    await actor.click(screen.getByRole("button", { name: "Thêm khoản chi" }));
-    await actor.type(screen.getByLabelText("Tên khoản chi"), "Ăn tối");
-    await actor.type(screen.getByLabelText("Số tiền (VND)"), "300000");
-    await actor.click(screen.getByRole("button", { name: "Lưu khoản chi" }));
+    await actor.click(screen.getByRole("button", { name: "Add expense" }));
+    await actor.type(screen.getByLabelText("Expense title"), "Ăn tối");
+    await actor.type(screen.getByLabelText("Amount (VND)"), "300000");
+    await actor.click(screen.getByRole("button", { name: "Save expense" }));
 
     expect(onCreate).toHaveBeenCalledWith({
       title: "Ăn tối",
@@ -77,11 +77,11 @@ describe("ExpensesPanel", () => {
       splitAmong: ["lead-1", "member-1"],
     });
 
-    await actor.click(screen.getByRole("button", { name: "Chốt Xe di chuyển" }));
-    expect(screen.getByRole("dialog", { name: "Xác nhận chốt khoản chi" })).toBeTruthy();
-    expect(screen.getByText(/không phải bằng chứng chuyển tiền/i)).toBeTruthy();
+    await actor.click(screen.getByRole("button", { name: "Settle Xe di chuyển" }));
+    expect(screen.getByRole("dialog", { name: "Confirm expense settlement" })).toBeTruthy();
+    expect(screen.getByText(/not proof of a money transfer/i)).toBeTruthy();
     expect(onSettle).not.toHaveBeenCalled();
-    await actor.click(screen.getByRole("button", { name: "Xác nhận chốt" }));
+    await actor.click(screen.getByRole("button", { name: "Confirm settlement" }));
     expect(onSettle).toHaveBeenCalledWith("expense-1");
   });
 
@@ -120,18 +120,18 @@ describe("ExpensesPanel", () => {
       />,
     );
 
-    expect(screen.getByRole("region", { name: "Chỉ số chi phí" })).toBeTruthy();
-    expect(screen.getByRole("table", { name: "Bảng khoản chi" })).toBeTruthy();
-    expect(screen.getByRole("complementary", { name: "Gợi ý thanh toán" }).textContent).toContain(
-      "Minh trả Khánh",
+    expect(screen.getByRole("region", { name: "Expense metrics" })).toBeTruthy();
+    expect(screen.getByRole("table", { name: "Expense table" })).toBeTruthy();
+    expect(screen.getByRole("complementary", { name: "Settlement suggestions" }).textContent).toContain(
+      "Minh pays Khánh",
     );
-    expect(screen.getByRole("button", { name: "Xuất CSV" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeTruthy();
 
     await actor.selectOptions(
-      screen.getByRole("combobox", { name: "Lọc trạng thái khoản chi" }),
+      screen.getByRole("combobox", { name: "Filter expense status" }),
       "pending",
     );
-    const table = screen.getByRole("table", { name: "Bảng khoản chi" });
+    const table = screen.getByRole("table", { name: "Expense table" });
     expect(within(table).getByText("Xe di chuyển")).toBeTruthy();
     expect(within(table).queryByText("Khách sạn")).toBeNull();
   });
@@ -190,10 +190,10 @@ describe("ExpensesPanel", () => {
       />,
     );
 
-    expect(screen.getByRole("status").textContent).toContain("Đang tải sổ chi phí");
+    expect(screen.getByRole("status").textContent).toContain("Loading the expense ledger");
     expect(screen.getByRole("alert").textContent).toContain("Unable to refresh the expense ledger.");
 
-    await actor.click(screen.getByRole("button", { name: "Thử lại" }));
+    await actor.click(screen.getByRole("button", { name: "Retry" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });

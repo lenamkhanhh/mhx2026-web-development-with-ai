@@ -81,7 +81,7 @@ export function ExpensesPanel({
       !effectivePaidBy ||
       effectiveSplitAmong.length === 0
     ) {
-      setFormError("Nhập tên, số tiền VND nguyên dương, người trả và người được chia.");
+      setFormError("Enter a title, positive whole-VND amount, payer, and recipients.");
       return;
     }
 
@@ -99,7 +99,7 @@ export function ExpensesPanel({
       setComposerOpen(false);
     } catch (cause) {
       setFormError(
-        cause instanceof Error ? cause.message : "Không thể thêm khoản chi.",
+        cause instanceof Error ? cause.message : "Unable to add the expense.",
       );
     } finally {
       setSaving(false);
@@ -114,7 +114,7 @@ export function ExpensesPanel({
       await onSettle(confirmingExpense.id);
       setConfirmingExpense(null);
     } catch {
-      setSettlementError("Không thể chốt khoản chi này. Hãy thử lại.");
+      setSettlementError("Unable to settle this expense. Try again.");
     } finally {
       setSettling(false);
     }
@@ -129,7 +129,7 @@ export function ExpensesPanel({
       setDeletingExpense(null);
       setSelectedExpenseId(null);
     } catch (cause) {
-      setDeleteError(cause instanceof Error ? cause.message : "Không thể xoá khoản chi này. Hãy thử lại.");
+      setDeleteError(cause instanceof Error ? cause.message : "Unable to delete this expense. Try again.");
     } finally {
       setDeleting(false);
     }
@@ -160,12 +160,12 @@ export function ExpensesPanel({
       <div className="section-heading page-heading expense-workbench__header">
         <div>
           <span className="eyebrow">Money ledger</span>
-          <h2 id="expenses-heading">Chi phí & chia tiền</h2>
-          <p>Đối soát khoản chi, công nợ và trạng thái bằng VND nguyên.</p>
+          <h2 id="expenses-heading">Expenses & settlement</h2>
+          <p>Review expenses, balances, and statuses using whole-VND amounts.</p>
         </div>
         <div className="expense-workbench__header-actions">
           <button className="secondary-button" onClick={exportCsv} type="button">
-            Xuất CSV
+            Export CSV
           </button>
           {onCreate ? (
             <button
@@ -173,77 +173,77 @@ export function ExpensesPanel({
               onClick={() => setComposerOpen(true)}
               type="button"
             >
-              Thêm khoản chi
+              Add expense
             </button>
           ) : null}
         </div>
       </div>
 
 
-      {isLoading ? <p className="expense-workbench__state" role="status">Đang tải sổ chi phí…</p> : null}
+      {isLoading ? <p className="expense-workbench__state" role="status">Loading the expense ledger…</p> : null}
       {loadError ? (
         <div className="expense-workbench__state expense-workbench__state--error">
           <p role="alert">{loadError}</p>
-          {onRetry ? <button onClick={onRetry} type="button">Thử lại</button> : null}
+          {onRetry ? <button onClick={onRetry} type="button">Retry</button> : null}
         </div>
       ) : null}
 
-      <section aria-label="Chỉ số chi phí" className="expense-workbench__metrics">
+      <section aria-label="Expense metrics" className="expense-workbench__metrics">
         <article>
-          <span>Tổng chi</span>
+          <span>Total spent</span>
           <strong>{formatVnd(ledger.totalAmount)}</strong>
-          <small>{ledger.includedExpenses.length} khoản hợp lệ</small>
+          <small>{ledger.includedExpenses.length} valid expenses</small>
         </article>
         <article>
-          <span>Chờ chốt</span>
+          <span>Pending</span>
           <strong>{pendingCount}</strong>
-          <small>Cần Lead đối soát</small>
+          <small>Needs lead review</small>
         </article>
         <article>
-          <span>Đã chốt</span>
+          <span>Settled</span>
           <strong>{settledCount}</strong>
-          <small>Trạng thái nội bộ</small>
+          <small>Internal marker</small>
         </article>
         <article>
-          <span>Cần thanh toán</span>
+          <span>Suggested transfers</span>
           <strong>{settlementSuggestions.length}</strong>
-          <small>Gợi ý từ sổ hiện tại</small>
+          <small>Derived from the current ledger</small>
         </article>
       </section>
 
       {onCreate && composerOpen ? (
         <form
-          aria-label="Ghi khoản chi mới"
+          aria-label="Create a new expense"
           className="panel-card expense-composer expense-workbench__composer"
           onSubmit={submitExpense}
         >
           <div className="section-heading">
             <div>
-              <span className="eyebrow">Thêm giao dịch</span>
-              <h3>Ghi khoản chi mới</h3>
+              <span className="eyebrow">Add transaction</span>
+              <h3>Create a new expense</h3>
             </div>
             <button
-              aria-label="Đóng biểu mẫu khoản chi"
+              aria-label="Close expense form"
               className="secondary-button"
               disabled={saving}
               onClick={() => setComposerOpen(false)}
               type="button"
             >
-              Đóng
+              Close
             </button>
           </div>
           <div className="expense-form-grid">
             <label>
-              Tên khoản chi
+              Expense title
               <input
                 onChange={(event) => setTitle(event.target.value)}
                 value={title}
               />
             </label>
             <label>
-              Số tiền (VND)
+              Amount (VND)
               <input
-                aria-label="Số tiền (VND)"
+                aria-label="Amount (VND)"
                 aria-describedby="expense-amount-help"
                 inputMode="numeric"
                 min="1"
@@ -252,10 +252,10 @@ export function ExpensesPanel({
                 type="number"
                 value={amount}
               />
-              <small id="expense-amount-help">Chỉ nhập số VND nguyên dương, không dùng số thập phân.</small>
+              <small id="expense-amount-help">Enter a positive whole-VND number; decimals are not supported.</small>
             </label>
             <label>
-              Người đã trả
+              Paid by
               <select
                 onChange={(event) => setPaidBy(event.target.value)}
                 value={effectivePaidBy}
@@ -269,7 +269,7 @@ export function ExpensesPanel({
             </label>
           </div>
           <fieldset className="participant-picker">
-            <legend>Chia cho</legend>
+            <legend>Split among</legend>
             {members.map((member) => (
               <label key={member.uid}>
                 <input
@@ -283,7 +283,7 @@ export function ExpensesPanel({
           </fieldset>
           {formError ? <p role="alert">{formError}</p> : null}
           <button className="primary-button" disabled={saving} type="submit">
-            {saving ? "Đang lưu…" : "Lưu khoản chi"}
+            {saving ? "Saving…" : "Save expense"}
           </button>
         </form>
       ) : null}
@@ -292,16 +292,16 @@ export function ExpensesPanel({
         <article className="panel-card">
           <div className="section-heading">
             <div>
-              <span className="eyebrow">Công nợ</span>
-              <h3>Đã trả · Phải trả · Dư / nợ</h3>
+              <span className="eyebrow">Balances</span>
+              <h3>Paid · Owed · Balance</h3>
             </div>
           </div>
-          <div className="balance-table" role="region" aria-label="Bảng công nợ">
+          <div className="balance-table" role="region" aria-label="Balance table">
             <div className="balance-row table-head" role="row">
-              <span role="columnheader">Thành viên</span>
-              <span role="columnheader">Đã trả</span>
-              <span role="columnheader">Phải trả</span>
-              <span role="columnheader">Dư / nợ</span>
+              <span role="columnheader">Member</span>
+              <span role="columnheader">Paid</span>
+              <span role="columnheader">Owed</span>
+              <span role="columnheader">Balance</span>
             </div>
             {ledger.balances.map((member) => (
               <div className="balance-row" key={member.memberId} role="row">
@@ -325,36 +325,36 @@ export function ExpensesPanel({
           <div className="section-heading">
             <div>
               <span className="eyebrow">Expense register</span>
-              <h3>{filteredExpenses.length} khoản đang hiển thị</h3>
+              <h3>{filteredExpenses.length} expenses shown</h3>
             </div>
             <label className="expense-workbench__filter">
-              <span>Lọc trạng thái</span>
+              <span>Filter status</span>
               <select
-                aria-label="Lọc trạng thái khoản chi"
+                aria-label="Filter expense status"
                 onChange={(event) =>
                   setStatusFilter(event.target.value as "all" | ExpenseStatus)
                 }
                 value={statusFilter}
               >
-                <option value="all">Tất cả</option>
-                <option value="pending">Chờ chốt</option>
-                <option value="settled">Đã chốt</option>
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="settled">Settled</option>
               </select>
             </label>
           </div>
           {filteredExpenses.length > 0 ? (
             <div
-              aria-label="Bảng khoản chi"
+              aria-label="Expense table"
               className="expense-workbench__table"
               role="table"
             >
               <div className="expense-workbench__table-row expense-workbench__table-row--head" role="row">
-                <span role="columnheader">Khoản chi</span>
-                <span role="columnheader">Người trả</span>
-                <span role="columnheader">Chia</span>
-                <span role="columnheader">Số tiền</span>
-                <span role="columnheader">Trạng thái</span>
-                <span role="columnheader">Thao tác</span>
+                <span role="columnheader">Expense</span>
+                <span role="columnheader">Payer</span>
+                <span role="columnheader">Split</span>
+                <span role="columnheader">Amount</span>
+                <span role="columnheader">Status</span>
+                <span role="columnheader">Actions</span>
               </div>
               {filteredExpenses.map((expense) => (
                 <div className="expense-workbench__table-row" key={expense.id} role="row">
@@ -363,11 +363,11 @@ export function ExpensesPanel({
                     {members.find((member) => member.uid === expense.paidBy)?.displayName ??
                       expense.paidBy}
                   </span>
-                  <span role="cell">{countKnownParticipants(expense, members)} người</span>
+                  <span role="cell">{countKnownParticipants(expense, members)} people</span>
                   <strong role="cell">{formatVnd(expense.amount)}</strong>
                   <span role="cell">
                     <span className={`expense-workbench__status expense-workbench__status--${expense.status}`}>
-                      {expense.status === "settled" ? "Đã chốt" : "Chờ chốt"}
+                      {expense.status === "settled" ? "Settled" : "Pending"}
                     </span>
                   </span>
                   <span className="expense-workbench__row-actions" role="cell">
@@ -377,11 +377,11 @@ export function ExpensesPanel({
                       onClick={() => setSelectedExpenseId(expense.id)}
                       type="button"
                     >
-                      Chi tiết
+                      Details
                     </button>
                     {canSettle && onSettle && expense.status === "pending" ? (
                       <button
-                        aria-label={`Chốt ${expense.title}`}
+                        aria-label={`Settle ${expense.title}`}
                         className="expense-workbench__settle-button"
                         onClick={() => {
                           setSettlementError("");
@@ -389,7 +389,7 @@ export function ExpensesPanel({
                         }}
                         type="button"
                       >
-                        Chốt
+                        Settle
                       </button>
                     ) : null}
                   </span>
@@ -397,41 +397,41 @@ export function ExpensesPanel({
               ))}
             </div>
           ) : (
-            <p>Không có khoản chi phù hợp bộ lọc.</p>
+            <p>No expenses match this filter.</p>
           )}
           {ledger.excludedExpenseIds.length > 0 ? (
             <p role="status">
-              {ledger.excludedExpenseIds.length} khoản chưa thể tính vì thiếu người trả hoặc người được chia.
+              {ledger.excludedExpenseIds.length} expenses cannot be calculated because the payer or split recipients are missing.
             </p>
           ) : null}
         </article>
         <aside
-          aria-label="Gợi ý thanh toán"
+          aria-label="Settlement suggestions"
           className="panel-card expense-workbench__settlement-rail"
         >
           <div className="section-heading">
             <div>
               <span className="eyebrow">Settlement suggestions</span>
-              <h3>Gợi ý thanh toán</h3>
+              <h3>Settlement suggestions</h3>
             </div>
           </div>
           <p className="expense-workbench__rail-note">
-            Phép tính từ số dư hiện tại; chưa xác nhận giao dịch đã diễn ra.
+            Derived from current balances; this does not confirm that a transfer occurred.
           </p>
           {settlementSuggestions.length > 0 ? (
             <ol>
               {settlementSuggestions.map((suggestion) => (
                 <li key={`${suggestion.fromId}-${suggestion.toId}`}>
                   <div>
-                    <strong>{suggestion.fromName} trả {suggestion.toName}</strong>
-                    <span>Cân bằng công nợ hiện tại</span>
+                    <strong>{suggestion.fromName} pays {suggestion.toName}</strong>
+                    <span>Balances the current ledger</span>
                   </div>
                   <b>{formatVnd(suggestion.amount)}</b>
                 </li>
               ))}
             </ol>
           ) : (
-            <p>Sổ hiện tại đã cân bằng.</p>
+            <p>The current ledger is balanced.</p>
           )}
         </aside>
         {selectedExpense ? <ExpenseDetailPanel
@@ -440,34 +440,34 @@ export function ExpensesPanel({
           members={members}
           onDelete={onDelete ? () => { setDeleteError(""); setDeletingExpense(selectedExpense); } : undefined}
           onUpdate={onUpdate}
-        /> : <aside aria-label="Expense details" className="panel-card expense-workbench__detail expense-workbench__detail--empty"><strong>Chọn một khoản chi</strong><p>Chi tiết và thao tác theo quyền sẽ xuất hiện tại đây.</p></aside>}
+        /> : <aside aria-label="Expense details" className="panel-card expense-workbench__detail expense-workbench__detail--empty"><strong>Select an expense</strong><p>Details and authorized actions appear here.</p></aside>}
       </div>
     </section>
 
       {confirmingExpense ? (
         <div className="expense-workbench__dialog-backdrop" role="presentation">
           <div
-            aria-label="Xác nhận chốt khoản chi"
+            aria-label="Confirm expense settlement"
             aria-modal="true"
             className="expense-workbench__dialog"
             role="dialog"
           >
-            <span className="eyebrow">Thao tác của Lead</span>
-            <h3>Chốt khoản chi</h3>
+            <span className="eyebrow">Lead action</span>
+            <h3>Settle expense</h3>
             <p>
-              Đánh dấu <strong>{confirmingExpense.title}</strong> là đã chốt trong sổ chi phí
-              với {formatVnd(confirmingExpense.amount)}?
+              Mark <strong>{confirmingExpense.title}</strong> as settled in the expense ledger
+              for {formatVnd(confirmingExpense.amount)}?
             </p>
             <p>
-              Đây là trạng thái đối soát nội bộ của nhóm, không phải bằng chứng chuyển tiền.
+              This is an internal reconciliation marker, not proof of a money transfer.
             </p>
             {settlementError ? <p role="alert">{settlementError}</p> : null}
             <div className="expense-workbench__dialog-actions">
               <button disabled={settling} onClick={() => setConfirmingExpense(null)} type="button">
-                Hủy
+                Cancel
               </button>
               <button className="primary-button" disabled={settling} onClick={() => void confirmSettlement()} type="button">
-                {settling ? "Đang chốt…" : "Xác nhận chốt"}
+                {settling ? "Settling…" : "Confirm settlement"}
               </button>
             </div>
           </div>
@@ -476,14 +476,14 @@ export function ExpensesPanel({
       {deletingExpense ? (
         <div className="expense-workbench__dialog-backdrop" role="presentation">
           <div aria-label="Confirm delete expense" aria-modal="true" className="expense-workbench__dialog" role="dialog">
-            <span className="eyebrow">Xác nhận thay đổi dữ liệu</span>
-            <h3>Xoá khoản chi</h3>
-            <p>Khoản <strong>{deletingExpense.title}</strong> sẽ bị xoá khỏi sổ chi phí và số dư sẽ được tính lại từ dữ liệu còn lại.</p>
-            <p>Thao tác này được kiểm tra lại bằng Firebase Security Rules trước khi ghi dữ liệu.</p>
+            <span className="eyebrow">Confirm data change</span>
+            <h3>Delete expense</h3>
+            <p><strong>{deletingExpense.title}</strong> will be removed from the expense ledger and balances will be recalculated from the remaining data.</p>
+            <p>Firebase Security Rules re-authorize this action before data is written.</p>
             {deleteError ? <p role="alert">{deleteError}</p> : null}
             <div className="expense-workbench__dialog-actions">
-              <button aria-label="Cancel delete" disabled={deleting} onClick={() => setDeletingExpense(null)} type="button">Huỷ</button>
-              <button aria-label="Confirm delete" className="expense-workbench__delete-button" disabled={deleting} onClick={() => void confirmDelete()} type="button">{deleting ? "Đang xoá…" : "Xác nhận xoá"}</button>
+              <button aria-label="Cancel delete" disabled={deleting} onClick={() => setDeletingExpense(null)} type="button">Cancel</button>
+              <button aria-label="Confirm delete" className="expense-workbench__delete-button" disabled={deleting} onClick={() => void confirmDelete()} type="button">{deleting ? "Deleting…" : "Confirm delete"}</button>
             </div>
           </div>
         </div>
@@ -511,7 +511,7 @@ function ExpenseDetailPanel({ canManage, expense, members, onDelete, onUpdate }:
   const [error, setError] = useState("");
   const participantNames = expense.splitAmong
     .map((uid) => members.find((member) => member.uid === uid)?.displayName ?? uid)
-    .join(", ") || "Chưa chỉ định";
+    .join(", ") || "Unassigned";
   const payerName = members.find((member) => member.uid === expense.paidBy)?.displayName ?? expense.paidBy;
 
   function beginEdit() {
@@ -532,7 +532,7 @@ function ExpenseDetailPanel({ canManage, expense, members, onDelete, onUpdate }:
     if (!onUpdate) return;
     const normalizedAmount = Number(amount);
     if (!title.trim() || !Number.isSafeInteger(normalizedAmount) || normalizedAmount <= 0 || !paidBy || splitAmong.length === 0) {
-      setError("Nhập tên, số VND nguyên dương, người trả và ít nhất một người được chia.");
+      setError("Enter a title, positive whole-VND amount, payer, and at least one recipient.");
       return;
     }
     setSaving(true);
@@ -541,7 +541,7 @@ function ExpenseDetailPanel({ canManage, expense, members, onDelete, onUpdate }:
       await onUpdate(expense.id, { title: title.trim(), amount: normalizedAmount, paidBy, splitAmong });
       setEditing(false);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể cập nhật khoản chi.");
+      setError(cause instanceof Error ? cause.message : "Unable to update the expense.");
     } finally {
       setSaving(false);
     }
@@ -549,30 +549,30 @@ function ExpenseDetailPanel({ canManage, expense, members, onDelete, onUpdate }:
 
   return <aside aria-label="Expense details" className="panel-card expense-workbench__detail">
     <div className="section-heading expense-workbench__detail-heading">
-      <div><span className="eyebrow">Chi tiết khoản chi</span><h3>{expense.title}</h3></div>
-      <span className={`expense-workbench__status expense-workbench__status--${expense.status}`}>{expense.status === "settled" ? "Đã chốt" : "Chờ chốt"}</span>
+      <div><span className="eyebrow">Expense details</span><h3>{expense.title}</h3></div>
+      <span className={`expense-workbench__status expense-workbench__status--${expense.status}`}>{expense.status === "settled" ? "Settled" : "Pending"}</span>
     </div>
     <dl className="expense-workbench__detail-list">
-      <div><dt>Số tiền</dt><dd>{formatVnd(expense.amount)}</dd></div>
-      <div><dt>Người đã trả</dt><dd>{payerName}</dd></div>
-      <div><dt>Chia cho</dt><dd>{participantNames}</dd></div>
-      <div><dt>Quyền thao tác</dt><dd>{canManage ? "Bạn có thể chỉnh sửa hoặc xoá khoản chi này." : "Chỉ Lead hoặc người tạo khoản chi mới có quyền chỉnh sửa."}</dd></div>
+      <div><dt>Amount</dt><dd>{formatVnd(expense.amount)}</dd></div>
+      <div><dt>Paid by</dt><dd>{payerName}</dd></div>
+      <div><dt>Split among</dt><dd>{participantNames}</dd></div>
+      <div><dt>Access</dt><dd>{canManage ? "You can edit or delete this expense." : "Only the lead or expense author may edit it."}</dd></div>
     </dl>
     {error ? <p className="expense-workbench__detail-error" role="alert">{error}</p> : null}
     {canManage && onUpdate ? editing ? <form className="expense-workbench__edit-form" onSubmit={(event) => void save(event)}>
-      <label>Tên khoản chi<input aria-label="Expense title" disabled={saving} maxLength={120} onChange={(event) => setTitle(event.target.value)} required value={title} /></label>
-      <label>Số tiền (VND)<input aria-label="Expense amount" disabled={saving} inputMode="numeric" min="1" onChange={(event) => setAmount(event.target.value)} required step="1" type="number" value={amount} /></label>
-      <label>Người đã trả<select disabled={saving} onChange={(event) => setPaidBy(event.target.value)} value={paidBy}>{members.map((member) => <option key={member.uid} value={member.uid}>{member.displayName}</option>)}</select></label>
-      <fieldset disabled={saving}><legend>Chia cho</legend>{members.map((member) => <label key={member.uid}><input checked={splitAmong.includes(member.uid)} onChange={() => toggleParticipant(member.uid)} type="checkbox" />{member.displayName}</label>)}</fieldset>
-      <div className="expense-workbench__detail-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? "Đang lưu…" : "Save expense changes"}</button><button disabled={saving} onClick={() => { setEditing(false); setError(""); }} type="button">Cancel expense edit</button></div>
+      <label>Expense title<input aria-label="Expense title" disabled={saving} maxLength={120} onChange={(event) => setTitle(event.target.value)} required value={title} /></label>
+      <label>Amount (VND)<input aria-label="Expense amount" disabled={saving} inputMode="numeric" min="1" onChange={(event) => setAmount(event.target.value)} required step="1" type="number" value={amount} /></label>
+      <label>Paid by<select disabled={saving} onChange={(event) => setPaidBy(event.target.value)} value={paidBy}>{members.map((member) => <option key={member.uid} value={member.uid}>{member.displayName}</option>)}</select></label>
+      <fieldset disabled={saving}><legend>Split among</legend>{members.map((member) => <label key={member.uid}><input checked={splitAmong.includes(member.uid)} onChange={() => toggleParticipant(member.uid)} type="checkbox" />{member.displayName}</label>)}</fieldset>
+      <div className="expense-workbench__detail-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? "Saving…" : "Save expense changes"}</button><button disabled={saving} onClick={() => { setEditing(false); setError(""); }} type="button">Cancel expense edit</button></div>
     </form> : <button className="secondary-button" onClick={beginEdit} type="button">Edit expense</button> : null}
     {canManage && onDelete ? <button className="expense-workbench__delete-button" disabled={saving} onClick={onDelete} type="button">Delete expense</button> : null}
-    <p className="expense-workbench__detail-audit">Số dư được tính lại từ snapshot mới. Firestore Security Rules vẫn là lớp kiểm soát quyền cuối cùng.</p>
+    <p className="expense-workbench__detail-audit">Balances are recalculated from the new snapshot. Firebase Security Rules remain the final authorization layer.</p>
   </aside>;
 }
 
 function formatSignedVnd(amount: number): string {
-  if (amount === 0) return "Đã cân bằng";
+  if (amount === 0) return "Balanced";
   return `${amount > 0 ? "+" : "−"}${formatVnd(Math.abs(amount))}`;
 }
 
