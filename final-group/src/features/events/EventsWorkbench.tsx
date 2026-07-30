@@ -333,6 +333,7 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
       <button aria-selected="false" disabled role="tab" type="button">Files</button>
       <button aria-selected={activeTab === "subitems"} onClick={() => setActiveTab("subitems")} role="tab" type="button">Sub-items</button>
     </div>
+    {activeTab === "details" ? <>
     <dl className={styles.detailList}>
       <div><dt>Category</dt><dd>{CATEGORY_LABELS[event.category]}</dd></div>
       <div><dt>Time</dt><dd>{formatDateTime(event.startAt)} — {formatDateTime(event.endAt)}</dd></div>
@@ -353,6 +354,7 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
         <button disabled={saving} onClick={() => { setEditing(false); setFeedback(null); }} type="button">Cancel edit</button>
       </div>
     </form> : <button className={styles.editButton} onClick={beginEdit} type="button">Edit event</button> : null}
+    </> : null}
     {activeTab === "notes" ? <section aria-label="Event notes" className={styles.collaborationPanel}>
       <form aria-label="Add note" className={styles.collaborationComposer} onSubmit={(eventForm) => void submitNote(eventForm)}>
         <label>New note<textarea aria-label="New note" disabled={collaborationSaving !== null} maxLength={1000} onChange={(eventInput) => setNoteBody(eventInput.target.value)} placeholder="Add a useful update for the team" required value={noteBody} /></label>
