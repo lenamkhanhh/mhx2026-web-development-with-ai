@@ -173,6 +173,39 @@ describe("EventsWorkbench", () => {
     await waitFor(() => expect(onUpdate).toHaveBeenCalledWith("event-1", { title: "Brunch" }));
   });
 
+  it("captures optional operational metadata on creation and clears it through the inspector", async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn().mockResolvedValue(undefined);
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    const { container } = renderWorkbench({ events: [event({ location: "Da Nang Airport", assigneeUid: "member-1", priority: "high" })], onCreate, onUpdate });
+
+    await openComposer(user);
+    const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
+    await user.type(screen.getByLabelText("Item title"), "Airport pickup");
+    await user.type(dateInputs[0], "2026-08-01T09:00");
+    await user.type(dateInputs[1], "2026-08-01T10:00");
+    await user.click(screen.getAllByRole("checkbox")[0]);
+    await user.type(screen.getByLabelText("Location"), "Da Nang Airport");
+    await user.selectOptions(screen.getByLabelText("Assignee"), "member-1");
+    await user.selectOptions(screen.getByLabelText("Priority"), "high");
+    await user.click(screen.getByRole("button", { name: "Add to timeline" }));
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
+      location: "Da Nang Airport", assigneeUid: "member-1", priority: "high",
+    })));
+
+    const details = screen.getByRole("complementary", { name: "Event details" });
+    await user.click(within(details).getByRole("button", { name: "Edit event" }));
+    await user.clear(within(details).getByLabelText("Location"));
+    await user.selectOptions(within(details).getByLabelText("Assignee"), "");
+    await user.selectOptions(within(details).getByLabelText("Priority"), "");
+    await user.click(within(details).getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(onUpdate).toHaveBeenCalledWith("event-1", {
+      location: null, assigneeUid: null, priority: null,
+    }));
+  });
+
   it("shows saving feedback, submits typed data, and resets after success", async () => {
     const user = userEvent.setup(); const save = deferred<void>();
     const { container, props } = renderWorkbench({ onCreate: vi.fn(() => save.promise) });
