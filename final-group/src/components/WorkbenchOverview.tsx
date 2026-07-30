@@ -66,15 +66,31 @@ export function WorkbenchOverview({
     if (filter === "pending") return event.status === "pending";
     return event.status === "completed";
   });
-  const pendingEvents = orderedEvents.filter((event) => event.status === "pending");
   const totalExpenses = snapshot.expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const settledExpenses = snapshot.expenses
     .filter((expense) => expense.status === "settled")
     .reduce((sum, expense) => sum + expense.amount, 0);
   const pendingExpenses = totalExpenses - settledExpenses;
-  const recentExpenses = [...snapshot.expenses].slice(-3).reverse();
   const currentMember = snapshot.members.find((member) => member.uid === currentUserId);
   const memberById = new Map(snapshot.members.map((member) => [member.uid, member]));
+  const recentExpenses = [...snapshot.expenses]
+    .filter((expense) => expense.createdAt)
+    .sort((left, right) => Date.parse(right.createdAt!) - Date.parse(left.createdAt!))
+    .slice(0, 3);
+  const activityItems = [
+    ...orderedEvents.flatMap((event) => event.createdAt ? [{
+      actorId: event.createdBy,
+      id: `event-${event.id}`,
+      label: `Added item “${event.title}”`,
+      timestamp: event.createdAt,
+    }] : []),
+    ...snapshot.expenses.flatMap((expense) => expense.createdAt ? [{
+      actorId: expense.createdBy,
+      id: `expense-${expense.id}`,
+      label: `Added expense “${expense.title}”`,
+      timestamp: expense.createdAt,
+    }] : []),
+  ].sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp)).slice(0, 6);
 
   return (
     <div className="workbench-overview">
@@ -195,24 +211,23 @@ export function WorkbenchOverview({
       </section>
 
       <aside aria-label="Trip context" className="workbench-context-rail">
-        <ContextPanel
-          action={pendingEvents.length ? "Open Timeline" : undefined}
-          onAction={pendingEvents.length ? onOpenSchedule : undefined}
-          title="Review queue"
-        >
-          {pendingEvents.length ? (
+        <ContextPanel action="View timeline" onAction={onOpenSchedule} title="Activity feed">
+          {activityItems.length ? (
             <ul className="workbench-context-list">
-              {pendingEvents.slice(0, 4).map((event) => (
-                <li key={event.id}>
+              {activityItems.map((item) => (
+                <li key={item.id}>
                   <span className="workbench-context-icon pending"><Clock aria-hidden="true" size={15} /></span>
-                  <span><strong>{event.title}</strong><small>{formatEventDate(event.startAt)}</small></span>
+                  <span>
+                    <strong>{item.label}</strong>
+                    <small>by {memberById.get(item.actorId)?.displayName ?? "Trip member"} · {formatActivityTime(item.timestamp)}</small>
+                  </span>
                 </li>
               ))}
             </ul>
           ) : (
             <div className="workbench-context-empty">
               <Check aria-hidden="true" size={17} />
-              <span>All proposed items have been reviewed.</span>
+              <span>No persisted activity yet.</span>
             </div>
           )}
         </ContextPanel>
@@ -220,9 +235,9 @@ export function WorkbenchOverview({
         <ContextPanel action="View expenses" onAction={onOpenExpenses} title="Expense summary">
           <div className="workbench-expense-total">
             <strong>{formatVnd(totalExpenses)}</strong>
-            <small>{snapshot.expenses.length} khoản chi</small>
+            <small>{snapshot.expenses.length} {snapshot.expenses.length === 1 ? "expense" : "expenses"}</small>
           </div>
-          <div className="workbench-expense-progress" aria-label={`${settledExpenses} đồng đã đối soát`}>
+          <div className="workbench-expense-progress" aria-label={`${formatVnd(settledExpenses)} settled`}>
             <span style={{ width: `${totalExpenses ? Math.round((settledExpenses / totalExpenses) * 100) : 0}%` }} />
           </div>
           <dl className="workbench-expense-breakdown">
@@ -241,13 +256,13 @@ export function WorkbenchOverview({
                   </span>
                   <span>
                     <strong>{expense.title}</strong>
-                    <small>{memberById.get(expense.paidBy)?.displayName ?? "Member"}</small>
+                    <small>{formatExpenseMeta(expense.createdAt!, memberById.get(expense.paidBy)?.displayName ?? "Member")}</small>
                   </span>
                   <b>{formatVnd(expense.amount)}</b>
                 </li>
               ))}
             </ul>
-          ) : <p className="workbench-context-note">No expenses yet.</p>}
+          ) : <p className="workbench-context-note">No persisted expenses yet.</p>}
           <button className="workbench-context-create" onClick={onOpenExpenses} type="button">
             <Plus aria-hidden="true" size={15} /> Add expense
           </button>
@@ -322,6 +337,19 @@ function formatEventDate(value: string): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatActivityTime(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+  }).format(new Date(value));
+}
+
+function formatExpenseMeta(createdAt: string, payer: string): string {
+  return `${new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" }).format(new Date(createdAt))} · ${payer}`;
 }
 
 function initials(value: string): string {
