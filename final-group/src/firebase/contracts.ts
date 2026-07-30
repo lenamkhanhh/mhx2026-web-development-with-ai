@@ -16,6 +16,13 @@ export type FirestoreEventStatus =
   | "completed"
   | "cancelled";
 export type ExpenseStatus = "pending" | "settled";
+export type FirestoreEventPriority = "low" | "medium" | "high";
+export type ExpenseCategory =
+  | "transport"
+  | "accommodation"
+  | "food"
+  | "activities"
+  | "other";
 
 export interface AuthenticatedUser {
   uid: string;
@@ -38,6 +45,8 @@ export interface TripRecord {
   endDate: string;
   leadId: string;
   joinCode: string;
+  /** Optional migration-safe trip spending cap, stored as integer VND. */
+  budgetVnd?: number;
 }
 
 export interface MemberRecord {
@@ -61,6 +70,10 @@ export interface EventRecord {
   participantIds: string[];
   createdBy: string;
   approvedBy: string | null;
+  /** Optional operational details. Missing values must render as not set. */
+  location?: string;
+  assigneeUid?: string;
+  priority?: FirestoreEventPriority;
   /** Firestore server timestamps exposed as ISO strings when available. */
   createdAt?: string;
   updatedAt?: string;
@@ -75,6 +88,8 @@ export interface ExpenseRecord {
   splitAmong: string[];
   status: ExpenseStatus;
   createdBy: string;
+  /** Optional declared expense category; never inferred from a title. */
+  category?: ExpenseCategory;
   /** Firestore server timestamps exposed as ISO strings when available. */
   createdAt?: string;
   updatedAt?: string;
@@ -92,6 +107,7 @@ export interface CreateTripInput {
   destination: string;
   startDate: string;
   endDate: string;
+  budgetVnd?: number;
 }
 
 export interface CreateEventInput {
@@ -100,6 +116,9 @@ export interface CreateEventInput {
   startAt: string;
   endAt: string;
   participantIds: string[];
+  location?: string;
+  assigneeUid?: string;
+  priority?: FirestoreEventPriority;
 }
 
 export interface CreateExpenseInput {
@@ -107,6 +126,7 @@ export interface CreateExpenseInput {
   amount: number;
   paidBy: string;
   splitAmong: string[];
+  category?: ExpenseCategory;
 }
 
 export interface TripBackend {

@@ -36,7 +36,8 @@ service cloud.firestore {
     }
 
     function validTrip(data) {
-      return hasOnlyKeys(data, ["name", "destination", "startDate", "endDate", "leadId", "joinCode", "createdAt", "updatedAt"])
+      return data.keys().hasOnly(["name", "destination", "startDate", "endDate", "leadId", "joinCode", "budgetVnd", "createdAt", "updatedAt"])
+        && data.keys().hasAll(["name", "destination", "startDate", "endDate", "leadId", "joinCode", "createdAt", "updatedAt"])
         && data.name is string
         && data.destination is string
         && data.startDate is string
@@ -44,6 +45,7 @@ service cloud.firestore {
         && data.leadId is string
         && data.joinCode is string
         && data.joinCode.matches("^[A-Z0-9]{6,16}$")
+        && (!("budgetVnd" in data) || (data.budgetVnd is int && data.budgetVnd >= 0))
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -59,7 +61,7 @@ service cloud.firestore {
     }
 
     function validEvent(data) {
-      return data.keys().hasOnly(["title", "order", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "createdAt", "updatedAt"])
+      return data.keys().hasOnly(["title", "order", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "location", "assigneeUid", "priority", "createdAt", "updatedAt"])
         && data.keys().hasAll(["title", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "createdAt", "updatedAt"])
         && data.title is string
         && (!("order" in data) || (data.order is int && data.order >= 0))
@@ -70,12 +72,16 @@ service cloud.firestore {
         && data.participantIds is list
         && data.createdBy is string
         && (data.approvedBy == null || data.approvedBy is string)
+        && (!("location" in data) || data.location is string)
+        && (!("assigneeUid" in data) || data.assigneeUid is string)
+        && (!("priority" in data) || (data.priority == "low" || data.priority == "medium" || data.priority == "high"))
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
 
     function validExpense(data) {
-      return hasOnlyKeys(data, ["title", "amount", "paidBy", "splitAmong", "status", "createdBy", "createdAt", "updatedAt"])
+      return data.keys().hasOnly(["title", "amount", "paidBy", "splitAmong", "status", "createdBy", "category", "createdAt", "updatedAt"])
+        && data.keys().hasAll(["title", "amount", "paidBy", "splitAmong", "status", "createdBy", "createdAt", "updatedAt"])
         && data.title is string
         && data.amount is int
         && data.amount >= 0
@@ -83,6 +89,7 @@ service cloud.firestore {
         && data.splitAmong is list
         && (data.status == "pending" || data.status == "settled")
         && data.createdBy is string
+        && (!("category" in data) || (data.category == "transport" || data.category == "accommodation" || data.category == "food" || data.category == "activities" || data.category == "other"))
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -144,7 +151,7 @@ service cloud.firestore {
             && request.resource.data.createdBy == resource.data.createdBy
             && request.resource.data.approvedBy == null
             && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["title", "category", "startAt", "endAt", "participantIds", "updatedAt"]))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["title", "category", "startAt", "endAt", "participantIds", "location", "assigneeUid", "priority", "updatedAt"]))
         );
         allow delete: if isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy && resource.data.status == "pending");
       }
@@ -164,6 +171,7 @@ service cloud.firestore {
                 "amount",
                 "paidBy",
                 "splitAmong",
+                "category",
                 "updatedAt"
               ]))
           )

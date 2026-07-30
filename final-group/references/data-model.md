@@ -32,6 +32,7 @@ startDate: YYYY-MM-DD
 endDate: YYYY-MM-DD
 leadId: uid
 joinCode: uppercase string
+budgetVnd?: non-negative integer VND
 createdAt: server timestamp
 updatedAt: server timestamp
 ```
@@ -59,6 +60,9 @@ status: "pending" | "approved" | "happening" | "completed" | "cancelled"
 participantIds: string[]
 createdBy: uid
 approvedBy: uid | null
+location?: string
+assigneeUid?: uid
+priority?: "low" | "medium" | "high"
 createdAt: server timestamp
 updatedAt: server timestamp
 ```
@@ -72,10 +76,14 @@ paidBy: uid
 splitAmong: uid[]
 status: "pending" | "settled"
 createdBy: uid
+category?: "transport" | "accommodation" | "food" | "activities" | "other"
 createdAt: server timestamp
 updatedAt: server timestamp
 ```
 
 Store money as integer VND, not floating-point fractions.
+The optional overview fields are migration-safe: absent values mean **not set**.
+The UI must show that absence directly and must not infer a location, assignee,
+priority, budget, or expense category from a title or another field.
 The `settled` status is only an internal reconciliation marker. It does not
 represent or replace a transfer record, receipt, or payment-provider proof.
