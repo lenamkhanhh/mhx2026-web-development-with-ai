@@ -361,8 +361,8 @@
 .eventCard {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 7px 10px;
-  padding: 11px 12px;
+  gap: 10px;
+  padding: 8px 10px;
   border: 1px solid #dbe1e8;
   border-radius: 6px;
   background: #fff;
@@ -379,7 +379,7 @@
 }
 
 .eventContent h3 {
-  margin: 4px 0 3px;
+  margin: 3px 0 2px;
   overflow: hidden;
   color: #25303a;
   font-size: 12px;
@@ -397,7 +397,7 @@
 }
 
 .eventContent small {
-  margin-top: 5px;
+  margin-top: 3px;
   color: #89939e;
 }
 
@@ -439,11 +439,17 @@
   background: #fff6f6;
 }
 
+.rightControls,
 .actions {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-end;
+  align-self: center;
   gap: 4px;
+}
+
+.rightControls {
+  flex-wrap: wrap;
 }
 
 .actions button {
@@ -454,13 +460,11 @@
 }
 
 .detailButton {
-  grid-column: 1 / -1;
-  justify-self: start;
   min-height: 26px;
-  border: 0;
-  padding: 0;
+  border: 1px solid #cdd5df;
+  padding: 0 7px;
   color: #0866ed;
-  background: transparent;
+  background: #fff;
   font-size: 10px;
 }
 

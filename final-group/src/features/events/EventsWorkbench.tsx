@@ -155,13 +155,15 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
       return <li className={styles.timelineItem} data-event-id={item.id} data-motion={moving ? "reordering" : "idle"} data-testid={`event-${item.id}`} key={item.id}>
         <span aria-hidden="true" className={styles.railMarker}>{String(index + 1).padStart(2, "0")}</span>
         <article className={styles.eventCard}><div className={styles.eventContent}><span className={`${styles.status} ${styles[`status_${item.status}`]}`}>{STATUS_LABELS[item.status]}</span><h3>{item.title}</h3><p>{CATEGORY_LABELS[item.category]} · {formatDateTime(item.startAt)} — {formatDateTime(item.endAt)}</p><small>{item.participantIds.length} người tham gia</small></div>
-          <div aria-label={`Thao tác ${item.title}`} className={styles.actions}>
-            {isLead ? <><button aria-label={`Đưa ${item.title} lên`} disabled={index === 0 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "up")} type="button">↑</button><button aria-label={`Đưa ${item.title} xuống`} disabled={index === timeline.length - 1 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "down")} type="button">↓</button></> : null}
-            {isLead && item.status === "pending" ? <button disabled={runningAction !== null} onClick={() => void runAction(`approve-${item.id}`, "Đã gửi yêu cầu duyệt hoạt động.", () => onApprove(item.id))} type="button">Duyệt</button> : null}
-            {isLead && item.status !== "cancelled" ? <button disabled={runningAction !== null} onClick={() => void runAction(`cancel-${item.id}`, "Đã gửi yêu cầu hủy hoạt động.", () => onCancel(item.id))} type="button">Hủy</button> : null}
-            {canDelete ? <button disabled={runningAction !== null} onClick={() => void runAction(`delete-${item.id}`, "Đã gửi yêu cầu xóa hoạt động.", () => onDelete(item.id))} type="button">Xóa</button> : null}
+          <div className={styles.rightControls}>
+            <div aria-label={`Thao tác ${item.title}`} className={styles.actions}>
+              {isLead ? <><button aria-label={`Đưa ${item.title} lên`} disabled={index === 0 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "up")} type="button">↑</button><button aria-label={`Đưa ${item.title} xuống`} disabled={index === timeline.length - 1 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "down")} type="button">↓</button></> : null}
+              {isLead && item.status === "pending" ? <button disabled={runningAction !== null} onClick={() => void runAction(`approve-${item.id}`, "Đã gửi yêu cầu duyệt hoạt động.", () => onApprove(item.id))} type="button">Duyệt</button> : null}
+              {isLead && item.status !== "cancelled" ? <button disabled={runningAction !== null} onClick={() => void runAction(`cancel-${item.id}`, "Đã gửi yêu cầu hủy hoạt động.", () => onCancel(item.id))} type="button">Hủy</button> : null}
+              {canDelete ? <button disabled={runningAction !== null} onClick={() => void runAction(`delete-${item.id}`, "Đã gửi yêu cầu xóa hoạt động.", () => onDelete(item.id))} type="button">Xóa</button> : null}
+            </div>
+            <button aria-label={`Open ${item.title} details`} className={styles.detailButton} onClick={() => setSelectedEventId(item.id)} type="button">Chi tiết</button>
           </div>
-          <button aria-label={`Open ${item.title} details`} className={styles.detailButton} onClick={() => setSelectedEventId(item.id)} type="button">Chi tiết</button>
         </article>
       </li>;
     })}</ol>}

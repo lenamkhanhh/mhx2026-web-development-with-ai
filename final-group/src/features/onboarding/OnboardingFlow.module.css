@@ -4,7 +4,7 @@
   min-height: 100dvh;
   place-items: center;
   overflow: hidden;
-  padding: clamp(24px, 5vw, 72px);
+  padding: clamp(24px, 4vw, 56px);
   color: #18212b;
   background:
     radial-gradient(circle at 1px 1px, rgb(78 99 116 / 14%) 1px, transparent 0) 0 0 / 22px 22px,
@@ -34,9 +34,9 @@
 
 .card {
   display: grid;
-  width: min(100%, 1160px);
+  width: min(100%, 1320px);
   gap: 18px;
-  padding: clamp(24px, 3vw, 36px);
+  padding: clamp(28px, 3vw, 42px);
   border: 1px solid #d7dee4;
   border-radius: 7px;
   background: #fff;
@@ -69,7 +69,7 @@
 }
 
 .header h1 {
-  font-size: clamp(28px, 3.2vw, 38px);
+  font-size: clamp(32px, 3.4vw, 44px);
 }
 
 .pathGrid {
