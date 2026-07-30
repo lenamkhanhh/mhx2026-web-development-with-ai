@@ -16,6 +16,7 @@ test("a traveller persists timeline notes, sub-items, and activity through Fires
   const displayName = `E2E Traveller ${runId}`;
   const tripName = `E2E Trip ${runId}`;
   const eventTitle = `Sunrise ${runId}`;
+  const eventLocation = "Tuyen Lam Lake";
 
   await page.goto("/final-group/");
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
@@ -41,6 +42,9 @@ test("a traveller persists timeline notes, sub-items, and activity through Fires
   await page.getByLabel("Item title").fill(eventTitle);
   await page.getByLabel("Start").fill("2026-08-10T05:00");
   await page.getByLabel("End").fill("2026-08-10T06:00");
+  await page.getByLabel("Location").fill(eventLocation);
+  await page.getByLabel("Assignee").selectOption({ label: displayName });
+  await page.getByLabel("Priority").selectOption("high");
   await page.getByRole("checkbox", { name: displayName }).check();
   await page.getByRole("button", { name: "Add to timeline" }).click();
   const eventRow = page.getByRole("list", { name: "Trip timeline" }).getByRole("listitem").filter({ hasText: eventTitle });
@@ -72,6 +76,10 @@ test("a traveller persists timeline notes, sub-items, and activity through Fires
   await expect(reloadedDetails.getByRole("checkbox", { name: "Mark Confirm the meeting point open" })).toBeChecked();
 
   await page.getByRole("link", { name: "Overview" }).click();
+  const itinerary = page.getByRole("table", { name: "Trip itinerary" });
+  await expect(itinerary.getByText(eventLocation)).toBeVisible();
+  await expect(itinerary.getByLabel(displayName)).toBeVisible();
+  await expect(itinerary.getByText("high", { exact: true })).toBeVisible();
   await expect(page.getByRole("complementary", { name: "Trip context" }).getByText("Completed sub-item “Confirm the meeting point”")).toBeVisible();
   expect(externalRequests).toEqual([]);
 });
