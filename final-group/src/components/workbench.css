@@ -511,18 +511,19 @@
   margin-top: 18px;
 }
 
-.workbench-page-tabs a {
+.workbench-page-tabs button {
   position: relative;
   display: grid;
   min-height: 40px;
   place-items: center;
   padding: 0 14px;
+  border: 0;
   color: #4d5866;
+  background: transparent;
   font-size: 12px;
-  text-decoration: none;
 }
 
-.workbench-page-tabs a::after {
+.workbench-page-tabs button::after {
   position: absolute;
   right: 8px;
   bottom: -1px;
@@ -532,13 +533,13 @@
   background: transparent;
 }
 
-.workbench-page-tabs a:hover,
-.workbench-page-tabs a:focus-visible,
-.workbench-page-tabs a.active {
+.workbench-page-tabs button:hover,
+.workbench-page-tabs button:focus-visible,
+.workbench-page-tabs button.active {
   color: var(--wb-blue);
 }
 
-.workbench-page-tabs a.active::after {
+.workbench-page-tabs button.active::after {
   background: var(--wb-blue);
 }
 
@@ -1231,7 +1232,7 @@
     overflow-x: auto;
   }
 
-  .workbench-page-tabs a {
+  .workbench-page-tabs button {
     min-width: max-content;
     padding: 0 10px;
   }

@@ -80,8 +80,8 @@ describe("WorkbenchShell", () => {
     expect(screen.getByText("# TRIP-1")).toBeTruthy();
 
     const tabs = screen.getByRole("navigation", { name: "Màn hình chuyến đi" });
-    expect(within(tabs).getAllByRole("link")).toHaveLength(4);
-    expect(within(tabs).getByRole("link", { name: "Lịch trình" }).getAttribute("aria-current")).toBe("page");
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(4);
+    expect(within(tabs).getByRole("tab", { name: "Lịch trình" }).getAttribute("aria-selected")).toBe("true");
   });
 
   it("uses topbar search to navigate to a real work area", async () => {

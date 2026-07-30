@@ -228,18 +228,16 @@ export function WorkbenchShell({
 
             <nav aria-label="Màn hình chuyến đi" className="workbench-page-tabs">
               {NAV_ITEMS.map((item) => (
-                <a
-                  aria-current={activeView === item.id ? "page" : undefined}
+                <button
+                  aria-selected={activeView === item.id}
                   className={activeView === item.id ? "active" : undefined}
-                  href={`#${item.id}`}
                   key={item.id}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    changeView(item.id);
-                  }}
+                  onClick={() => changeView(item.id)}
+                  role="tab"
+                  type="button"
                 >
                   {item.label}
-                </a>
+                </button>
               ))}
             </nav>
           </header>
