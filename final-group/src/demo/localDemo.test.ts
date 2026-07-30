@@ -42,10 +42,12 @@ describe("local rich TripFlow demo", () => {
     expect(observed.snapshot!.members.length).toBeGreaterThanOrEqual(5);
     expect(observed.snapshot!.members.every((member) => member.isDemo)).toBe(true);
     expect(observed.snapshot!.events.length).toBeGreaterThanOrEqual(9);
+    expect(observed.snapshot!.events.every((event) => Boolean(event.createdAt))).toBe(true);
     expect(new Set(observed.snapshot!.events.map((event) => event.status))).toEqual(
       new Set(["pending", "approved", "happening", "completed", "cancelled"]),
     );
     expect(observed.snapshot!.expenses.length).toBeGreaterThanOrEqual(7);
+    expect(observed.snapshot!.expenses.every((expense) => Boolean(expense.createdAt))).toBe(true);
     expect(new Set(observed.snapshot!.expenses.map((expense) => expense.status))).toEqual(
       new Set(["pending", "settled"]),
     );
@@ -89,6 +91,7 @@ describe("local rich TripFlow demo", () => {
     expect(observed.latest!.expenses.at(-1)).toMatchObject({
       title: "Vé tàu demo mới",
       status: "pending",
+      createdAt: expect.any(String),
     });
   });
 });
