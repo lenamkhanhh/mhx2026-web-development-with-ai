@@ -281,6 +281,8 @@ class LocalDemoTripBackend implements TripBackend {
       participantIds: [...input.participantIds],
       createdBy: actor.uid,
       approvedBy: role === "lead" ? actor.uid : null,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
     };
     this.updateSnapshot(tripId, (current) => ({
       ...current,
@@ -302,6 +304,7 @@ class LocalDemoTripBackend implements TripBackend {
               ...event,
               ...patch,
               ...(patch.participantIds ? { participantIds: [...patch.participantIds] } : {}),
+              updatedAt: nowIso(),
             }
           : event,
       ),
@@ -317,7 +320,7 @@ class LocalDemoTripBackend implements TripBackend {
     this.updateSnapshot(tripId, (snapshot) => ({
       ...snapshot,
       events: snapshot.events.map((event) =>
-        event.id === eventId ? { ...event, status, approvedBy: approverId } : event,
+        event.id === eventId ? { ...event, status, approvedBy: approverId, updatedAt: nowIso() } : event,
       ),
     }));
   }
@@ -335,11 +338,11 @@ class LocalDemoTripBackend implements TripBackend {
       const ordered = eventIds
         .map((eventId) => eventById.get(eventId))
         .filter((event): event is EventRecord => Boolean(event))
-        .map((event, order) => ({ ...event, order }));
+        .map((event, order) => ({ ...event, order, updatedAt: nowIso() }));
       const remaining = snapshot.events
         .filter((event) => !eventIds.includes(event.id))
         .sort((left, right) => left.order - right.order)
-        .map((event, offset) => ({ ...event, order: ordered.length + offset }));
+        .map((event, offset) => ({ ...event, order: ordered.length + offset, updatedAt: nowIso() }));
       return { ...snapshot, events: [...ordered, ...remaining] };
     });
   }
@@ -357,6 +360,8 @@ class LocalDemoTripBackend implements TripBackend {
       splitAmong: [...input.splitAmong],
       status: "pending",
       createdBy: actor.uid,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
     };
     this.updateSnapshot(tripId, (snapshot) => ({
       ...snapshot,
@@ -378,6 +383,7 @@ class LocalDemoTripBackend implements TripBackend {
               ...expense,
               ...patch,
               ...(patch.splitAmong ? { splitAmong: [...patch.splitAmong] } : {}),
+              updatedAt: nowIso(),
             }
           : expense,
       ),
@@ -395,7 +401,7 @@ class LocalDemoTripBackend implements TripBackend {
     this.updateSnapshot(tripId, (snapshot) => ({
       ...snapshot,
       expenses: snapshot.expenses.map((expense) =>
-        expense.id === expenseId ? { ...expense, status: "settled" } : expense,
+        expense.id === expenseId ? { ...expense, status: "settled", updatedAt: nowIso() } : expense,
       ),
     }));
   }
@@ -521,7 +527,8 @@ function event(
   createdBy: string,
   approvedBy: string | null,
 ): EventRecord {
-  return { id, order, title, category, startAt, endAt, status, participantIds, createdBy, approvedBy };
+  const timestamp = demoRecordTimestamp(id);
+  return { id, order, title, category, startAt, endAt, status, participantIds, createdBy, approvedBy, createdAt: timestamp, updatedAt: timestamp };
 }
 
 function expense(
@@ -533,7 +540,17 @@ function expense(
   status: ExpenseRecord["status"],
   createdBy: string,
 ): ExpenseRecord {
-  return { id, title, amount, paidBy, splitAmong, status, createdBy };
+  const timestamp = demoRecordTimestamp(id);
+  return { id, title, amount, paidBy, splitAmong, status, createdBy, createdAt: timestamp, updatedAt: timestamp };
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+function demoRecordTimestamp(id: string): string {
+  const sequence = Number(id.match(/(\d+)$/)?.[1] ?? "0");
+  return new Date(Date.UTC(2026, 6, 30, 7, sequence * 7, 0)).toISOString();
 }
 
 function profileFor(user: AuthenticatedUser, trips: TripRecord[]): UserRecord {
