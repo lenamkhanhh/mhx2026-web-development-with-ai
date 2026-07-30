@@ -170,8 +170,8 @@ describe("WorkbenchOverview", () => {
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Filter itinerary" }), "activity");
 
-    expect(within(table).getByText("Tham quan vÆ°á»n hoa")).toBeTruthy();
-    expect(within(table).queryByText("Nháº­n phÃ²ng")).toBeNull();
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    expect(within(table).getByText("Activity")).toBeTruthy();
   });
 
   it("links the overview footer to the real reorder workflow in Timeline", async () => {

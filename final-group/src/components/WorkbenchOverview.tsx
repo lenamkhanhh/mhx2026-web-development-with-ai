@@ -27,6 +27,7 @@ interface WorkbenchOverviewProps {
 
 type OverviewFilter = "all" | "open" | "pending" | "done";
 type OverviewSort = "time-asc" | "time-desc" | "title";
+type OverviewCategoryFilter = "all" | FirestoreEventCategory;
 
 const CATEGORY_META: Record<
   FirestoreEventCategory,
@@ -55,6 +56,7 @@ export function WorkbenchOverview({
 }: WorkbenchOverviewProps) {
   const [filter, setFilter] = useState<OverviewFilter>("all");
   const [sort, setSort] = useState<OverviewSort>("time-asc");
+  const [categoryFilter, setCategoryFilter] = useState<OverviewCategoryFilter>("all");
   const orderedEvents = useMemo(
     () => [...snapshot.events].sort((left, right) => {
       if (sort === "title") return left.title.localeCompare(right.title, "vi");
@@ -69,6 +71,7 @@ export function WorkbenchOverview({
     done: orderedEvents.filter((event) => event.status === "completed").length,
   };
   const visibleEvents = orderedEvents.filter((event) => {
+    if (categoryFilter !== "all" && event.category !== categoryFilter) return false;
     if (filter === "all") return true;
     if (filter === "open") return event.status === "approved" || event.status === "happening";
     if (filter === "pending") return event.status === "pending";
@@ -138,6 +141,13 @@ export function WorkbenchOverview({
             />
           </div>
           <div className="workbench-table-toolbar-actions">
+            <label className="workbench-sort-control">
+              <span>Filter</span>
+              <select aria-label="Filter itinerary" onChange={(event) => setCategoryFilter(event.target.value as OverviewCategoryFilter)} value={categoryFilter}>
+                <option value="all">All items</option>
+                {Object.entries(CATEGORY_META).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}
+              </select>
+            </label>
             <label className="workbench-sort-control">
               <span>Sort</span>
               <select aria-label="Sort itinerary" onChange={(event) => setSort(event.target.value as OverviewSort)} value={sort}>
