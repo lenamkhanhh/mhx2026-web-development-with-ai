@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { mapAuthError, validateLogin, validateRegistration, type LoginInput, type RegistrationInput } from "../../auth";
 import type { AuthenticatedUser, TripBackend, UserRecord } from "../../firebase/contracts";
 import styles from "./AuthFlow.module.css";
@@ -43,7 +43,7 @@ export function AuthFlow({ backend, onAuthenticated }: { backend: AuthBackend; o
   const isLogin = mode === "login";
   const fieldProps = (error: string | undefined, errorId: string) => ({ "aria-describedby": error ? errorId : undefined, "aria-invalid": Boolean(error) });
   const switchMode = (nextMode: AuthMode) => { if (submitting) return; setMode(nextMode); setErrors({}); setRequestError(""); setSuccess(""); setPasswordVisible(false); };
-  const update = (key: keyof RegistrationInput) => (event: React.ChangeEvent<HTMLInputElement>) => setInput((current) => ({ ...current, [key]: event.target.value }));
+  const update = (key: keyof RegistrationInput) => (event: ChangeEvent<HTMLInputElement>) => setInput((current) => ({ ...current, [key]: event.target.value }));
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (submitting) return;
     setErrors({}); setRequestError(""); setSuccess(""); setSubmitting(true);
