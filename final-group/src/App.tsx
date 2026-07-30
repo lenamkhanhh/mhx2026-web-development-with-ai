@@ -8,7 +8,6 @@ import { MembersPanel } from "./features/members/MembersPanel";
 import { WorkbenchShell, type WorkbenchView } from "./components/WorkbenchShell";
 import { WorkbenchOverview } from "./components/WorkbenchOverview";
 import { OnboardingFlow } from "./features/onboarding/OnboardingFlow";
-import { StatisticsPanel } from "./features/statistics";
 import type {
   AuthenticatedUser,
   FirestoreEventCategory,
@@ -393,22 +392,20 @@ export function App({ backend, demoMode = false }: AppProps) {
       role={role}
     />
   ) : activeView === "expenses" ? (
-    <div className="workbench-feature-stack">
-      <ExpensesPanel
-        canSettle={role === "lead"}
-        currentUserId={user.uid}
-        expenses={selectedSnapshot.expenses}
-        members={selectedSnapshot.members}
-        onCreate={createExpense}
-        onDelete={deleteExpense}
-        onSettle={settleExpense}
-        onUpdate={updateExpense}
-      />
-      <StatisticsPanel members={selectedSnapshot.members} expenses={selectedSnapshot.expenses} />
-    </div>
+    <ExpensesPanel
+      canSettle={role === "lead"}
+      currentUserId={user.uid}
+      expenses={selectedSnapshot.expenses}
+      members={selectedSnapshot.members}
+      onCreate={createExpense}
+      onDelete={deleteExpense}
+      onSettle={settleExpense}
+      onUpdate={updateExpense}
+    />
   ) : (
     <MembersPanel
       currentUserId={user.uid}
+      expenses={selectedSnapshot.expenses}
       members={selectedSnapshot.members}
       onRemoveMember={(uid) => membersFeature.removeMember(uid)}
       onUpdateResponsibility={(uid, responsibility) => membersFeature.updateResponsibility(uid, responsibility)}

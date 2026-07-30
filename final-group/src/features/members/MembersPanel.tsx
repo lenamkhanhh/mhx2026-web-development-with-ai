@@ -1,5 +1,10 @@
 import { useState } from "react";
-import type { MemberRecord, TripRecord } from "../../firebase/contracts";
+import type {
+  ExpenseRecord,
+  MemberRecord,
+  TripRecord,
+} from "../../firebase/contracts";
+import { formatVnd } from "../expenses/expense-calculations";
 import { canEditResponsibility, canRemoveMember } from "./authorization";
 import "./MembersPanel.css";
 
@@ -8,6 +13,7 @@ export type MembersPanelState = "ready" | "loading" | "error";
 export interface MembersPanelProps {
   trip: Pick<TripRecord, "id" | "joinCode">;
   members: MemberRecord[];
+  expenses?: ExpenseRecord[];
   currentUserId: string;
   state?: MembersPanelState;
   errorMessage?: string;
@@ -17,7 +23,16 @@ export interface MembersPanelProps {
 
 type Feedback = "idle" | "saving" | "saved" | "error";
 
-export function MembersPanel({ trip, members, currentUserId, state = "ready", errorMessage, onUpdateResponsibility, onRemoveMember }: MembersPanelProps) {
+export function MembersPanel({
+  trip,
+  members,
+  expenses = [],
+  currentUserId,
+  state = "ready",
+  errorMessage,
+  onUpdateResponsibility,
+  onRemoveMember,
+}: MembersPanelProps) {
   const currentMember = members.find((member) => member.uid === currentUserId);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<Record<string, Feedback>>({});
@@ -25,8 +40,21 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
   const [copyStateCode, setCopyStateCode] = useState<string | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<MemberRecord | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [memberQuery, setMemberQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | MemberRecord["role"]>("all");
   const displayedCopyState =
     copyStateCode === trip.joinCode ? copyState : "idle";
+  const normalizedQuery = memberQuery.trim().toLocaleLowerCase("vi");
+  const visibleMembers = members.filter((member) => {
+    const matchesRole = roleFilter === "all" || member.role === roleFilter;
+    const matchesQuery =
+      normalizedQuery.length === 0 ||
+      member.displayName.toLocaleLowerCase("vi").includes(normalizedQuery) ||
+      member.email.toLocaleLowerCase("vi").includes(normalizedQuery) ||
+      member.responsibility.toLocaleLowerCase("vi").includes(normalizedQuery);
+    return matchesRole && matchesQuery;
+  });
+  const recentExpenses = expenses.slice(-4).reverse();
 
   const updateResponsibility = async (member: MemberRecord) => {
     if (!canEditResponsibility(currentUserId, member)) return;
@@ -91,6 +119,34 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
         </aside>
       </header>
 
+      <div className="members-panel__toolbar">
+        <label>
+          <span>Tìm trong nhóm</span>
+          <input
+            aria-label="Tìm thành viên"
+            onChange={(event) => setMemberQuery(event.target.value)}
+            placeholder="Tên, email hoặc trách nhiệm…"
+            type="search"
+            value={memberQuery}
+          />
+        </label>
+        <label>
+          <span>Vai trò</span>
+          <select
+            aria-label="Lọc vai trò"
+            onChange={(event) =>
+              setRoleFilter(event.target.value as "all" | MemberRecord["role"])
+            }
+            value={roleFilter}
+          >
+            <option value="all">Tất cả vai trò</option>
+            <option value="lead">Trưởng nhóm (Lead)</option>
+            <option value="member">Thành viên</option>
+          </select>
+        </label>
+        <strong>{visibleMembers.length} / {members.length} thành viên</strong>
+      </div>
+
       {state === "loading" ? <div className="members-panel__state" data-state="loading" data-testid="members-state" role="status">Đang tải thành viên…</div> : null}
       {state === "error" ? <div className="members-panel__state members-panel__state--error" data-state="error" data-testid="members-state" role="alert">{errorMessage || "Không thể tải nhóm. Hãy thử lại."}</div> : null}
       {state === "ready" && members.length === 0 ? <div className="members-panel__state" data-state="empty" data-testid="members-state">Chưa có thành viên nào khác trong chuyến đi.</div> : null}
@@ -98,7 +154,7 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
       {state === "ready" && members.length > 0 ? <div className="members-panel__table-wrap" role="region" aria-label="Danh sách thành viên">
         <div className="members-panel__table-head" aria-hidden="true"><span>Thành viên</span><span>Trách nhiệm</span><span>Thao tác</span></div>
         <ul aria-label="Danh sách thành viên" className="members-panel__list">
-        {members.map((member) => {
+        {visibleMembers.map((member) => {
           const mayEdit = canEditResponsibility(currentUserId, member);
           const mayRemove = canRemoveMember(currentUserId, currentMember?.role, member);
           const draft = drafts[member.uid] ?? member.responsibility;
@@ -119,8 +175,50 @@ export function MembersPanel({ trip, members, currentUserId, state = "ready", er
             {memberFeedback !== "idle" ? <p className="members-panel__feedback" data-state={memberFeedback} data-testid={`responsibility-status-${member.uid}`} role="status">{memberFeedback === "saving" ? "Đang lưu trách nhiệm…" : memberFeedback === "saved" ? "Đã lưu trách nhiệm" : "Không thể lưu trách nhiệm. Thử lại nhé."}</p> : null}
           </li>;
         })}
+        {visibleMembers.length === 0 ? (
+          <li className="members-panel__filtered-empty">
+            Không có thành viên phù hợp bộ lọc.
+          </li>
+        ) : null}
         </ul>
       </div> : null}
+
+      <aside aria-label="Ngữ cảnh thành viên" className="members-panel__context">
+        <div>
+          <span className="members-panel__eyebrow">Workspace context</span>
+          <h3>Ngữ cảnh thành viên</h3>
+          <p>Dữ liệu thật đang có trong chuyến đi, không tạo activity giả.</p>
+        </div>
+        <dl className="members-panel__context-metrics">
+          <div><dt>Tổng thành viên</dt><dd>{members.length}</dd></div>
+          <div><dt>Số Lead</dt><dd>{members.filter((member) => member.role === "lead").length}</dd></div>
+        </dl>
+        <section>
+          <div className="members-panel__context-heading">
+            <span>Khoản chi gần đây</span>
+            <b>{recentExpenses.length}</b>
+          </div>
+          {recentExpenses.length > 0 ? (
+            <ul>
+              {recentExpenses.map((expense) => (
+                <li key={expense.id}>
+                  <div>
+                    <strong>{expense.title}</strong>
+                    <span>
+                      {expense.status === "settled" ? "Đã chốt" : "Chờ chốt"} ·{" "}
+                      {members.find((member) => member.uid === expense.paidBy)?.displayName ??
+                        expense.paidBy}
+                    </span>
+                  </div>
+                  <b>{formatVnd(expense.amount)}</b>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Chưa có khoản chi để hiển thị.</p>
+          )}
+        </section>
+      </aside>
 
       {state === "ready" && members.length > 0 ? <PermissionMatrix /> : null}
 

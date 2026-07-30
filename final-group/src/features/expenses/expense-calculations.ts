@@ -24,6 +24,14 @@ export interface ExpenseLedger {
   totalAmount: number;
 }
 
+export interface SettlementSuggestion {
+  amount: number;
+  fromId: string;
+  fromName: string;
+  toId: string;
+  toName: string;
+}
+
 export function isVndAmount(amount: number): boolean {
   return Number.isSafeInteger(amount) && amount >= 0;
 }
@@ -122,4 +130,78 @@ export function calculateExpenseBalances(
   expenses: TripExpense[],
 ): ExpenseBalance[] {
   return calculateExpenseLedger(members, expenses).balances;
+}
+
+/**
+ * Derives a deterministic minimum-pass settlement plan from the current
+ * ledger. These are suggestions only: the approved schema does not contain
+ * transfer records, so this function never claims that money moved.
+ */
+export function calculateSettlementSuggestions(
+  balances: ExpenseBalance[],
+): SettlementSuggestion[] {
+  const debtors = balances
+    .filter((member) => member.balance < 0)
+    .map((member) => ({ ...member, remaining: -member.balance }));
+  const creditors = balances
+    .filter((member) => member.balance > 0)
+    .map((member) => ({ ...member, remaining: member.balance }));
+  const suggestions: SettlementSuggestion[] = [];
+  let debtorIndex = 0;
+  let creditorIndex = 0;
+
+  while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+    const debtor = debtors[debtorIndex];
+    const creditor = creditors[creditorIndex];
+    const amount = Math.min(debtor.remaining, creditor.remaining);
+
+    if (amount > 0) {
+      suggestions.push({
+        amount,
+        fromId: debtor.memberId,
+        fromName: debtor.displayName,
+        toId: creditor.memberId,
+        toName: creditor.displayName,
+      });
+      debtor.remaining -= amount;
+      creditor.remaining -= amount;
+    }
+
+    if (debtor.remaining === 0) debtorIndex += 1;
+    if (creditor.remaining === 0) creditorIndex += 1;
+  }
+
+  return suggestions;
+}
+
+function csvCell(value: string | number): string {
+  let normalized = String(value);
+  if (/^[=+\-@\t\r]/.test(normalized)) {
+    normalized = `'${normalized}`;
+  }
+  const escaped = normalized.replace(/"/g, '""');
+  return /[",;\r\n]/.test(escaped) ? `"${escaped}"` : escaped;
+}
+
+export function expensesToCsv(
+  members: ExpenseMember[],
+  expenses: TripExpense[],
+): string {
+  const names = new Map(members.map((member) => [member.uid, member.displayName]));
+  const rows = expenses.map((expense) => [
+    expense.title,
+    expense.amount,
+    names.get(expense.paidBy) ?? expense.paidBy,
+    expense.splitAmong
+      .map((memberId) => names.get(memberId) ?? memberId)
+      .join("; "),
+    expense.status,
+  ]);
+
+  return [
+    ["title", "amount", "paidBy", "splitAmong", "status"],
+    ...rows,
+  ]
+    .map((row) => row.map(csvCell).join(","))
+    .join("\r\n");
 }

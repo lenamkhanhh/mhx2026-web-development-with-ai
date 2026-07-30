@@ -1,6 +1,6 @@
 .expense-workbench {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(270px, 320px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   min-width: 0;
   color: #20262e;
@@ -23,13 +23,57 @@
   font-size: 11px;
 }
 
-.expense-workbench .total-cost {
-  padding: 9px 11px;
-  border: 1px solid #c5e97a;
-  border-radius: 5px;
-  color: #2d4d00;
-  background: #f1ffca;
-  font-size: 11px;
+.expense-workbench__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.expense-workbench__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.expense-workbench__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid #dbe1e8;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.expense-workbench__metrics article {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-right: 1px solid #e4e8ed;
+}
+
+.expense-workbench__metrics article:last-child {
+  border-right: 0;
+}
+
+.expense-workbench__metrics span,
+.expense-workbench__metrics small {
+  color: #74808d;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.expense-workbench__metrics strong {
+  overflow: hidden;
+  color: #20262e;
+  font-size: 19px;
+  letter-spacing: -.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .expense-workbench__state {
@@ -49,18 +93,27 @@
 }
 
 .expense-workbench__composer {
-  grid-column: 2;
-  grid-row: 2 / span 2;
-  align-self: start;
+  position: fixed;
+  z-index: 60;
+  top: 64px;
+  right: 0;
+  bottom: 0;
+  width: min(410px, calc(100vw - 24px));
+  overflow-y: auto;
   margin: 0;
   padding: 14px;
-  border: 1px solid #dbe1e8;
-  border-radius: 6px;
+  border: 0;
+  border-left: 1px solid #dbe1e8;
+  border-radius: 0;
   background: #fff;
+  box-shadow: -12px 0 34px rgb(22 34 49 / 12%);
 }
 
 .expense-workbench__composer .section-heading {
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 10px;
 }
 
@@ -162,9 +215,8 @@
 
 .expense-workbench__ledger {
   display: grid;
-  grid-column: 1;
-  grid-row: 2 / span 2;
-  grid-template-columns: minmax(0, 1fr) minmax(235px, .75fr);
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
   align-content: start;
   gap: 12px;
   min-width: 0;
@@ -326,6 +378,125 @@
   background: #fff;
   font-size: 9px;
   font-weight: 750;
+}
+
+.expense-workbench__filter {
+  display: grid;
+  gap: 3px;
+  color: #6d7884;
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.expense-workbench__filter select {
+  min-height: 29px;
+  width: 118px;
+  margin: 0;
+}
+
+.expense-workbench__table {
+  overflow-x: auto;
+  margin-top: 10px;
+  border: 1px solid #e0e5ea;
+  border-radius: 5px;
+}
+
+.expense-workbench__table-row {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1.25fr)
+    minmax(90px, .75fr)
+    62px
+    minmax(90px, .7fr)
+    78px
+    minmax(108px, .75fr);
+  min-width: 690px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border-bottom: 1px solid #edf0f3;
+  color: #46515d;
+  font-size: 9px;
+}
+
+.expense-workbench__table-row:last-child {
+  border-bottom: 0;
+}
+
+.expense-workbench__table-row:not(.expense-workbench__table-row--head):hover {
+  background: #fbfdff;
+}
+
+.expense-workbench__table-row--head {
+  color: #667380;
+  background: #fbfcfc;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.expense-workbench__row-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.expense-workbench__settle-button {
+  min-height: 27px;
+  padding: 0 7px;
+  border: 1px solid #b9e958;
+  border-radius: 4px;
+  color: #314c00;
+  background: #efffc8;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.expense-workbench__settlement-rail {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+}
+
+.expense-workbench__settlement-rail ol {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.expense-workbench__settlement-rail li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 0;
+  border-bottom: 1px solid #edf0f3;
+}
+
+.expense-workbench__settlement-rail li:last-child {
+  border-bottom: 0;
+}
+
+.expense-workbench__settlement-rail li div {
+  display: grid;
+  gap: 3px;
+}
+
+.expense-workbench__settlement-rail li strong,
+.expense-workbench__settlement-rail li b {
+  color: #2f3944;
+  font-size: 10px;
+}
+
+.expense-workbench__settlement-rail li span,
+.expense-workbench__rail-note {
+  margin: 0;
+  color: #78838e;
+  font-size: 9px;
+  line-height: 1.4;
 }
 
 .expense-workbench__detail-audit {
