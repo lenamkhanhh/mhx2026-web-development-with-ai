@@ -61,6 +61,16 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
     if (confirmsRequestedOrder(canonicalOrder, optimisticOrder)) setOptimisticState(null);
   }, [events, optimisticOrder]);
 
+  useEffect(() => {
+    if (timeline.length === 0) {
+      if (selectedEventId !== null) setSelectedEventId(null);
+      return;
+    }
+    if (!selectedEventId || !timeline.some((event) => event.id === selectedEventId)) {
+      setSelectedEventId(timeline[0].id);
+    }
+  }, [selectedEventId, timeline]);
+
   function toggleParticipant(uid: string) {
     setDraft((current) => ({ ...current, participantIds: current.participantIds.includes(uid) ? current.participantIds.filter((id) => id !== uid) : [...current.participantIds, uid] }));
   }

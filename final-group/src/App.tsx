@@ -397,6 +397,14 @@ export function App({ backend, demoMode = false }: AppProps) {
       onLogout={handleLogout}
       pendingCount={pendingCount}
       role={role}
+      topbarAction={
+        <label className="workbench-trip-switcher">
+          <span>Chuyến đi</span>
+          <select aria-label="Chuyến đi đang mở" value={tripId} onChange={(event) => handleTripChange(event.target.value)}>
+            {trips.map((trip) => <option key={trip.id} value={trip.id}>{trip.name}</option>)}
+          </select>
+        </label>
+      }
       trip={selectedSnapshot.trip}
     >
       <div className="workbench-screen-stack">
@@ -406,12 +414,6 @@ export function App({ backend, demoMode = false }: AppProps) {
             <span> Chỉ dùng để trải nghiệm; mọi thay đổi sẽ reset khi tải lại.</span>
           </p>
         ) : null}
-        <label className="workbench-trip-switcher">
-          <span>Chuyến đi đang mở</span>
-          <select value={tripId} onChange={(event) => handleTripChange(event.target.value)}>
-            {trips.map((trip) => <option key={trip.id} value={trip.id}>{trip.name}</option>)}
-          </select>
-        </label>
         {error ? <p className="app-alert error" role="alert">{error}</p> : null}
         {notice ? <p className="app-alert" role="status">{notice}</p> : null}
         {currentScreen}

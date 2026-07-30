@@ -160,6 +160,25 @@ export function AuthFlow({
       data-testid="auth-workbench"
     >
       <div aria-hidden="true" className={styles.grid} />
+      <div className={styles.story}>
+        <p className={styles.storyKicker}>TRIPFLOW / WORKBENCH</p>
+        <h2>Quản lý &amp; vận hành chuyến đi dễ dàng</h2>
+        <p className={styles.storyIntro}>
+          TripFlow Workbench giúp cả nhóm lập kế hoạch, phân công, theo dõi tiến độ và kiểm soát chi phí trong một không gian chung.
+        </p>
+        <p className={styles.storyLabel}>QUY TRÌNH CHUYẾN ĐI</p>
+        <ol className={styles.process}>
+          <li><strong>01</strong><span><b>Lên kế hoạch</b><small>Xây dựng lịch trình chi tiết</small></span></li>
+          <li><strong>02</strong><span><b>Phân công</b><small>Giao việc &amp; nguồn lực cho thành viên</small></span></li>
+          <li><strong>03</strong><span><b>Theo dõi</b><small>Cập nhật tiến độ theo thời gian thực</small></span></li>
+          <li><strong>04</strong><span><b>Tổng kết</b><small>Đối soát chi phí &amp; báo cáo</small></span></li>
+        </ol>
+        <ul className={styles.features}>
+          <li><b>Quản lý tập trung</b><span>Chuyến đi, công việc, thành viên và chi phí ở một nơi.</span></li>
+          <li><b>Phân công rõ ràng</b><span>Mọi đề xuất và trách nhiệm đều có trạng thái minh bạch.</span></li>
+          <li><b>Theo dõi thời gian thực</b><span>Snapshot mới giúp nhóm biết thay đổi nào đã được xác nhận.</span></li>
+        </ul>
+      </div>
       <article className={styles.card}>
         <header className={styles.header}>
           <p className={styles.kicker}>TRIPFLOW WORKBENCH</p>

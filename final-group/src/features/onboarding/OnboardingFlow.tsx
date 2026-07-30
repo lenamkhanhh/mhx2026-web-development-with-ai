@@ -200,6 +200,11 @@ export function OnboardingFlow({
             <button className={styles.lockedAction} disabled type="button">Chưa thể tham gia bằng mã</button>
           </section>
         )}
+        <ol aria-label="Các bước bắt đầu" className={styles.processStrip}>
+          <li><strong>01</strong><span><b>Create / Join</b><small>Tạo chuyến đi mới hoặc tham gia bằng mã.</small></span></li>
+          <li><strong>02</strong><span><b>Add members</b><small>Mời thành viên và phân vai trò.</small></span></li>
+          <li><strong>03</strong><span><b>Build timeline</b><small>Lên lịch trình, chi phí và công việc.</small></span></li>
+        </ol>
       </article>
     </section>
   );

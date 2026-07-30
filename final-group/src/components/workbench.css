@@ -400,6 +400,36 @@
   white-space: nowrap;
 }
 
+.workbench-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.workbench-trip-switcher {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #707b88;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.workbench-trip-switcher select {
+  min-height: 34px;
+  max-width: 205px;
+  padding: 0 26px 0 9px;
+  border: 1px solid var(--wb-line);
+  border-radius: 5px;
+  color: #3e4a56;
+  background: #fff;
+  font: inherit;
+  font-size: 10px;
+  text-transform: none;
+}
+
 .workbench-status-separator {
   color: #c4c9ce;
 }
@@ -533,6 +563,23 @@
   background: rgb(255 255 255 / 65%);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 9px;
+}
+
+.workbench-screen-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.workbench-screen-stack .local-demo-notice {
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid #b8d0ff;
+  border-left: 3px solid var(--wb-blue);
+  border-radius: 5px;
+  color: #38506f;
+  background: #f7faff;
+  font-size: 10px;
+  line-height: 1.4;
 }
 
 .workbench-overview {
@@ -1156,6 +1203,10 @@
   }
 
   .workbench-system-status {
+    display: none;
+  }
+
+  .workbench-topbar-actions {
     display: none;
   }
 

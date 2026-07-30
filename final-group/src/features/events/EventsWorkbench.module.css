@@ -1,122 +1,539 @@
 .workbench {
   display: grid;
-  gap: 22px;
-  padding: clamp(20px, 3vw, 34px);
-  border: 1px solid #dee2df;
-  border-radius: 24px;
-  color: #20262c;
-  background:
-    linear-gradient(135deg, rgb(248 250 244 / 94%), rgb(255 255 255 / 98%) 48%),
-    repeating-linear-gradient(90deg, transparent 0 23px, rgb(169 235 0 / 5%) 24px);
-  box-shadow: 0 18px 42px rgb(28 43 58 / 8%);
+  gap: 12px;
+  min-width: 0;
+  color: #20262e;
 }
 
-.header, .timelineHeader, .composerHeader, .eventCard, .actions { display: flex; }
-.header, .timelineHeader, .eventCard { align-items: flex-start; justify-content: space-between; gap: 16px; }
-.kicker { margin: 0 0 7px; color: #617900; font-size: 11px; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
-.header h2 { margin: 0; font-size: clamp(27px, 4vw, 42px); line-height: 1; letter-spacing: -.045em; }
-.intro { max-width: 560px; margin: 10px 0 0; color: #6e7780; line-height: 1.55; }
-.syncButton, .createButton, .actions button { min-height: 38px; border: 1px solid #cdd4d5; border-radius: 7px; color: #39464d; background: #fff; font-weight: 780; cursor: pointer; }
-.syncButton { padding: 0 13px; white-space: nowrap; }
-.syncButton:hover, .actions button:hover { border-color: #9da7a7; background: #f3f6f5; }
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
 
-.feedback { margin: 0; padding: 11px 13px; border-radius: 11px; font-size: 14px; font-weight: 680; }
-.saving { color: #4d6500; background: #effbc8; }
-.success { color: #075f49; background: #daf7ea; }
-.error { color: #931f3c; background: #ffe8ee; }
+.kicker,
+.detailKicker {
+  margin: 0;
+  color: #6e7a87;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
 
-.composer { display: grid; grid-template-columns: 1.3fr .7fr 1fr 1fr; gap: 12px; padding: 18px; border: 1px solid #dee2df; border-radius: 9px; background: rgb(255 255 255 / 90%); }
-.composerHeader { grid-column: 1 / -1; align-items: center; gap: 10px; }
-.composerHeader > span, .timelineHeader > span, .railMarker { display: inline-grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: #1b2600; background: #b5ee19; font-size: 11px; font-weight: 850; letter-spacing: .05em; }
-.composerHeader strong { display: block; }
-.composerHeader small { display: block; margin-top: 2px; color: #7a838a; }
-.composer label { display: grid; gap: 6px; color: #4b555d; font-size: 13px; font-weight: 760; }
-.composer input, .composer select { box-sizing: border-box; min-height: 42px; width: 100%; padding: 0 10px; border: 1px solid #cdd4d5; border-radius: 7px; color: #20262c; background: #fff; font: inherit; }
-.composer input:focus, .composer select:focus { outline: 3px solid rgb(169 235 0 / 18%); border-color: #7ba600; }
-.participants { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: 10px 16px; margin: 0; padding: 12px; border: 1px solid #dee2df; border-radius: 8px; }
-.participants legend { padding: 0 5px; color: #4b555d; font-size: 13px; font-weight: 760; }
-.participants label { display: flex; align-items: center; gap: 7px; color: #39464d; font-weight: 600; }
-.participants input { width: auto; min-height: auto; }
-.createButton { justify-self: start; padding: 0 16px; border-color: #a9eb00; color: #1b2600; background: #b5ee19; }
-.createButton:hover { background: #c8f54e; }
-.createButton:disabled, .syncButton:disabled, .actions button:disabled { cursor: not-allowed; opacity: .52; }
+.header h2 {
+  margin: 4px 0 2px;
+  color: #1a1f25;
+  font-size: 20px;
+  letter-spacing: -.03em;
+}
 
-.timelineHeader { align-items: center; padding-top: 6px; border-top: 1px solid #e2e5e2; }
-.timelineHeader strong { margin-right: auto; font-size: 15px; }
-.timelineHeader small { color: #7a838a; }
-.timeline { position: relative; display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.timeline::before { position: absolute; top: 15px; bottom: 15px; left: 14px; width: 1px; content: ""; background: #d7dfc4; }
-.timelineItem { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; transition: transform 240ms cubic-bezier(.2, .8, .2, 1), opacity 160ms ease; }
-.timelineItem[data-motion="reordering"] { z-index: 1; transform: translateX(7px) scale(1.008); }
-.railMarker { z-index: 1; color: #4d6500; background: #effbc8; box-shadow: 0 0 0 4px #fff; }
-.eventCard { min-width: 0; padding: 16px; border: 1px solid #dee2df; border-radius: 9px; background: #fff; box-shadow: 0 8px 20px rgb(28 43 58 / 5%); }
-.eventContent h3 { margin: 9px 0 0; font-size: 18px; letter-spacing: -.02em; }
-.eventContent p, .eventContent small { display: block; margin: 5px 0 0; color: #6e7780; line-height: 1.45; }
-.eventContent small { font-size: 12px; }
-.status { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 850; letter-spacing: .02em; }
-.status_pending { color: #875900; background: #fff0bd; }
-.status_approved { color: #075d46; background: #d8f8e9; }
-.status_happening { color: #fff; background: #155eef; }
-.status_completed { color: #425779; background: #e7edf8; }
-.status_cancelled { color: #8f203a; background: #ffe0e8; }
-.actions { flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
-.actions button { padding: 0 10px; }
-.empty { display: grid; gap: 6px; min-height: 130px; place-content: center; padding: 20px; border: 1px dashed #b8c0bd; border-radius: 9px; text-align: center; background: rgb(248 250 247 / 78%); }
-.empty p { margin: 0; color: #6e7780; }
+.intro {
+  margin: 0;
+  color: #75808c;
+  font-size: 11px;
+}
+
+.syncButton,
+.createButton,
+.actions button,
+.editButton,
+.saveButton,
+.detailButton {
+  min-height: 33px;
+  padding: 0 10px;
+  border: 1px solid #c8d0d9;
+  border-radius: 5px;
+  color: #34404c;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.syncButton:hover,
+.editButton:hover,
+.detailButton:hover,
+.actions button:hover:not(:disabled) {
+  border-color: #0866ed;
+  color: #0866ed;
+  background: #f4f8ff;
+}
+
+.feedback {
+  margin: 0;
+  padding: 9px 11px;
+  border-left: 3px solid #0866ed;
+  color: #1b4e91;
+  background: #f3f8ff;
+  font-size: 11px;
+}
+
+.success {
+  border-color: #5aa96c;
+  color: #22663a;
+  background: #f3fbf5;
+}
+
+.error {
+  border-color: #d53a3a;
+  color: #9b2424;
+  background: #fff5f5;
+}
+
+.saving {
+  border-color: #c68a22;
+  color: #8d5d00;
+  background: #fffaf0;
+}
+
+.composer {
+  display: grid;
+  order: 2;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid #dbe1e8;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.composerHeader {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 9px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #edf0f3;
+}
+
+.composerHeader > span,
+.timelineHeader > span {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border: 1px solid #a9ed00;
+  border-radius: 5px;
+  color: #405d00;
+  background: #f1fcca;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.composerHeader strong,
+.composerHeader small {
+  display: block;
+}
+
+.composerHeader strong {
+  color: #27303a;
+  font-size: 12px;
+}
+
+.composerHeader small {
+  margin-top: 2px;
+  color: #7b8692;
+  font-size: 10px;
+}
+
+.composer > label {
+  display: grid;
+  gap: 5px;
+  color: #53606d;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.composer input,
+.composer select,
+.editForm input {
+  box-sizing: border-box;
+  min-height: 36px;
+  width: 100%;
+  padding: 0 9px;
+  border: 1px solid #ccd4de;
+  border-radius: 5px;
+  color: #20262e;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+}
+
+.composer input:focus-visible,
+.composer select:focus-visible,
+.editForm input:focus-visible {
+  border-color: #0866ed;
+  outline: 2px solid rgb(8 102 237 / 14%);
+  outline-offset: 1px;
+}
+
+.participants {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin: 0;
+  padding: 8px 9px;
+  border: 1px solid #dbe1e8;
+  border-radius: 5px;
+}
+
+.participants legend {
+  padding: 0 4px;
+  color: #53606d;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.participants label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #4c5865;
+  font-size: 10px;
+}
+
+.createButton {
+  grid-column: 1 / -1;
+  justify-self: start;
+  border-color: #a9ed00;
+  color: #172000;
+  background: #a9ed00;
+}
+
+.createButton:hover:not(:disabled) {
+  background: #baf52e;
+}
+
+.timelineWorkspace {
+  display: grid;
+  order: 1;
+  grid-template-columns: minmax(0, 1fr) minmax(255px, 310px);
+  gap: 12px;
+  min-width: 0;
+}
+
+.timelineHeader {
+  display: flex;
+  grid-column: 1;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  color: #28323d;
+  font-size: 12px;
+}
+
+.timelineHeader strong {
+  font-weight: 800;
+}
+
+.timelineHeader small {
+  margin-left: auto;
+  color: #7c8793;
+  font-size: 10px;
+}
+
+.timeline {
+  position: relative;
+  display: grid;
+  grid-column: 1;
+  gap: 7px;
+  margin: 0;
+  padding: 0 0 0 30px;
+  list-style: none;
+}
+
+.timeline::before {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 10px;
+  width: 1px;
+  content: "";
+  background: #cbd5e1;
+}
+
+.timelineItem {
+  position: relative;
+  min-width: 0;
+}
+
+.railMarker {
+  position: absolute;
+  top: 15px;
+  left: -28px;
+  z-index: 1;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #0870ee;
+  background: #dcecff;
+  box-shadow: 0 0 0 1px #8ebaff;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.eventCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px 10px;
+  padding: 11px 12px;
+  border: 1px solid #dbe1e8;
+  border-radius: 6px;
+  background: #fff;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.eventCard:hover {
+  border-color: #9fc6ff;
+  background: #fbfdff;
+}
+
+.eventContent {
+  min-width: 0;
+}
+
+.eventContent h3 {
+  margin: 4px 0 3px;
+  overflow: hidden;
+  color: #25303a;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventContent p,
+.eventContent small {
+  display: block;
+  margin: 0;
+  color: #697583;
+  font-size: 10px;
+}
+
+.eventContent small {
+  margin-top: 5px;
+  color: #89939e;
+}
+
+.status {
+  display: inline-flex;
+  min-height: 21px;
+  align-items: center;
+  padding: 0 6px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.status_pending {
+  border-color: #efc47e;
+  color: #9c5b00;
+  background: #fffaf0;
+}
+
+.status_approved,
+.status_happening {
+  border-color: #8ebcff;
+  color: #0961d7;
+  background: #f3f8ff;
+}
+
+.status_completed {
+  border-color: #91d3a4;
+  color: #1b763d;
+  background: #f3fbf5;
+}
+
+.status_cancelled {
+  border-color: #eda9a9;
+  color: #bf2c2c;
+  background: #fff6f6;
+}
+
+.actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.actions button {
+  min-width: 29px;
+  min-height: 27px;
+  padding: 0 6px;
+  font-size: 9px;
+}
+
+.detailButton {
+  grid-column: 1 / -1;
+  justify-self: start;
+  min-height: 26px;
+  border: 0;
+  padding: 0;
+  color: #0866ed;
+  background: transparent;
+  font-size: 10px;
+}
+
+.detailPanel {
+  position: sticky;
+  top: 82px;
+  display: grid;
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-content: start;
+  gap: 12px;
+  min-height: 230px;
+  padding: 14px;
+  border: 1px solid #dbe1e8;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 9px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e8ecf0;
+}
+
+.detailHeader h3 {
+  margin: 4px 0 0;
+  color: #29333e;
+  font-size: 14px;
+}
+
+.detailList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.detailList > div {
+  display: grid;
+  gap: 3px;
+}
+
+.detailList dt {
+  color: #7d8792;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.detailList dd {
+  margin: 0;
+  color: #35404c;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.detailFeedback {
+  margin: 0;
+  color: #23633a;
+  font-size: 10px;
+}
+
+.editForm {
+  display: grid;
+  gap: 8px;
+}
+
+.editForm label {
+  display: grid;
+  gap: 4px;
+  color: #53606d;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.detailActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.saveButton {
+  border-color: #a9ed00;
+  color: #172000;
+  background: #a9ed00;
+}
+
+.detailAudit {
+  margin: 0;
+  padding-top: 9px;
+  border-top: 1px solid #e7ebef;
+  color: #7b8691;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.empty {
+  grid-column: 1;
+  padding: 30px;
+  border: 1px dashed #cbd4df;
+  border-radius: 6px;
+  color: #697583;
+  background: #fff;
+  text-align: center;
+}
+
+.empty strong,
+.empty p {
+  display: block;
+}
+
+.empty p {
+  margin: 5px 0 0;
+  font-size: 11px;
+}
+
+@media (max-width: 980px) {
+  .timelineWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .detailPanel {
+    position: static;
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
 
 @media (max-width: 760px) {
-  .header, .eventCard { flex-direction: column; }
-  .composer { grid-template-columns: 1fr 1fr; }
-  .actions { justify-content: flex-start; width: 100%; }
-}
+  .composer {
+    grid-template-columns: 1fr 1fr;
+  }
 
-@media (max-width: 520px) {
-  .workbench { padding: 18px; border-radius: 18px; }
-  .composer { grid-template-columns: 1fr; }
-  .participants { grid-column: auto; }
-  .syncButton { width: 100%; }
+  .composer > label:first-of-type {
+    grid-column: 1 / -1;
+  }
+
+  .timeline {
+    padding-left: 25px;
+  }
+
+  .railMarker {
+    left: -23px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .timelineItem { transition: none; }
-  .timelineItem[data-motion="reordering"] { transform: none; }
-}
-
-.workbench[data-reduced-motion="true"] .timelineItem { transition: none; }
-.workbench[data-reduced-motion="true"] .timelineItem[data-motion="reordering"] { transform: none; }
-
-.timelineWorkspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 330px); align-items: start; gap: 18px; }
-.timelineWorkspace > .timelineHeader, .timelineWorkspace > .timeline, .timelineWorkspace > .empty { grid-column: 1; }
-.detailPanel { position: sticky; top: 18px; grid-column: 2; grid-row: 1 / span 2; display: grid; gap: 15px; padding: 18px; border: 1px solid #d7dde2; border-radius: 9px; background: #fff; box-shadow: 0 8px 20px rgb(28 43 58 / 5%); }
-.detailHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 13px; border-bottom: 1px solid #e4e8eb; }
-.detailHeader h3 { margin: 5px 0 0; font-size: 20px; letter-spacing: -.025em; }
-.detailKicker { margin: 0; color: #607080; font-size: 10px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
-.detailList { display: grid; gap: 10px; margin: 0; }
-.detailList > div { display: grid; gap: 3px; }
-.detailList dt { color: #65727d; font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
-.detailList dd { margin: 0; color: #27313b; font-size: 13px; line-height: 1.45; }
-.detailFeedback { margin: 0; padding: 10px 11px; border-radius: 7px; font-size: 12px; font-weight: 700; }
-.editButton, .saveButton, .detailActions button, .detailButton { min-height: 36px; border: 1px solid #bdc8d0; border-radius: 7px; padding: 0 11px; color: #253342; background: #fff; font: inherit; font-size: 13px; font-weight: 760; cursor: pointer; }
-.editButton, .saveButton { border-color: #155eef; color: #fff; background: #155eef; }
-.editButton:hover, .saveButton:hover { background: #004eea; }
-.editButton:focus-visible, .saveButton:focus-visible, .detailActions button:focus-visible, .detailButton:focus-visible { outline: 3px solid rgb(21 94 239 / 22%); outline-offset: 2px; }
-.editForm { display: grid; gap: 10px; padding-top: 2px; }
-.editForm label { display: grid; gap: 6px; color: #4b555d; font-size: 12px; font-weight: 760; }
-.editForm input { min-height: 40px; box-sizing: border-box; width: 100%; padding: 0 10px; border: 1px solid #bdc8d0; border-radius: 7px; color: #20262c; background: #fff; font: inherit; }
-.editForm input:focus { outline: 3px solid rgb(21 94 239 / 16%); border-color: #155eef; }
-.detailActions { display: flex; flex-wrap: wrap; gap: 8px; }
-.detailActions button:disabled, .editButton:disabled, .saveButton:disabled { cursor: not-allowed; opacity: .55; }
-.detailAudit { margin: 0; padding-top: 12px; border-top: 1px solid #e4e8eb; color: #6e7780; font-size: 11px; line-height: 1.5; }
-.detailButton { align-self: flex-start; border-color: #b7ceff; color: #155eef; white-space: nowrap; }
-.detailButton:hover { border-color: #155eef; background: #eef4ff; }
-
-@media (max-width: 1050px) {
-  .timelineWorkspace { grid-template-columns: 1fr; }
-  .timelineWorkspace > .timelineHeader, .timelineWorkspace > .timeline, .timelineWorkspace > .empty, .detailPanel { grid-column: auto; grid-row: auto; }
-  .detailPanel { position: static; }
-}
-
-@media (max-width: 760px) {
-  .detailHeader { flex-direction: column; }
-  .detailButton { align-self: stretch; }
+  .eventCard {
+    transition: none;
+  }
 }

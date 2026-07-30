@@ -33,6 +33,7 @@ export interface WorkbenchShellProps {
   onLogout: () => void | Promise<void>;
   pendingCount: number;
   role: WorkbenchRole;
+  topbarAction?: ReactNode;
   trip: WorkbenchTripSummary;
 }
 
@@ -79,6 +80,7 @@ export function WorkbenchShell({
   onLogout,
   pendingCount,
   role,
+  topbarAction,
   trip,
 }: WorkbenchShellProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -198,11 +200,14 @@ export function WorkbenchShell({
               ) : null}
             </div>
 
-            <div aria-label="Trạng thái hệ thống" className="workbench-system-status" role="status">
-              <span aria-hidden="true" className="workbench-online-dot" />
-              <span>Firebase: ready</span>
-              <span className="workbench-status-separator">·</span>
-              <span className={`workbench-role-pill ${role}`}>{role === "lead" ? "LEAD" : "MEMBER"}</span>
+            <div className="workbench-topbar-actions">
+              {topbarAction}
+              <div aria-label="Trạng thái hệ thống" className="workbench-system-status" role="status">
+                <span aria-hidden="true" className="workbench-online-dot" />
+                <span>Firebase: ready</span>
+                <span className="workbench-status-separator">·</span>
+                <span className={`workbench-role-pill ${role}`}>{role === "lead" ? "LEAD" : "MEMBER"}</span>
+              </div>
             </div>
           </header>
 
