@@ -88,16 +88,16 @@ describe("WorkbenchOverview", () => {
       />,
     );
 
-    const table = screen.getByRole("table", { name: "Danh sách hoạt động" });
+    const table = screen.getByRole("table", { name: "Trip itinerary" });
     expect(table).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Hoạt động" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Ngày & giờ" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Người tham gia" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Item" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Date & time" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Participants" })).toBeTruthy();
     expect(within(table).getByText("Nhận phòng")).toBeTruthy();
     expect(within(table).getByText("Tham quan vườn hoa")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Đang mở 1" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Chờ duyệt 1" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Hoàn tất 0" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open 1" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "In review 1" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Done 0" })).toBeTruthy();
   });
 
   it("provides a contextual right rail for pending work and real expenses", () => {
@@ -110,12 +110,12 @@ describe("WorkbenchOverview", () => {
       />,
     );
 
-    const context = screen.getByRole("complementary", { name: "Ngữ cảnh chuyến đi" });
-    expect(within(context).getByText("Hàng chờ duyệt")).toBeTruthy();
+    const context = screen.getByRole("complementary", { name: "Trip context" });
+    expect(within(context).getByText("Review queue")).toBeTruthy();
     expect(within(context).getByText("Tham quan vườn hoa")).toBeTruthy();
-    expect(within(context).getByText("Tổng chi")).toBeTruthy();
+    expect(within(context).getByText("Expense summary")).toBeTruthy();
     expect(within(context).getAllByText("1.800.000 ₫").length).toBeGreaterThan(0);
-    expect(within(context).getByText("Chi gần đây")).toBeTruthy();
+    expect(within(context).getByText("Recent expenses")).toBeTruthy();
     expect(within(context).getByText("Khách sạn")).toBeTruthy();
   });
 
@@ -131,9 +131,9 @@ describe("WorkbenchOverview", () => {
       />,
     );
 
-    const table = screen.getByRole("table", { name: "Danh sách hoạt động" });
+    const table = screen.getByRole("table", { name: "Trip itinerary" });
     await user.selectOptions(
-      screen.getByRole("combobox", { name: "Sắp xếp hoạt động" }),
+      screen.getByRole("combobox", { name: "Sort itinerary" }),
       "time-desc",
     );
     expect(within(table).getAllByRole("row")[1].textContent).toContain(
@@ -142,7 +142,7 @@ describe("WorkbenchOverview", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: "Mở Nhận phòng trong lịch trình",
+        name: "Open Nhận phòng in Timeline",
       }),
     );
     expect(onOpenSchedule).toHaveBeenCalledWith("event-1");
@@ -160,7 +160,7 @@ describe("WorkbenchOverview", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Sắp xếp lại ở Lịch trình" }));
+    await user.click(screen.getByRole("button", { name: "Reorder in Timeline" }));
 
     expect(onOpenSchedule).toHaveBeenCalledWith();
   });
