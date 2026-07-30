@@ -95,11 +95,44 @@ export interface ExpenseRecord {
   updatedAt?: string;
 }
 
+/** Plain-text collaboration note attached to one itinerary item. */
+export interface EventNote {
+  id: string;
+  eventId: string;
+  body: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** A lightweight planning checklist item attached to one itinerary item. */
+export interface EventSubitem {
+  id: string;
+  eventId: string;
+  title: string;
+  completed: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Actor-attributed UI context, not a server-forensic audit trail. */
+export interface TripActivity {
+  id: string;
+  kind: "note_added" | "subitem_added" | "subitem_completed";
+  eventId: string;
+  actorId: string;
+  label: string;
+  createdAt: string;
+}
+
 export interface TripSnapshot {
   trip: TripRecord;
   members: MemberRecord[];
   events: EventRecord[];
   expenses: ExpenseRecord[];
+  notes: EventNote[];
+  subitems: EventSubitem[];
+  activity: TripActivity[];
 }
 
 export interface CreateTripInput {
