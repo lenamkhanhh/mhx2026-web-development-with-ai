@@ -534,7 +534,7 @@ function event(
 ): EventRecord {
   const timestamp = demoRecordTimestamp(id);
   return {
-    id, order, title, category, startAt, endAt, status, participantIds, createdBy, approvedBy,
+    id, order, title: demoRecordTitle(id, title), category, startAt, endAt, status, participantIds, createdBy, approvedBy,
     ...demoEventDetails(id),
     createdAt: timestamp, updatedAt: timestamp,
   };
@@ -550,7 +550,22 @@ function expense(
   createdBy: string,
 ): ExpenseRecord {
   const timestamp = demoRecordTimestamp(id);
-  return { id, title, amount, paidBy, splitAmong, status, createdBy, category: demoExpenseCategory(id), createdAt: timestamp, updatedAt: timestamp };
+  return { id, title: demoRecordTitle(id, title), amount, paidBy, splitAmong, status, createdBy, category: demoExpenseCategory(id), createdAt: timestamp, updatedAt: timestamp };
+}
+
+function demoRecordTitle(id: string, fallback: string): string {
+  const titles: Record<string, string> = {
+    "bkk-01": "Meet at the airport", "bkk-02": "Check in at Ari Hostel", "bkk-03": "Khao soi lunch",
+    "bkk-04": "Talad Noi walk", "bkk-05": "Open the coordination room", "bkk-06": "BTS transfer to IconSiam",
+    "bkk-07": "Yaowarat street food", "bkk-08": "MOCA museum proposal", "bkk-09": "Rain plan review", "bkk-10": "Night transfer to airport",
+    "dl-01": "Night coach arrival", "dl-02": "Check in at Pine Studio", "dl-03": "Tuyen Lam Lake photo walk", "dl-04": "Da Lat Market dinner",
+    "dn-01": "Arrive at Da Nang Airport", "dn-02": "Check in at My Khe Villa", "dn-03": "Coworking sprint review", "dn-04": "Man Thai seafood dinner",
+    "bkk-exp-01": "Airport Rail Link tickets", "bkk-exp-02": "Ari Hostel · 3 nights", "bkk-exp-03": "Khao soi and drinks",
+    "bkk-exp-04": "Group BTS tickets", "bkk-exp-05": "Creative workshop tickets", "bkk-exp-06": "Coffee and coworking", "bkk-exp-07": "Yaowarat dinner", "bkk-exp-08": "Airport Grab transfer",
+    "dl-exp-01": "Pine Studio", "dl-exp-02": "Limousine coach", "dl-exp-03": "Banh can set",
+    "dn-exp-01": "My Khe Villa", "dn-exp-02": "Four-day car rental", "dn-exp-03": "Man Thai seafood",
+  };
+  return titles[id] ?? fallback;
 }
 
 function demoEventDetails(id: string): { location: string; assigneeUid: string; priority: FirestoreEventPriority } {
