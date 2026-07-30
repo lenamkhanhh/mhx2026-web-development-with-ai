@@ -644,6 +644,39 @@
   gap: 9px;
 }
 
+.workbench-table-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workbench-sort-control {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 35px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--wb-line-strong);
+  border-radius: 5px;
+  color: #65707d;
+  background: #fff;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.workbench-sort-control select {
+  border: 0;
+  outline: 0;
+  color: #2d3742;
+  background: transparent;
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: none;
+}
+
 .workbench-status-filter,
 .workbench-table-add,
 .workbench-table-footer button,

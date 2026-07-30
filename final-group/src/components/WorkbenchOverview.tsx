@@ -20,11 +20,12 @@ import { formatVnd } from "../features/expenses/expense-calculations";
 interface WorkbenchOverviewProps {
   currentUserId: string;
   onOpenExpenses: () => void;
-  onOpenSchedule: () => void;
+  onOpenSchedule: (eventId?: string) => void;
   snapshot: TripSnapshot;
 }
 
 type OverviewFilter = "all" | "open" | "pending" | "done";
+type OverviewSort = "time-asc" | "time-desc" | "title";
 
 const CATEGORY_META: Record<
   FirestoreEventCategory,
@@ -44,11 +45,14 @@ export function WorkbenchOverview({
   snapshot,
 }: WorkbenchOverviewProps) {
   const [filter, setFilter] = useState<OverviewFilter>("all");
+  const [sort, setSort] = useState<OverviewSort>("time-asc");
   const orderedEvents = useMemo(
-    () => [...snapshot.events].sort(
-      (left, right) => left.order - right.order || Date.parse(left.startAt) - Date.parse(right.startAt),
-    ),
-    [snapshot.events],
+    () => [...snapshot.events].sort((left, right) => {
+      if (sort === "title") return left.title.localeCompare(right.title, "vi");
+      const byTime = Date.parse(left.startAt) - Date.parse(right.startAt);
+      return sort === "time-desc" ? -byTime : (left.order - right.order || byTime);
+    }),
+    [snapshot.events, sort],
   );
   const counts = {
     open: orderedEvents.filter((event) => event.status === "approved" || event.status === "happening").length,
@@ -98,9 +102,19 @@ export function WorkbenchOverview({
               tone="done"
             />
           </div>
-          <button className="workbench-table-add" onClick={onOpenSchedule} type="button">
-            <Plus aria-hidden="true" size={16} /> Thêm hoạt động
-          </button>
+          <div className="workbench-table-toolbar-actions">
+            <label className="workbench-sort-control">
+              <span>Sắp xếp</span>
+              <select aria-label="Sắp xếp hoạt động" onChange={(event) => setSort(event.target.value as OverviewSort)} value={sort}>
+                <option value="time-asc">Theo thời gian</option>
+                <option value="time-desc">Mới nhất trước</option>
+                <option value="title">Theo tên</option>
+              </select>
+            </label>
+            <button className="workbench-table-add" onClick={() => onOpenSchedule()} type="button">
+              <Plus aria-hidden="true" size={16} /> Thêm hoạt động
+            </button>
+          </div>
         </div>
 
         <div className="workbench-table-frame">
@@ -152,7 +166,7 @@ export function WorkbenchOverview({
                       <button
                         aria-label={`Mở ${event.title} trong lịch trình`}
                         className="workbench-row-action"
-                        onClick={onOpenSchedule}
+                        onClick={() => onOpenSchedule(event.id)}
                         type="button"
                       >
                         <DotsThree aria-hidden="true" size={19} weight="bold" />
@@ -170,7 +184,7 @@ export function WorkbenchOverview({
             </tbody>
           </table>
           <div className="workbench-table-footer">
-            <button onClick={onOpenSchedule} type="button"><Plus aria-hidden="true" size={15} /> Thêm hoạt động</button>
+            <button onClick={() => onOpenSchedule()} type="button"><Plus aria-hidden="true" size={15} /> Thêm hoạt động</button>
             <span>{visibleEvents.length} mục</span>
           </div>
         </div>
