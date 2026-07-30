@@ -55,6 +55,7 @@ test("lead and member permissions stay consistent across realtime updates", asyn
     await expect(memberPage.getByText("MEMBER", { exact: true })).toBeVisible();
 
     await memberPage.getByRole("link", { name: "Lịch trình" }).click();
+    await memberPage.getByTestId("events-add-button").click();
     await memberPage.getByLabel("Tên hoạt động").fill(memberEvent);
     await memberPage.getByLabel("Bắt đầu").fill("2026-08-20T09:00");
     await memberPage.getByLabel("Kết thúc").fill("2026-08-20T10:00");
@@ -71,6 +72,9 @@ test("lead and member permissions stay consistent across realtime updates", asyn
     await expect(
       memberEventRow.getByRole("button", { name: "Duyệt" }),
     ).toHaveCount(0);
+    await memberPage
+      .getByRole("button", { name: "Đóng trình tạo hoạt động" })
+      .click();
 
     await leadPage.getByRole("link", { name: "Lịch trình" }).click();
     const leadEventRow = leadPage
@@ -83,12 +87,13 @@ test("lead and member permissions stay consistent across realtime updates", asyn
     ).toBeVisible();
 
     await memberPage.getByRole("link", { name: "Chi phí" }).click();
+    await memberPage.getByRole("button", { name: "Thêm khoản chi" }).click();
     await memberPage.getByLabel("Tên khoản chi").fill(memberExpense);
     await memberPage.getByLabel("Số tiền (VND)").fill("320000");
-    await memberPage.getByRole("button", { name: "Thêm khoản chi" }).click();
+    await memberPage.getByRole("button", { name: "Lưu khoản chi" }).click();
     await expect(
       memberPage
-        .getByLabel("Danh sách chi phí")
+        .getByRole("table", { name: "Bảng khoản chi" })
         .getByText(memberExpense, { exact: true }),
     ).toBeVisible();
     await expect(
@@ -102,7 +107,7 @@ test("lead and member permissions stay consistent across realtime updates", asyn
     await leadPage.getByRole("button", { name: "Xác nhận chốt" }).click();
     await expect(
       memberPage
-        .getByLabel("Danh sách chi phí")
+        .getByRole("table", { name: "Bảng khoản chi" })
         .getByText(/Đã chốt/),
     ).toBeVisible();
 

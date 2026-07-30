@@ -260,6 +260,7 @@ export function AuthFlow({
             <div className={styles.passwordControl}>
               <input
                 {...fieldProps(errors.password, "password-error")}
+                aria-label="Mật khẩu"
                 autoComplete={isLogin ? "current-password" : "new-password"}
                 disabled={submitting}
                 onChange={(event) =>
@@ -290,6 +291,7 @@ export function AuthFlow({
               <div className={styles.passwordControl}>
                 <input
                   {...fieldProps(errors.confirmPassword, "confirm-password-error")}
+                  aria-label="Xác nhận mật khẩu"
                   autoComplete="new-password"
                   disabled={submitting}
                   onChange={(event) =>
@@ -299,11 +301,7 @@ export function AuthFlow({
                   value={input.confirmPassword}
                 />
                 <button
-                  aria-label={
-                    passwordVisible
-                      ? "Ẩn xác nhận mật khẩu"
-                      : "Hiện xác nhận mật khẩu"
-                  }
+                  aria-label={passwordVisible ? "Ẩn" : "Hiện"}
                   disabled={submitting}
                   onClick={() => setPasswordVisible((current) => !current)}
                   type="button"

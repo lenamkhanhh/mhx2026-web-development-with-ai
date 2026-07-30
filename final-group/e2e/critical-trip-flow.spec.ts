@@ -49,11 +49,9 @@ test("a new traveller can create a trip, open Workbench, and log out", async ({
   await expect(
     page.getByRole("heading", { name: "Bắt đầu một chuyến đi" }),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Tham gia chuyến đi" }).click();
   await expect(
     page.getByRole("button", { name: "Chưa thể tham gia bằng mã" }),
   ).toBeDisabled();
-  await page.getByRole("tab", { name: "Tạo chuyến đi" }).click();
 
   await page.getByLabel("Tên chuyến đi").fill(tripName);
   await page.getByLabel("Điểm đến").fill("Đà Lạt");
@@ -70,22 +68,33 @@ test("a new traveller can create a trip, open Workbench, and log out", async ({
   await expect(page.getByLabel("Chuyến đi đang mở")).toContainText(tripName);
 
   await page.getByRole("link", { name: "Lịch trình" }).click();
+  await page.getByTestId("events-add-button").click();
   await page.getByLabel("Tên hoạt động").fill("Đón bình minh");
   await page.getByRole("combobox", { name: "Loại" }).selectOption("activity");
   await page.getByLabel("Bắt đầu").fill("2026-08-10T05:00");
   await page.getByLabel("Kết thúc").fill("2026-08-10T06:00");
   await page.getByRole("checkbox", { name: displayName }).check();
   await page.getByRole("button", { name: "Thêm vào lịch trình" }).click();
-  await expect(page.getByText("Đón bình minh", { exact: true })).toBeVisible();
-  await expect(page.getByText("Đã duyệt", { exact: true })).toBeVisible();
+  const dawnRow = page
+    .getByRole("list", { name: "Timeline hoạt động" })
+    .getByRole("listitem")
+    .filter({ hasText: "Đón bình minh" });
+  await expect(dawnRow).toBeVisible();
+  await expect(dawnRow.getByText("Đã duyệt", { exact: true })).toBeVisible();
 
+  await page.getByRole("button", { name: "Đóng trình tạo hoạt động" }).click();
+  await page.getByTestId("events-add-button").click();
   await page.getByLabel("Tên hoạt động").fill("Ăn sáng E2E");
   await page.getByRole("combobox", { name: "Loại" }).selectOption("food");
   await page.getByLabel("Bắt đầu").fill("2026-08-10T07:00");
   await page.getByLabel("Kết thúc").fill("2026-08-10T08:00");
   await page.getByRole("checkbox", { name: displayName }).check();
   await page.getByRole("button", { name: "Thêm vào lịch trình" }).click();
-  await expect(page.getByText("Ăn sáng E2E", { exact: true })).toBeVisible();
+  const breakfastRow = page
+    .getByRole("list", { name: "Timeline hoạt động" })
+    .getByRole("listitem")
+    .filter({ hasText: "Ăn sáng E2E" });
+  await expect(breakfastRow).toBeVisible();
 
   await page.getByRole("button", { name: "Đưa Ăn sáng E2E lên" }).click();
   const timeline = page.getByRole("list", { name: "Timeline hoạt động" });
@@ -101,11 +110,12 @@ test("a new traveller can create a trip, open Workbench, and log out", async ({
   ).toContainText("Ăn sáng E2E");
 
   await page.getByRole("link", { name: "Chi phí" }).click();
+  await page.getByRole("button", { name: "Thêm khoản chi" }).click();
   await page.getByLabel("Tên khoản chi").fill("Bữa tối E2E");
   await page.getByLabel("Số tiền (VND)").fill("450000");
-  await page.getByRole("button", { name: "Thêm khoản chi" }).click();
+  await page.getByRole("button", { name: "Lưu khoản chi" }).click();
   await expect(
-    page.getByLabel("Danh sách chi phí").getByText("Bữa tối E2E", {
+    page.getByRole("table", { name: "Bảng khoản chi" }).getByText("Bữa tối E2E", {
       exact: true,
     }),
   ).toBeVisible();
@@ -114,7 +124,9 @@ test("a new traveller can create a trip, open Workbench, and log out", async ({
     page.getByRole("dialog", { name: "Xác nhận chốt khoản chi" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Xác nhận chốt" }).click();
-  await expect(page.getByText("Đã chốt", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("table", { name: "Bảng khoản chi" }).getByText("Đã chốt", { exact: true }),
+  ).toBeVisible();
 
   await page.getByRole("link", { name: "Thành viên" }).click();
   const responsibility = page.getByRole("textbox", {

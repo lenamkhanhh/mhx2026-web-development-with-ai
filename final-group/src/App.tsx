@@ -341,13 +341,14 @@ export function App({ backend, demoMode = false }: AppProps) {
   if (!selectedSnapshot || !currentMember || !role || !eventFeature || !membersFeature || !expenseFeature) {
     return <ScreenMessage title="Đang tải bảng điều khiển chuyến đi…" />;
   }
+  const shareTrip = selectedSnapshot.trip;
 
   async function handleShareTrip() {
-    const shareText = `${selectedSnapshot.trip.name} · Mã tham gia ${selectedSnapshot.trip.joinCode}`;
+    const shareText = `${shareTrip.name} · Mã tham gia ${shareTrip.joinCode}`;
     try {
       if (navigator.share) {
         await navigator.share({
-          title: selectedSnapshot.trip.name,
+          title: shareTrip.name,
           text: shareText,
           url: window.location.href,
         });

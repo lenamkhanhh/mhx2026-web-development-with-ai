@@ -126,7 +126,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
       <div><p className={styles.kicker}>Trip timeline · realtime workspace</p><h2>Lịch trình</h2><p className={styles.intro}>Tạo một nhịp đi chung; đề xuất của member sẽ chờ Lead duyệt.</p></div>
       <div className={styles.headerActions}>
         {isLead ? <button className={styles.syncButton} disabled={runningAction === "sync"} onClick={() => void runAction("sync", "Đã yêu cầu đồng bộ trạng thái.", onSync)} type="button">Đồng bộ trạng thái</button> : null}
-        <button aria-expanded={composerOpen} className={styles.addButton} onClick={() => setComposerOpen((open) => !open)} type="button">Thêm hoạt động</button>
+        <button aria-expanded={composerOpen} className={styles.addButton} data-testid="events-add-button" onClick={() => setComposerOpen((open) => !open)} type="button">Thêm hoạt động</button>
       </div>
     </header>
     {feedback ? <p className={`${styles.feedback} ${styles[feedback.kind]}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.message}</p> : null}
