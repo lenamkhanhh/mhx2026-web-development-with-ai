@@ -32,6 +32,7 @@ Rules: npm.cmd run test:final-group:rules (13 tests passed)
 Build: npm.cmd run build (passed)
 E2E: npm.cmd run test:final-group:e2e (2 tests passed)
 Script: verify-final-group.ps1 -Full (passed)
+Release: Firestore Rules deployed to `tripflow-mhx2026-khanh`; Vercel production deployment `dpl_AGtVhoBXWUcsNdjwHL8EhjhWDUJa` is READY and aliased to https://mxhuit26.vercel.app/final-group/
 ```
 
 ## Known limitations or blockers
@@ -42,7 +43,7 @@ Script: verify-final-group.ps1 -Full (passed)
 
 ## Next safe action
 
-- Commit this verified change set, deploy Firestore Rules and the Vercel frontend, then smoke-test the public route.
+- Use the production app for a manual reviewer smoke test with a fresh Firebase account; do not use personal accounts as test fixtures.
 
 ## Do not touch
 
