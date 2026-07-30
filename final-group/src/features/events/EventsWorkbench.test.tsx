@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import type { ComponentProps } from "react";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventRecord, MemberRecord } from "../../firebase/contracts";
@@ -27,15 +27,21 @@ function renderWorkbench(overrides: Partial<ComponentProps<typeof EventsWorkbenc
   const props: ComponentProps<typeof EventsWorkbench> = { currentUserId: "lead-1", events: [], members, role: "lead", onApprove: vi.fn().mockResolvedValue(undefined), onCancel: vi.fn().mockResolvedValue(undefined), onCreate: vi.fn().mockResolvedValue(undefined), onDelete: vi.fn().mockResolvedValue(undefined), onMove: vi.fn().mockResolvedValue(undefined), onSync: vi.fn().mockResolvedValue(undefined), onUpdate: vi.fn().mockResolvedValue(undefined), ...overrides };
   return { ...render(<EventsWorkbench {...props} />), props };
 }
+async function openComposer(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "Thêm hoạt động" }));
+  return screen.getByRole("form", { name: "Tạo hoạt động mới" });
+}
 beforeEach(() => vi.stubGlobal("matchMedia", vi.fn().mockImplementation(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("EventsWorkbench", () => {
-  it("renders a distinct empty state and the event composer", () => {
-    const { container } = renderWorkbench();
+  it("renders a distinct empty state and opens the event composer on demand", async () => {
+    const user = userEvent.setup();
+    renderWorkbench();
     expect(screen.getByRole("heading")).toBeTruthy();
     expect(screen.getAllByText(/Timeline/).length).toBeGreaterThan(1);
-    expect(container.querySelector('button[type="submit"]')).toBeTruthy();
+    expect(screen.queryByRole("form", { name: "Tạo hoạt động mới" })).toBeNull();
+    expect(await openComposer(user)).toBeTruthy();
   });
 
   it("shows canonical status/category labels and only the member-owned pending action", () => {
@@ -83,6 +89,60 @@ describe("EventsWorkbench", () => {
     expect(screen.getByRole("button", { name: "Đồng bộ trạng thái" })).toBeTruthy();
   });
 
+  it("starts with a focused inspector and filters the timeline by status and date", async () => {
+    const user = userEvent.setup();
+    renderWorkbench({
+      events: [
+        event(),
+        event({
+          id: "pending",
+          title: "Proposal",
+          order: 1,
+          startAt: "2026-07-31T08:00:00.000Z",
+          endAt: "2026-07-31T09:00:00.000Z",
+          status: "pending",
+          approvedBy: null,
+        }),
+      ],
+    });
+
+    const details = screen.getByRole("complementary", { name: "Event details" });
+    expect(within(details).getByText("Breakfast")).toBeTruthy();
+    expect(
+      within(details).getAllByRole("tab", { hidden: true }),
+    ).toHaveLength(4);
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Lọc trạng thái" }),
+      "pending",
+    );
+    expect(screen.queryByTestId("event-event-1")).toBeNull();
+    expect(screen.getByTestId("event-pending")).toBeTruthy();
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Lọc trạng thái" }),
+      "all",
+    );
+    fireEvent.change(screen.getByLabelText("Từ ngày"), {
+      target: { value: "2026-07-31" },
+    });
+    expect(screen.queryByTestId("event-event-1")).toBeNull();
+    expect(screen.getByTestId("event-pending")).toBeTruthy();
+  });
+
+  it("honors an event selected from Overview", () => {
+    renderWorkbench({
+      events: [
+        event(),
+        event({ id: "selected", title: "Selected event", order: 1 }),
+      ],
+      initialSelectedEventId: "selected",
+    });
+
+    const details = screen.getByRole("complementary", { name: "Event details" });
+    expect(within(details).getByText("Selected event")).toBeTruthy();
+  });
+
   it("opens a real detail panel and saves a permitted event title edit", async () => {
     const user = userEvent.setup();
     const onUpdate = vi.fn().mockResolvedValue(undefined);
@@ -104,6 +164,7 @@ describe("EventsWorkbench", () => {
   it("shows saving feedback, submits typed data, and resets after success", async () => {
     const user = userEvent.setup(); const save = deferred<void>();
     const { container, props } = renderWorkbench({ onCreate: vi.fn(() => save.promise) });
+    await openComposer(user);
     const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
     await user.type(screen.getByRole("textbox"), "Sunrise");
     await user.selectOptions(screen.getByRole("combobox", { name: "Loại" }), "transport");
@@ -126,6 +187,7 @@ describe("EventsWorkbench", () => {
     const user = userEvent.setup();
     const save = deferred<void>();
     const { container } = renderWorkbench({ onCreate: vi.fn(() => save.promise) });
+    await openComposer(user);
     const dateInputs = [
       ...container.querySelectorAll<HTMLInputElement>(
         'input[type="datetime-local"]',
@@ -156,6 +218,7 @@ describe("EventsWorkbench", () => {
 
   it("keeps the composer draft and announces rollback feedback when saving fails", async () => {
     const user = userEvent.setup(); const { container, props } = renderWorkbench({ onCreate: vi.fn().mockRejectedValue(new Error("offline")) });
+    await openComposer(user);
     const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
     await user.type(screen.getByRole("textbox"), "Night market");
     await user.type(dateInputs[0], "2026-07-30T18:00"); await user.type(dateInputs[1], "2026-07-30T19:00");
