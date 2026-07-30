@@ -44,12 +44,14 @@ describe("local rich TripFlow demo", () => {
     expect(observed.snapshot!.events.length).toBeGreaterThanOrEqual(9);
     expect(observed.snapshot!.events.every((event) => Boolean(event.createdAt))).toBe(true);
     expect(observed.snapshot!.events.every((event) => Boolean(event.location && event.assigneeUid && event.priority))).toBe(true);
+    expect(observed.snapshot!.events[0]?.title).toBe("Meet at the airport");
     expect(new Set(observed.snapshot!.events.map((event) => event.status))).toEqual(
       new Set(["pending", "approved", "happening", "completed", "cancelled"]),
     );
     expect(observed.snapshot!.expenses.length).toBeGreaterThanOrEqual(7);
     expect(observed.snapshot!.expenses.every((expense) => Boolean(expense.createdAt))).toBe(true);
     expect(observed.snapshot!.expenses.every((expense) => Boolean(expense.category))).toBe(true);
+    expect(observed.snapshot!.expenses[0]?.title).toBe("Airport Rail Link tickets");
     expect(observed.snapshot!.trip.budgetVnd).toBeGreaterThan(0);
     expect(new Set(observed.snapshot!.expenses.map((expense) => expense.status))).toEqual(
       new Set(["pending", "settled"]),
