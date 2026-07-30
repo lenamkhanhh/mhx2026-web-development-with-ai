@@ -34,6 +34,8 @@ import type {
   CreateExpenseInput,
   CreateTripInput,
   EventRecord,
+  EventNote,
+  EventSubitem,
   ExpenseCategory,
   ExpenseRecord,
   FirestoreEventCategory,
@@ -41,6 +43,7 @@ import type {
   FirestoreEventStatus,
   MemberRecord,
   TripBackend,
+  TripActivity,
   TripRecord,
   TripSnapshot,
   UserRecord,
@@ -341,8 +344,11 @@ export class FirebaseTripBackend implements TripBackend {
     let members: MemberRecord[] = [];
     let events: EventRecord[] = [];
     let expenses: ExpenseRecord[] = [];
+    let notes: EventNote[] = [];
+    let subitems: EventSubitem[] = [];
+    let activity: TripActivity[] = [];
     const publish = () => {
-      if (trip) listener({ trip, members, events, expenses });
+      if (trip) listener({ trip, members, events, expenses, notes, subitems, activity });
     };
     const fail = (error: Error) => onError?.(error);
     return combineUnsubscribers([
@@ -367,6 +373,21 @@ export class FirebaseTripBackend implements TripBackend {
       }, fail),
       onSnapshot(collection(this.firestore, "trips", tripId, "expenses"), (snapshot) => {
         expenses = snapshot.docs.map((expense) => decodeExpenseRecord(expense.id, expense.data()));
+        publish();
+      }, fail),
+      onSnapshot(collection(this.firestore, "trips", tripId, "notes"), (snapshot) => {
+        notes = snapshot.docs.map((note) => decodeEventNote(note.id, note.data()))
+          .sort((left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt));
+        publish();
+      }, fail),
+      onSnapshot(collection(this.firestore, "trips", tripId, "subitems"), (snapshot) => {
+        subitems = snapshot.docs.map((subitem) => decodeEventSubitem(subitem.id, subitem.data()))
+          .sort((left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt));
+        publish();
+      }, fail),
+      onSnapshot(collection(this.firestore, "trips", tripId, "activity"), (snapshot) => {
+        activity = snapshot.docs.map((item) => decodeTripActivity(item.id, item.data()))
+          .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
         publish();
       }, fail),
     ]);
@@ -479,6 +500,50 @@ export class FirebaseTripBackend implements TripBackend {
     await batch.commit();
   }
 
+  async createEventNote(tripId: string, eventId: string, body: string): Promise<void> {
+    const actor = this.requireActor();
+    const normalizedBody = body.trim();
+    if (!normalizedBody || normalizedBody.length > 1000) throw new FirestoreDataError("Notes must contain 1 to 1000 characters.");
+    await this.requireEvent(tripId, eventId);
+    const noteRef = doc(collection(this.firestore, "trips", tripId, "notes"));
+    const batch = writeBatch(this.firestore);
+    batch.set(noteRef, { eventId, body: normalizedBody, createdBy: actor.uid, createdAt: serverTimestamp() });
+    this.writeActivity(batch, tripId, { kind: "note_added", eventId, actorId: actor.uid, label: "Added a note" });
+    await batch.commit();
+  }
+
+  deleteEventNote(tripId: string, noteId: string): Promise<void> {
+    return deleteDoc(doc(this.firestore, "trips", tripId, "notes", noteId));
+  }
+
+  async createEventSubitem(tripId: string, eventId: string, title: string): Promise<void> {
+    const actor = this.requireActor();
+    const normalizedTitle = title.trim();
+    if (!normalizedTitle || normalizedTitle.length > 160) throw new FirestoreDataError("Sub-items must contain 1 to 160 characters.");
+    await this.requireEvent(tripId, eventId);
+    const subitemRef = doc(collection(this.firestore, "trips", tripId, "subitems"));
+    const batch = writeBatch(this.firestore);
+    batch.set(subitemRef, { eventId, title: normalizedTitle, completed: false, createdBy: actor.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    this.writeActivity(batch, tripId, { kind: "subitem_added", eventId, actorId: actor.uid, label: `Added sub-item “${normalizedTitle}”` });
+    await batch.commit();
+  }
+
+  async toggleEventSubitem(tripId: string, subitemId: string, completed: boolean): Promise<void> {
+    const actor = this.requireActor();
+    const subitemRef = doc(this.firestore, "trips", tripId, "subitems", subitemId);
+    const existing = await getDoc(subitemRef);
+    if (!existing.exists()) throw new FirestoreDataError("Sub-item does not exist.");
+    const subitem = decodeEventSubitem(subitemId, existing.data());
+    const batch = writeBatch(this.firestore);
+    batch.update(subitemRef, { completed, updatedAt: serverTimestamp() });
+    this.writeActivity(batch, tripId, { kind: completed ? "subitem_completed" : "subitem_reopened", eventId: subitem.eventId, actorId: actor.uid, label: `${completed ? "Completed" : "Reopened"} sub-item “${subitem.title}”` });
+    await batch.commit();
+  }
+
+  deleteEventSubitem(tripId: string, subitemId: string): Promise<void> {
+    return deleteDoc(doc(this.firestore, "trips", tripId, "subitems", subitemId));
+  }
+
   async createExpense(tripId: string, input: CreateExpenseInput, actor: AuthenticatedUser): Promise<ExpenseRecord> {
     validateExpenseInput(input);
     const expenseRef = doc(collection(this.firestore, "trips", tripId, "expenses"));
@@ -520,6 +585,22 @@ export class FirebaseTripBackend implements TripBackend {
     const snapshot = await getDoc(doc(this.firestore, "trips", tripId, "members", uid));
     return snapshot.exists() ? decodeMemberRecord(uid, snapshot.data()) : null;
   }
+
+  private requireActor(): AuthenticatedUser {
+    const actor = this.auth.currentUser;
+    if (!actor) throw new FirestoreDataError("Authentication is required.");
+    return toAuthenticatedUser(actor);
+  }
+
+  private async requireEvent(tripId: string, eventId: string): Promise<void> {
+    if (!(await getDoc(doc(this.firestore, "trips", tripId, "events", eventId))).exists()) {
+      throw new FirestoreDataError("Timeline item does not exist.");
+    }
+  }
+
+  private writeActivity(batch: ReturnType<typeof writeBatch>, tripId: string, activity: Omit<TripActivity, "id" | "createdAt">): void {
+    batch.set(doc(collection(this.firestore, "trips", tripId, "activity")), { ...activity, createdAt: serverTimestamp() });
+  }
 }
 
 function decodeTripRecord(id: string, data: DocumentData): TripRecord {
@@ -540,6 +621,22 @@ function decodeMemberRecord(uid: string, data: DocumentData): MemberRecord {
   const isDemo = value(data, "isDemo");
   if (typeof isDemo !== "boolean") throw new FirestoreDataError("Expected isDemo to be boolean.");
   return { uid, displayName: stringValue(data, "displayName"), email: stringValue(data, "email"), role, responsibility: stringValue(data, "responsibility"), isDemo };
+}
+
+export function decodeEventNote(id: string, data: DocumentData): EventNote {
+  return { id, eventId: stringValue(data, "eventId"), body: stringValue(data, "body"), createdBy: stringValue(data, "createdBy"), createdAt: requiredTimestamp(data, "createdAt") };
+}
+
+export function decodeEventSubitem(id: string, data: DocumentData): EventSubitem {
+  const completed = value(data, "completed");
+  if (typeof completed !== "boolean") throw new FirestoreDataError("Expected completed to be a boolean.");
+  return { id, eventId: stringValue(data, "eventId"), title: stringValue(data, "title"), completed, createdBy: stringValue(data, "createdBy"), createdAt: requiredTimestamp(data, "createdAt"), updatedAt: requiredTimestamp(data, "updatedAt") };
+}
+
+export function decodeTripActivity(id: string, data: DocumentData): TripActivity {
+  const kind = stringValue(data, "kind");
+  if (kind !== "note_added" && kind !== "subitem_added" && kind !== "subitem_completed" && kind !== "subitem_reopened") throw new FirestoreDataError("Unexpected activity kind.");
+  return { id, kind, eventId: stringValue(data, "eventId"), actorId: stringValue(data, "actorId"), label: stringValue(data, "label"), createdAt: requiredTimestamp(data, "createdAt") };
 }
 
 function validateEventInput(input: CreateEventInput): void {
@@ -573,6 +670,12 @@ function isoDateTime(data: DocumentData, key: string): string {
   const result = stringValue(data, key);
   if (!isDateTime(result)) throw new FirestoreDataError(`Expected ${key} to be an ISO datetime.`);
   return result;
+}
+
+function requiredTimestamp(data: DocumentData, key: string): string {
+  const timestamp = optionalTimestamp(data, key);
+  if (!timestamp) throw new FirestoreDataError(`Expected ${key} to be a Firestore timestamp.`);
+  return timestamp;
 }
 
 function isDateTime(value: string): boolean { return Number.isFinite(Date.parse(value)) && value.includes("T"); }
