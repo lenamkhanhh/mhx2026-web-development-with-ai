@@ -47,7 +47,7 @@ schema; the record is a planning checklist, not an attendance or payment log.
 ### Activity
 
 ```text
-kind: "note_added" | "subitem_added" | "subitem_completed"
+kind: "note_added" | "subitem_added" | "subitem_completed" | "subitem_reopened"
 eventId: string
 actorId: uid
 label: plain string, 1..220 characters

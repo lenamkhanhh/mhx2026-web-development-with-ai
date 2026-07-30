@@ -132,9 +132,9 @@ function optionalTimestamp(data: DocumentData, key: string): string | undefined 
   if (result === undefined || result === null) return undefined;
   if (typeof result === "string" && isDateTime(result)) return new Date(result).toISOString();
   if (typeof result === "object" && result !== null && "toDate" in result) {
-    const toDate = (result as { toDate?: unknown }).toDate;
-    if (typeof toDate === "function") {
-      const parsed = (toDate as () => Date)();
+    const timestamp = result as { toDate?: unknown };
+    if (typeof timestamp.toDate === "function") {
+      const parsed = (timestamp.toDate as () => Date).call(timestamp);
       if (parsed instanceof Date && Number.isFinite(parsed.getTime())) return parsed.toISOString();
     }
   }
@@ -376,17 +376,17 @@ export class FirebaseTripBackend implements TripBackend {
         publish();
       }, fail),
       onSnapshot(collection(this.firestore, "trips", tripId, "notes"), (snapshot) => {
-        notes = snapshot.docs.map((note) => decodeEventNote(note.id, note.data()))
+        notes = snapshot.docs.map((note) => decodeEventNote(note.id, note.data({ serverTimestamps: "estimate" })))
           .sort((left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt));
         publish();
       }, fail),
       onSnapshot(collection(this.firestore, "trips", tripId, "subitems"), (snapshot) => {
-        subitems = snapshot.docs.map((subitem) => decodeEventSubitem(subitem.id, subitem.data()))
+        subitems = snapshot.docs.map((subitem) => decodeEventSubitem(subitem.id, subitem.data({ serverTimestamps: "estimate" })))
           .sort((left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt));
         publish();
       }, fail),
       onSnapshot(collection(this.firestore, "trips", tripId, "activity"), (snapshot) => {
-        activity = snapshot.docs.map((item) => decodeTripActivity(item.id, item.data()))
+        activity = snapshot.docs.map((item) => decodeTripActivity(item.id, item.data({ serverTimestamps: "estimate" })))
           .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
         publish();
       }, fail),
@@ -533,7 +533,7 @@ export class FirebaseTripBackend implements TripBackend {
     const subitemRef = doc(this.firestore, "trips", tripId, "subitems", subitemId);
     const existing = await getDoc(subitemRef);
     if (!existing.exists()) throw new FirestoreDataError("Sub-item does not exist.");
-    const subitem = decodeEventSubitem(subitemId, existing.data());
+    const subitem = decodeEventSubitem(subitemId, existing.data({ serverTimestamps: "estimate" }));
     const batch = writeBatch(this.firestore);
     batch.update(subitemRef, { completed, updatedAt: serverTimestamp() });
     this.writeActivity(batch, tripId, { kind: completed ? "subitem_completed" : "subitem_reopened", eventId: subitem.eventId, actorId: actor.uid, label: `${completed ? "Completed" : "Reopened"} sub-item “${subitem.title}”` });

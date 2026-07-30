@@ -17,7 +17,8 @@ expenses, and members in one Firebase-backed workspace.
    - **Overview** — status and category filters, sort controls, real global
      search, activity context, and expense summary.
    - **Timeline** — create, edit, approve, cancel, delete, and reorder
-     itinerary items according to role.
+     itinerary items according to role; add event notes and actionable
+     sub-items from the selected item's inspector.
    - **Expenses** — create, filter, edit, delete, calculate balances, and
      settle an expense as lead.
    - **Members** — search/filter members, assign responsibilities, inspect
@@ -39,6 +40,12 @@ The client uses only Firebase's public web configuration. Firestore Security
 Rules are the authorization boundary for every data mutation; UI role badges
 are only affordances. All money is stored as integer VND. The repository does
 not contain service-account credentials or private keys.
+
+Notes and sub-items are stored in Firestore under their trip, with an
+actor-attributed activity record written in the same client batch. The activity
+feed is append-only in Security Rules and only shows persisted records. It is
+not presented as a server-forensic audit trail: trusted audit logging would
+require a server-side writer.
 
 Joining an existing trip by code is intentionally shown as unavailable in this
 release. A client-only implementation could let a user self-grant membership,
@@ -79,8 +86,11 @@ browser E2E flows:
 powershell -ExecutionPolicy Bypass -File .\final-group\scripts\verify-final-group.ps1 -Full
 ```
 
-## Known limitation
+## Known limitations
 
 The production app does not include a server-verified invite/join-by-code
 endpoint yet. A reviewer can still verify the complete create-trip and
 lead/member management workflow by creating a new account and trip.
+
+File uploads remain unavailable because Firebase Storage and its matching
+Security Rules are intentionally not configured in this release.

@@ -98,20 +98,15 @@ export function WorkbenchOverview({
     .filter((expense) => expense.createdAt)
     .sort((left, right) => Date.parse(right.createdAt!) - Date.parse(left.createdAt!))
     .slice(0, 3);
-  const activityItems = [
-    ...orderedEvents.flatMap((event) => event.createdAt ? [{
-      actorId: event.createdBy,
-      id: `event-${event.id}`,
-      label: `Added item “${event.title}”`,
-      timestamp: event.createdAt,
-    }] : []),
-    ...snapshot.expenses.flatMap((expense) => expense.createdAt ? [{
-      actorId: expense.createdBy,
-      id: `expense-${expense.id}`,
-      label: `Added expense “${expense.title}”`,
-      timestamp: expense.createdAt,
-    }] : []),
-  ].sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp)).slice(0, 6);
+  const activityItems = (snapshot.activity ?? [])
+    .map((activity) => ({
+      actorId: activity.actorId,
+      id: activity.id,
+      label: activity.label,
+      timestamp: activity.createdAt,
+    }))
+    .sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp))
+    .slice(0, 6);
 
   return (
     <div className="workbench-overview">

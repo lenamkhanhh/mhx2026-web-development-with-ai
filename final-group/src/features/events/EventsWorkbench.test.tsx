@@ -24,7 +24,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 function renderWorkbench(overrides: Partial<ComponentProps<typeof EventsWorkbench>> = {}) {
-  const props: ComponentProps<typeof EventsWorkbench> = { currentUserId: "lead-1", events: [], members, role: "lead", onApprove: vi.fn().mockResolvedValue(undefined), onCancel: vi.fn().mockResolvedValue(undefined), onCreate: vi.fn().mockResolvedValue(undefined), onDelete: vi.fn().mockResolvedValue(undefined), onMove: vi.fn().mockResolvedValue(undefined), onSync: vi.fn().mockResolvedValue(undefined), onUpdate: vi.fn().mockResolvedValue(undefined), ...overrides };
+  const props: ComponentProps<typeof EventsWorkbench> = { currentUserId: "lead-1", events: [], members, role: "lead", notes: [], subitems: [], onApprove: vi.fn().mockResolvedValue(undefined), onCancel: vi.fn().mockResolvedValue(undefined), onCreate: vi.fn().mockResolvedValue(undefined), onDelete: vi.fn().mockResolvedValue(undefined), onMove: vi.fn().mockResolvedValue(undefined), onSync: vi.fn().mockResolvedValue(undefined), onUpdate: vi.fn().mockResolvedValue(undefined), onCreateNote: vi.fn().mockResolvedValue(undefined), onDeleteNote: vi.fn().mockResolvedValue(undefined), onCreateSubitem: vi.fn().mockResolvedValue(undefined), onToggleSubitem: vi.fn().mockResolvedValue(undefined), onDeleteSubitem: vi.fn().mockResolvedValue(undefined), ...overrides };
   return { ...render(<EventsWorkbench {...props} />), props };
 }
 async function openComposer(user: ReturnType<typeof userEvent.setup>) {

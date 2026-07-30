@@ -99,4 +99,23 @@ describe("local rich TripFlow demo", () => {
       createdAt: expect.any(String),
     });
   });
+
+  it("keeps notes, sub-items, and their activity in the realtime local snapshot", async () => {
+    const backend = createLocalDemoTripBackend();
+    const observed: { user: AuthenticatedUser | null; trips: TripRecord[]; latest: TripSnapshot | undefined } = { user: null, trips: [], latest: undefined };
+    backend.observeSession((nextUser) => { observed.user = nextUser; });
+    backend.subscribeTrips("demo-lead", (nextTrips) => { observed.trips = nextTrips; });
+    backend.subscribeTrip(observed.trips[0]!.id, (snapshot) => { observed.latest = snapshot; });
+
+    const tripId = observed.trips[0]!.id;
+    const eventId = observed.latest!.events[0]!.id;
+    await backend.createEventNote!(tripId, eventId, "Meet at exit 4.");
+    await backend.createEventSubitem!(tripId, eventId, "Confirm pickup contact");
+    const subitem = observed.latest!.subitems!.at(-1)!;
+    await backend.toggleEventSubitem!(tripId, subitem.id, true);
+
+    expect(observed.latest!.notes!.at(-1)).toMatchObject({ eventId, body: "Meet at exit 4.", createdBy: "demo-lead" });
+    expect(observed.latest!.subitems!.at(-1)).toMatchObject({ id: subitem.id, completed: true });
+    expect(observed.latest!.activity!.slice(-3).map((activity) => activity.kind)).toEqual(["note_added", "subitem_added", "subitem_completed"]);
+  });
 });

@@ -118,7 +118,7 @@ export interface EventSubitem {
 /** Actor-attributed UI context, not a server-forensic audit trail. */
 export interface TripActivity {
   id: string;
-  kind: "note_added" | "subitem_added" | "subitem_completed";
+  kind: "note_added" | "subitem_added" | "subitem_completed" | "subitem_reopened";
   eventId: string;
   actorId: string;
   label: string;
@@ -190,6 +190,11 @@ export interface TripBackend {
   approveEvent(tripId: string, eventId: string, status: Exclude<FirestoreEventStatus, "pending">): Promise<void>;
   deleteEvent(tripId: string, eventId: string): Promise<void>;
   reorderEvents(tripId: string, eventIds: string[]): Promise<void>;
+  createEventNote?(tripId: string, eventId: string, body: string): Promise<void>;
+  deleteEventNote?(tripId: string, noteId: string): Promise<void>;
+  createEventSubitem?(tripId: string, eventId: string, title: string): Promise<void>;
+  toggleEventSubitem?(tripId: string, subitemId: string, completed: boolean): Promise<void>;
+  deleteEventSubitem?(tripId: string, subitemId: string): Promise<void>;
   createExpense(tripId: string, input: CreateExpenseInput, actor: AuthenticatedUser): Promise<ExpenseRecord>;
   updateExpense(tripId: string, expenseId: string, patch: Partial<CreateExpenseInput>): Promise<void>;
   deleteExpense(tripId: string, expenseId: string): Promise<void>;

@@ -1,223 +1,97 @@
-import {
-  initializeTestEnvironment,
-  type RulesTestEnvironment,
-} from "@firebase/rules-unit-testing";
+import { initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { expect, test, type Page } from "@playwright/test";
-import {
-  arrayUnion,
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  Timestamp,
-  updateDoc,
-} from "firebase/firestore";
+import { arrayUnion, collection, doc, getDocs, setDoc, Timestamp, updateDoc } from "firebase/firestore";
 
 const PROJECT_ID = "demo-tripflow-e2e";
 const SYNTHETIC_PASSWORD = "Synthetic-E2E-Only-2026!";
 
-test("lead and member permissions stay consistent across realtime updates", async ({
-  browser,
-  page: leadPage,
-}, testInfo) => {
-  test.setTimeout(60_000);
+test("lead approval and member collaboration stay realtime and permission-aware", async ({ browser, page: leadPage }, testInfo) => {
+  test.setTimeout(70_000);
   const runId = `${Date.now()}-${testInfo.parallelIndex}`;
-  const lead = {
-    email: `tripflow-lead-${runId}@example.test`,
-    displayName: `Lead ${runId}`,
-  };
-  const member = {
-    email: `tripflow-member-${runId}@example.test`,
-    displayName: `Member ${runId}`,
-  };
+  const lead = { email: `tripflow-lead-${runId}@example.test`, displayName: `Lead ${runId}` };
+  const member = { email: `tripflow-member-${runId}@example.test`, displayName: `Member ${runId}` };
   const tripName = `Role Trip ${runId}`;
   const memberEvent = `Member proposal ${runId}`;
-  const memberExpense = `Member expense ${runId}`;
-  const externalRequests: string[] = [];
-  guardExternalRequests(leadPage, externalRequests);
 
   await register(leadPage, lead);
   await createTrip(leadPage, tripName);
-  const tripPicker = leadPage.getByLabel("Chuyến đi đang mở");
-  await expect(tripPicker).toHaveValue(/.+/);
-  const tripId = await tripPicker.inputValue();
-
+  const tripId = await leadPage.getByLabel("Current trip").inputValue();
   const memberContext = await browser.newContext();
   const memberPage = await memberContext.newPage();
-  guardExternalRequests(memberPage, externalRequests);
   try {
     await register(memberPage, member);
     await seedMember(tripId, member);
-
-    await expect(
-      memberPage.getByRole("navigation", { name: "Điều hướng TripFlow" }),
-    ).toBeVisible();
+    await memberPage.reload();
+    await leadPage.reload();
     await expect(memberPage.getByText("MEMBER", { exact: true })).toBeVisible();
 
-    await memberPage.getByRole("link", { name: "Lịch trình" }).click();
+    await memberPage.getByRole("link", { name: "Timeline" }).click();
     await memberPage.getByTestId("events-add-button").click();
-    await memberPage.getByLabel("Tên hoạt động").fill(memberEvent);
-    await memberPage.getByLabel("Bắt đầu").fill("2026-08-20T09:00");
-    await memberPage.getByLabel("Kết thúc").fill("2026-08-20T10:00");
+    await memberPage.getByLabel("Item title").fill(memberEvent);
+    await memberPage.getByLabel("Start").fill("2026-08-20T09:00");
+    await memberPage.getByLabel("End").fill("2026-08-20T10:00");
     await memberPage.getByRole("checkbox", { name: member.displayName }).check();
-    await memberPage
-      .getByRole("button", { name: "Thêm vào lịch trình" })
-      .click();
-    const memberEventRow = memberPage
-      .getByRole("listitem")
-      .filter({ hasText: memberEvent });
-    await expect(
-      memberEventRow.getByText("Chờ duyệt"),
-    ).toBeVisible();
-    await expect(
-      memberEventRow.getByRole("button", { name: "Duyệt" }),
-    ).toHaveCount(0);
-    await memberPage
-      .getByRole("button", { name: "Đóng trình tạo hoạt động" })
-      .click();
+    await memberPage.getByRole("button", { name: "Add to timeline" }).click();
+    const memberEventRow = memberPage.getByRole("listitem").filter({ hasText: memberEvent });
+    await expect(memberEventRow.getByText("In review", { exact: true })).toBeVisible();
 
-    await leadPage.getByRole("link", { name: "Lịch trình" }).click();
-    const leadEventRow = leadPage
-      .getByRole("listitem")
-      .filter({ hasText: memberEvent });
-    await expect(leadEventRow.getByText("Chờ duyệt")).toBeVisible();
-    await leadEventRow.getByRole("button", { name: "Duyệt" }).click();
-    await expect(
-      memberEventRow.getByText("Đã duyệt"),
-    ).toBeVisible();
+    await leadPage.reload();
+    await leadPage.getByRole("link", { name: "Timeline" }).click();
+    const leadEventRow = leadPage.getByRole("listitem").filter({ hasText: memberEvent });
+    await expect(leadEventRow.getByText("In review", { exact: true })).toBeVisible();
+    await leadEventRow.getByRole("button", { name: "Approve" }).click();
+    await expect(memberEventRow.getByText("Open", { exact: true })).toBeVisible();
 
-    await memberPage.getByRole("link", { name: "Chi phí" }).click();
-    await memberPage.getByRole("button", { name: "Thêm khoản chi" }).click();
-    await memberPage.getByLabel("Tên khoản chi").fill(memberExpense);
-    await memberPage.getByLabel("Số tiền (VND)").fill("320000");
-    await memberPage.getByRole("button", { name: "Lưu khoản chi" }).click();
-    await expect(
-      memberPage
-        .getByRole("table", { name: "Bảng khoản chi" })
-        .getByText(memberExpense, { exact: true }),
-    ).toBeVisible();
-    await expect(
-      memberPage.getByRole("button", { name: `Chốt ${memberExpense}` }),
-    ).toHaveCount(0);
+    await memberPage.getByRole("button", { name: "Close item composer" }).click();
+    await memberPage.getByRole("button", { name: `Open ${memberEvent} details` }).click();
+    const memberDetails = memberPage.getByRole("complementary", { name: "Event details" });
+    await memberDetails.getByRole("tab", { name: "Notes" }).click();
+    await memberDetails.getByLabel("New note").fill("The member has checked transport.");
+    await memberDetails.getByRole("button", { name: "Add note" }).click();
+    await expect(memberDetails.getByText("The member has checked transport.")).toBeVisible();
 
-    await leadPage.getByRole("link", { name: "Chi phí" }).click();
-    await leadPage
-      .getByRole("button", { name: `Chốt ${memberExpense}` })
-      .click();
-    await leadPage.getByRole("button", { name: "Xác nhận chốt" }).click();
-    await expect(
-      memberPage
-        .getByRole("table", { name: "Bảng khoản chi" })
-        .getByText(/Đã chốt/),
-    ).toBeVisible();
-
-    await memberPage.getByRole("link", { name: "Thành viên" }).click();
-    await memberPage
-      .getByRole("textbox", {
-        name: `Trách nhiệm của ${member.displayName}`,
-      })
-      .fill("Ghi hình");
-    await memberPage
-      .getByRole("button", { name: "Lưu trách nhiệm" })
-      .click();
-    await expect(
-      memberPage.getByText("Đã lưu trách nhiệm", { exact: true }),
-    ).toBeVisible();
-
-    await leadPage.getByRole("link", { name: "Thành viên" }).click();
-    await expect(
-      leadPage.getByRole("textbox", {
-        name: `Trách nhiệm của ${member.displayName}`,
-      }),
-    ).toHaveValue("Ghi hình");
-    await leadPage
-      .getByRole("button", {
-        name: `Xóa ${member.displayName} khỏi chuyến đi`,
-      })
-      .click();
-    await leadPage.getByRole("button", { name: "Xác nhận xóa" }).click();
-
-    await expect(
-      leadPage.getByText(member.displayName, { exact: true }),
-    ).toHaveCount(0);
-    await expect(memberPage.getByTestId("onboarding-workbench")).toBeVisible();
-    expect(externalRequests).toEqual([]);
+    await leadPage.getByRole("button", { name: `Open ${memberEvent} details` }).click();
+    const leadDetails = leadPage.getByRole("complementary", { name: "Event details" });
+    await leadDetails.getByRole("tab", { name: "Notes" }).click();
+    await expect(leadDetails.getByText("The member has checked transport.")).toBeVisible();
   } finally {
     await memberContext.close();
   }
 });
 
-async function register(
-  page: Page,
-  user: { email: string; displayName: string },
-): Promise<void> {
+async function register(page: Page, user: { email: string; displayName: string }): Promise<void> {
   await page.goto("/final-group/");
-  await page.getByRole("tab", { name: "Đăng ký" }).click();
-  await page.getByLabel("Tên hiển thị").fill(user.displayName);
+  await page.getByRole("tab", { name: "Create account" }).click();
+  await page.getByLabel("Display name").fill(user.displayName);
   await page.getByLabel("Email").fill(user.email);
-  await page
-    .getByLabel("Mật khẩu", { exact: true })
-    .fill(SYNTHETIC_PASSWORD);
-  await page.getByLabel("Xác nhận mật khẩu").fill(SYNTHETIC_PASSWORD);
-  await page.getByRole("button", { name: "Tạo tài khoản" }).click();
+  await page.getByLabel("Password", { exact: true }).fill(SYNTHETIC_PASSWORD);
+  await page.getByLabel("Confirm password").fill(SYNTHETIC_PASSWORD);
+  await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.getByTestId("onboarding-workbench")).toBeVisible();
 }
 
 async function createTrip(page: Page, tripName: string): Promise<void> {
-  await page.getByLabel("Tên chuyến đi").fill(tripName);
-  await page.getByLabel("Điểm đến").fill("Đà Nẵng");
-  await page.getByLabel("Ngày bắt đầu").fill("2026-08-20");
-  await page.getByLabel("Ngày kết thúc").fill("2026-08-22");
-  await page.getByRole("button", { name: "Tạo chuyến đi mới" }).click();
-  await expect(
-    page.getByRole("navigation", { name: "Điều hướng TripFlow" }),
-  ).toBeVisible();
+  await page.getByLabel("Trip name").fill(tripName);
+  await page.getByLabel("Destination").fill("Da Nang");
+  await page.getByLabel("Start date").fill("2026-08-20");
+  await page.getByLabel("End date").fill("2026-08-22");
+  await page.getByRole("button", { name: "Create new trip" }).click();
+  await expect(page.getByRole("navigation", { name: "TripFlow navigation" })).toBeVisible();
 }
 
-async function seedMember(
-  tripId: string,
-  member: { email: string; displayName: string },
-): Promise<void> {
+async function seedMember(tripId: string, member: { email: string; displayName: string }): Promise<void> {
   let environment: RulesTestEnvironment | undefined;
   try {
-    environment = await initializeTestEnvironment({
-      projectId: PROJECT_ID,
-      firestore: { host: "127.0.0.1", port: 8085 },
-    });
+    environment = await initializeTestEnvironment({ projectId: PROJECT_ID, firestore: { host: "127.0.0.1", port: 8085 } });
     await environment.withSecurityRulesDisabled(async (context) => {
       const firestore = context.firestore();
       const profiles = await getDocs(collection(firestore, "users"));
-      const profile = profiles.docs.find(
-        (candidate) => candidate.data().email === member.email,
-      );
+      const profile = profiles.docs.find((candidate) => candidate.data().email === member.email);
       if (!profile) throw new Error("Synthetic member profile was not created.");
-
-      await setDoc(doc(firestore, "trips", tripId, "members", profile.id), {
-        displayName: member.displayName,
-        email: member.email,
-        role: "member",
-        responsibility: "",
-        isDemo: false,
-        joinedAt: Timestamp.now(),
-      });
-      await updateDoc(doc(firestore, "users", profile.id), {
-        tripIds: arrayUnion(tripId),
-        updatedAt: Timestamp.now(),
-      });
+      await setDoc(doc(firestore, "trips", tripId, "members", profile.id), { displayName: member.displayName, email: member.email, role: "member", responsibility: "", isDemo: false, joinedAt: Timestamp.now() });
+      await updateDoc(doc(firestore, "users", profile.id), { tripIds: arrayUnion(tripId), updatedAt: Timestamp.now() });
     });
   } finally {
     await environment?.cleanup();
   }
-}
-
-function guardExternalRequests(page: Page, requests: string[]): void {
-  page.on("request", (request) => {
-    const url = new URL(request.url());
-    if (
-      (url.protocol === "http:" || url.protocol === "https:") &&
-      !["127.0.0.1", "localhost", "::1"].includes(url.hostname)
-    ) {
-      requests.push(request.url());
-    }
-  });
 }

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type {
   CreateEventInput,
+  EventNote,
   EventRecord,
+  EventSubitem,
   FirestoreEventCategory,
   FirestoreEventStatus,
   FirestoreMemberRole,
@@ -31,10 +33,17 @@ export interface EventsWorkbenchProps {
   onMove: (eventId: string, direction: "up" | "down") => Promise<void>;
   onSync: () => Promise<void>;
   onUpdate: (eventId: string, patch: Partial<CreateEventInput>) => Promise<void>;
+  notes: EventNote[];
+  subitems: EventSubitem[];
+  onCreateNote: (eventId: string, body: string) => Promise<void>;
+  onDeleteNote: (noteId: string) => Promise<void>;
+  onCreateSubitem: (eventId: string, title: string) => Promise<void>;
+  onToggleSubitem: (subitemId: string, completed: boolean) => Promise<void>;
+  onDeleteSubitem: (subitemId: string) => Promise<void>;
 }
 
 export function EventsWorkbench(props: EventsWorkbenchProps) {
-  const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate } = props;
+  const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate, notes, subitems, onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem } = props;
   const [draft, setDraft] = useState({ title: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[] });
   const [composerOpen, setComposerOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<FirestoreEventStatus | "all">("all");
@@ -169,8 +178,17 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
     })}</ol>}
       {selectedEvent ? <EventDetailPanel
         canEdit={isLead || (selectedEvent.createdBy === currentUserId && selectedEvent.status === "pending")}
+        canManageCollaboration={isLead}
+        currentUserId={currentUserId}
         event={selectedEvent}
         members={members}
+        notes={notes.filter((note) => note.eventId === selectedEvent.id)}
+        subitems={subitems.filter((subitem) => subitem.eventId === selectedEvent.id)}
+        onCreateNote={onCreateNote}
+        onDeleteNote={onDeleteNote}
+        onCreateSubitem={onCreateSubitem}
+        onDeleteSubitem={onDeleteSubitem}
+        onToggleSubitem={onToggleSubitem}
         onUpdate={onUpdate}
       /> : null}
     </div>
@@ -179,16 +197,30 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
 
 interface EventDetailPanelProps {
   canEdit: boolean;
+  canManageCollaboration: boolean;
+  currentUserId: string;
   event: EventRecord;
   members: MemberRecord[];
+  notes: EventNote[];
+  subitems: EventSubitem[];
+  onCreateNote: (eventId: string, body: string) => Promise<void>;
+  onDeleteNote: (noteId: string) => Promise<void>;
+  onCreateSubitem: (eventId: string, title: string) => Promise<void>;
+  onToggleSubitem: (subitemId: string, completed: boolean) => Promise<void>;
+  onDeleteSubitem: (subitemId: string) => Promise<void>;
   onUpdate: (eventId: string, patch: Partial<CreateEventInput>) => Promise<void>;
 }
 
-function EventDetailPanel({ canEdit, event, members, onUpdate }: EventDetailPanelProps) {
+function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, event, members, notes, subitems, onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem, onUpdate }: EventDetailPanelProps) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(event.title);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const [activeTab, setActiveTab] = useState<"details" | "notes" | "subitems">("details");
+  const [noteBody, setNoteBody] = useState("");
+  const [subitemTitle, setSubitemTitle] = useState("");
+  const [collaborationSaving, setCollaborationSaving] = useState<string | null>(null);
+  const [collaborationFeedback, setCollaborationFeedback] = useState<Feedback>(null);
   const participants = event.participantIds
     .map((uid) => members.find((member) => member.uid === uid)?.displayName ?? uid)
     .join(", ") || "Unassigned";
@@ -223,16 +255,55 @@ function EventDetailPanel({ canEdit, event, members, onUpdate }: EventDetailPane
     }
   }
 
+  async function runCollaborationAction(action: string, success: string, operation: () => Promise<void>) {
+    setCollaborationSaving(action);
+    setCollaborationFeedback({ kind: "saving", message: "Saving collaboration change..." });
+    try {
+      await operation();
+      setCollaborationFeedback({ kind: "success", message: success });
+    } catch (error) {
+      setCollaborationFeedback({ kind: "error", message: rollbackMessage(error, "Unable to save the collaboration change.") });
+    } finally {
+      setCollaborationSaving(null);
+    }
+  }
+
+  async function submitNote(eventForm: FormEvent<HTMLFormElement>) {
+    eventForm.preventDefault();
+    const body = noteBody.trim();
+    if (!body) {
+      setCollaborationFeedback({ kind: "error", message: "A note cannot be blank." });
+      return;
+    }
+    await runCollaborationAction("create-note", "Note saved. Waiting for the realtime update.", async () => {
+      await onCreateNote(event.id, body);
+      setNoteBody("");
+    });
+  }
+
+  async function submitSubitem(eventForm: FormEvent<HTMLFormElement>) {
+    eventForm.preventDefault();
+    const nextTitle = subitemTitle.trim();
+    if (!nextTitle) {
+      setCollaborationFeedback({ kind: "error", message: "A sub-item title cannot be blank." });
+      return;
+    }
+    await runCollaborationAction("create-subitem", "Sub-item saved. Waiting for the realtime update.", async () => {
+      await onCreateSubitem(event.id, nextTitle);
+      setSubitemTitle("");
+    });
+  }
+
   return <aside aria-label="Event details" className={styles.detailPanel}>
     <div className={styles.detailHeader}>
       <div><p className={styles.detailKicker}>Item details</p><h3>{event.title}</h3></div>
       <span className={`${styles.status} ${styles[`status_${event.status}`]}`}>{STATUS_LABELS[event.status]}</span>
     </div>
     <div aria-label="Item details" className={styles.detailTabs} role="tablist">
-      <button aria-selected="true" role="tab" type="button">Details</button>
-      <button aria-selected="false" disabled role="tab" type="button">Notes</button>
+      <button aria-selected={activeTab === "details"} onClick={() => setActiveTab("details")} role="tab" type="button">Details</button>
+      <button aria-selected={activeTab === "notes"} onClick={() => setActiveTab("notes")} role="tab" type="button">Notes</button>
       <button aria-selected="false" disabled role="tab" type="button">Files</button>
-      <button aria-selected="false" disabled role="tab" type="button">Sub-items</button>
+      <button aria-selected={activeTab === "subitems"} onClick={() => setActiveTab("subitems")} role="tab" type="button">Sub-items</button>
     </div>
     <dl className={styles.detailList}>
       <div><dt>Category</dt><dd>{CATEGORY_LABELS[event.category]}</dd></div>
@@ -248,6 +319,27 @@ function EventDetailPanel({ canEdit, event, members, onUpdate }: EventDetailPane
         <button disabled={saving} onClick={() => { setEditing(false); setFeedback(null); }} type="button">Cancel edit</button>
       </div>
     </form> : <button className={styles.editButton} onClick={beginEdit} type="button">Edit event</button> : null}
+    {activeTab === "notes" ? <section aria-label="Event notes" className={styles.collaborationPanel}>
+      <form aria-label="Add note" className={styles.collaborationComposer} onSubmit={(eventForm) => void submitNote(eventForm)}>
+        <label>New note<textarea aria-label="New note" disabled={collaborationSaving !== null} maxLength={1000} onChange={(eventInput) => setNoteBody(eventInput.target.value)} placeholder="Add a useful update for the team" required value={noteBody} /></label>
+        <button className={styles.saveButton} disabled={collaborationSaving !== null} type="submit">Add note</button>
+      </form>
+      {notes.length ? <ul className={styles.collaborationList}>{notes.map((note) => {
+        const canManage = canManageCollaboration || note.createdBy === currentUserId;
+        return <li key={note.id}><p>{note.body}</p><small>{members.find((member) => member.uid === note.createdBy)?.displayName ?? note.createdBy}</small>{canManage ? <button disabled={collaborationSaving !== null} onClick={() => void runCollaborationAction(`delete-note-${note.id}`, "Note removed. Waiting for the realtime update.", () => onDeleteNote(note.id))} type="button">Delete</button> : null}</li>;
+      })}</ul> : <p className={styles.collaborationEmpty}>No notes yet. Add the first shared update.</p>}
+    </section> : null}
+    {activeTab === "subitems" ? <section aria-label="Event sub-items" className={styles.collaborationPanel}>
+      <form aria-label="Add sub-item" className={styles.collaborationComposer} onSubmit={(eventForm) => void submitSubitem(eventForm)}>
+        <label>New sub-item<input aria-label="New sub-item" disabled={collaborationSaving !== null} maxLength={160} onChange={(eventInput) => setSubitemTitle(eventInput.target.value)} placeholder="Add a concrete next step" required value={subitemTitle} /></label>
+        <button className={styles.saveButton} disabled={collaborationSaving !== null} type="submit">Add sub-item</button>
+      </form>
+      {subitems.length ? <ul className={styles.subitemList}>{subitems.map((subitem) => {
+        const canManage = canManageCollaboration || subitem.createdBy === currentUserId;
+        return <li key={subitem.id}><label><input aria-label={`Mark ${subitem.title} ${subitem.completed ? "open" : "complete"}`} checked={subitem.completed} disabled={!canManage || collaborationSaving !== null} onChange={(eventInput) => void runCollaborationAction(`toggle-subitem-${subitem.id}`, "Sub-item updated. Waiting for the realtime update.", () => onToggleSubitem(subitem.id, eventInput.target.checked))} type="checkbox" /><span>{subitem.title}</span></label>{canManage ? <button disabled={collaborationSaving !== null} onClick={() => void runCollaborationAction(`delete-subitem-${subitem.id}`, "Sub-item removed. Waiting for the realtime update.", () => onDeleteSubitem(subitem.id))} type="button">Delete</button> : null}</li>;
+      })}</ul> : <p className={styles.collaborationEmpty}>No sub-items yet. Break the work into an actionable step.</p>}
+    </section> : null}
+    {collaborationFeedback ? <p className={`${styles.detailFeedback} ${styles[collaborationFeedback.kind]}`} role={collaborationFeedback.kind === "error" ? "alert" : "status"}>{collaborationFeedback.message}</p> : null}
     <p className={styles.detailAudit}>Synced from the realtime snapshot. A change is complete only when the updated record appears in the timeline.</p>
   </aside>;
 }

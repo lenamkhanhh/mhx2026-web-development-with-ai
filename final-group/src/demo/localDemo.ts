@@ -3,12 +3,15 @@ import type {
   CreateEventInput,
   CreateExpenseInput,
   ExpenseCategory,
+  EventNote,
   EventRecord,
+  EventSubitem,
   ExpenseRecord,
   FirestoreEventPriority,
   FirestoreEventStatus,
   MemberRecord,
   TripBackend,
+  TripActivity,
   TripRecord,
   TripSnapshot,
   UserRecord,
@@ -229,7 +232,7 @@ class LocalDemoTripBackend implements TripBackend {
       responsibility: "Điều phối chuyến demo",
       isDemo: true,
     };
-    this.snapshots.set(trip.id, { trip, members: [member], events: [], expenses: [] });
+    this.snapshots.set(trip.id, { trip, members: [member], events: [], expenses: [], notes: [], subitems: [], activity: [] });
     this.profiles.set(actor.uid, profileFor(actor, this.tripsFor(actor.uid)));
     this.emitTrips(actor.uid);
     return copyTrip(trip);
@@ -352,6 +355,46 @@ class LocalDemoTripBackend implements TripBackend {
     });
   }
 
+  async createEventNote(tripId: string, eventId: string, body: string): Promise<void> {
+    const actor = this.requireSession();
+    const normalized = body.trim();
+    if (!normalized || normalized.length > 1000) throw new Error("Notes must contain 1 to 1000 characters.");
+    this.updateSnapshot(tripId, (snapshot) => {
+      this.requireEvent(snapshot, eventId);
+      const note: EventNote = { id: this.nextId("demo-note"), eventId, body: normalized, createdBy: actor.uid, createdAt: nowIso() };
+      return { ...snapshot, notes: [...(snapshot.notes ?? []), note], activity: [...(snapshot.activity ?? []), this.activity("note_added", eventId, actor.uid, "Added a note")] };
+    });
+  }
+
+  async deleteEventNote(tripId: string, noteId: string): Promise<void> {
+    this.updateSnapshot(tripId, (snapshot) => ({ ...snapshot, notes: (snapshot.notes ?? []).filter((note) => note.id !== noteId) }));
+  }
+
+  async createEventSubitem(tripId: string, eventId: string, title: string): Promise<void> {
+    const actor = this.requireSession();
+    const normalized = title.trim();
+    if (!normalized || normalized.length > 160) throw new Error("Sub-items must contain 1 to 160 characters.");
+    this.updateSnapshot(tripId, (snapshot) => {
+      this.requireEvent(snapshot, eventId);
+      const timestamp = nowIso();
+      const subitem: EventSubitem = { id: this.nextId("demo-subitem"), eventId, title: normalized, completed: false, createdBy: actor.uid, createdAt: timestamp, updatedAt: timestamp };
+      return { ...snapshot, subitems: [...(snapshot.subitems ?? []), subitem], activity: [...(snapshot.activity ?? []), this.activity("subitem_added", eventId, actor.uid, `Added sub-item “${normalized}”`)] };
+    });
+  }
+
+  async toggleEventSubitem(tripId: string, subitemId: string, completed: boolean): Promise<void> {
+    const actor = this.requireSession();
+    this.updateSnapshot(tripId, (snapshot) => {
+      const target = (snapshot.subitems ?? []).find((subitem) => subitem.id === subitemId);
+      if (!target) throw new Error("Sub-item does not exist.");
+      return { ...snapshot, subitems: (snapshot.subitems ?? []).map((subitem) => subitem.id === subitemId ? { ...subitem, completed, updatedAt: nowIso() } : subitem), activity: [...(snapshot.activity ?? []), this.activity(completed ? "subitem_completed" : "subitem_reopened", target.eventId, actor.uid, `${completed ? "Completed" : "Reopened"} sub-item “${target.title}”`)] };
+    });
+  }
+
+  async deleteEventSubitem(tripId: string, subitemId: string): Promise<void> {
+    this.updateSnapshot(tripId, (snapshot) => ({ ...snapshot, subitems: (snapshot.subitems ?? []).filter((subitem) => subitem.id !== subitemId) }));
+  }
+
   async createExpense(
     tripId: string,
     input: CreateExpenseInput,
@@ -421,6 +464,19 @@ class LocalDemoTripBackend implements TripBackend {
     const snapshot = this.snapshots.get(tripId);
     if (!snapshot) throw new Error("Không tìm thấy chuyến demo local.");
     return copySnapshot(snapshot);
+  }
+
+  private requireSession(): AuthenticatedUser {
+    if (!this.session) throw new Error("Authentication is required.");
+    return copyUser(this.session);
+  }
+
+  private requireEvent(snapshot: TripSnapshot, eventId: string): void {
+    if (!snapshot.events.some((event) => event.id === eventId)) throw new Error("Timeline item does not exist.");
+  }
+
+  private activity(kind: TripActivity["kind"], eventId: string, actorId: string, label: string): TripActivity {
+    return { id: this.nextId("demo-activity"), kind, eventId, actorId, label, createdAt: nowIso() };
   }
 
   private updateSnapshot(
@@ -517,7 +573,12 @@ function createInitialSnapshots(): TripSnapshot[] {
         expense("dn-exp-03", "Hải sản Mân Thái", 1_180_000, "demo-linh", ["demo-lead", "demo-minh", "demo-ha", "demo-tuan", "demo-linh"], "pending", "demo-linh"),
       ],
     },
-  ].map(copySnapshot);
+  ].map((snapshot, index) => copySnapshot({
+    ...snapshot,
+    notes: index === 0 ? [{ id: "demo-note-1", eventId: "bkk-01", body: "Meet beside exit 4 before collecting bags.", createdBy: "demo-lead", createdAt: demoRecordTimestamp("bkk-01") }] : [],
+    subitems: index === 0 ? [{ id: "demo-subitem-1", eventId: "bkk-01", title: "Confirm airport pickup contact", completed: true, createdBy: "demo-tuan", createdAt: demoRecordTimestamp("bkk-01"), updatedAt: demoRecordTimestamp("bkk-01") }] : [],
+    activity: index === 0 ? [{ id: "demo-activity-1", kind: "note_added", eventId: "bkk-01", actorId: "demo-lead", label: "Added a note", createdAt: demoRecordTimestamp("bkk-01") }] : [],
+  }));
 }
 
 function event(
@@ -654,5 +715,8 @@ function copySnapshot(snapshot: TripSnapshot): TripSnapshot {
     members: snapshot.members.map((member) => ({ ...member })),
     events: snapshot.events.map(copyEvent),
     expenses: snapshot.expenses.map(copyExpense),
+    notes: (snapshot.notes ?? []).map((note) => ({ ...note })),
+    subitems: (snapshot.subitems ?? []).map((subitem) => ({ ...subitem })),
+    activity: (snapshot.activity ?? []).map((item) => ({ ...item })),
   };
 }

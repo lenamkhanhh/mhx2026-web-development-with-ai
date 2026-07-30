@@ -11,6 +11,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  serverTimestamp,
   setDoc,
   Timestamp,
   updateDoc,
@@ -288,5 +289,108 @@ describe("expense boundaries", () => {
         updatedAt: now(),
       }),
     );
+  });
+});
+
+describe("event collaboration boundaries", () => {
+  async function seedEvent() {
+    await testEnvironment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), "trips", TRIP_ID, "events", "event-1"),
+        eventData(LEAD_ID, "approved"),
+      );
+    });
+  }
+
+  it("allows a member to add a bounded note for an existing event but not alter another note", async () => {
+    await seedEvent();
+    const memberDb = testEnvironment.authenticatedContext(MEMBER_ID).firestore();
+    const leadDb = testEnvironment.authenticatedContext(LEAD_ID).firestore();
+    const notePath = ["trips", TRIP_ID, "notes", "member-note"] as const;
+
+    await assertSucceeds(
+      setDoc(doc(memberDb, ...notePath), {
+        eventId: "event-1",
+        body: "Meet at the arrival exit.",
+        createdBy: MEMBER_ID,
+        createdAt: now(),
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(leadDb, ...notePath), { body: "Tampered note" }),
+    );
+    await assertFails(
+      setDoc(doc(memberDb, "trips", TRIP_ID, "notes", "too-long"), {
+        eventId: "event-1",
+        body: "x".repeat(1001),
+        createdBy: MEMBER_ID,
+        createdAt: now(),
+      }),
+    );
+  });
+
+  it("restricts sub-item completion to its author or the lead", async () => {
+    await seedEvent();
+    await testEnvironment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "trips", TRIP_ID, "subitems", "member-subitem"), {
+        eventId: "event-1",
+        title: "Confirm pickup contact",
+        completed: false,
+        createdBy: MEMBER_ID,
+        createdAt: now(),
+        updatedAt: now(),
+      });
+    });
+    const memberDb = testEnvironment.authenticatedContext(MEMBER_ID).firestore();
+    const leadDb = testEnvironment.authenticatedContext(LEAD_ID).firestore();
+    const outsiderDb = testEnvironment.authenticatedContext(OUTSIDER_ID).firestore();
+    const subitemPath = ["trips", TRIP_ID, "subitems", "member-subitem"] as const;
+
+    await assertSucceeds(updateDoc(doc(memberDb, ...subitemPath), { completed: true, updatedAt: now() }));
+    await assertSucceeds(updateDoc(doc(leadDb, ...subitemPath), { completed: false, updatedAt: now() }));
+    await assertFails(updateDoc(doc(outsiderDb, ...subitemPath), { completed: true, updatedAt: now() }));
+    await assertFails(updateDoc(doc(memberDb, ...subitemPath), { title: "Not an allowed update", updatedAt: now() }));
+  });
+
+  it("keeps trip activity actor-attributed and append-only", async () => {
+    await seedEvent();
+    const memberDb = testEnvironment.authenticatedContext(MEMBER_ID).firestore();
+    const leadDb = testEnvironment.authenticatedContext(LEAD_ID).firestore();
+    const activityPath = ["trips", TRIP_ID, "activity", "member-activity"] as const;
+    const activity = {
+      kind: "note_added",
+      eventId: "event-1",
+      actorId: MEMBER_ID,
+      label: "Added a note",
+      createdAt: now(),
+    };
+
+    await assertSucceeds(setDoc(doc(memberDb, ...activityPath), activity));
+    await assertFails(updateDoc(doc(memberDb, ...activityPath), { label: "Edited activity" }));
+    await assertFails(deleteDoc(doc(leadDb, ...activityPath)));
+    await assertFails(setDoc(doc(memberDb, "trips", TRIP_ID, "activity", "spoofed"), { ...activity, actorId: LEAD_ID }));
+  });
+
+  it("accepts a server-timestamped sub-item and matching activity in one batch", async () => {
+    await seedEvent();
+    const memberDb = testEnvironment.authenticatedContext(MEMBER_ID).firestore();
+    const batch = writeBatch(memberDb);
+    batch.set(doc(memberDb, "trips", TRIP_ID, "subitems", "batched-subitem"), {
+      eventId: "event-1",
+      title: "Confirm pickup contact",
+      completed: false,
+      createdBy: MEMBER_ID,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    batch.set(doc(memberDb, "trips", TRIP_ID, "activity", "batched-activity"), {
+      kind: "subitem_added",
+      eventId: "event-1",
+      actorId: MEMBER_ID,
+      label: "Added sub-item",
+      createdAt: serverTimestamp(),
+    });
+
+    await assertSucceeds(batch.commit());
   });
 });

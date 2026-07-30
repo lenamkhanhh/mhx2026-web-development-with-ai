@@ -84,6 +84,16 @@ const snapshot: TripSnapshot = {
       createdAt: "2026-08-01T07:50:00.000Z",
     },
   ],
+  activity: [
+    {
+      id: "activity-1",
+      kind: "note_added",
+      eventId: "event-1",
+      actorId: "user-1",
+      label: "Added a note",
+      createdAt: "2026-08-01T08:10:00.000Z",
+    },
+  ],
 };
 
 describe("WorkbenchOverview", () => {
@@ -125,7 +135,7 @@ describe("WorkbenchOverview", () => {
 
     const context = screen.getByRole("complementary", { name: "Trip context" });
     expect(within(context).getByText("Activity feed")).toBeTruthy();
-    expect(within(context).getByText("Added item “Nhận phòng”")).toBeTruthy();
+    expect(within(context).getByText("Added a note")).toBeTruthy();
     expect(within(context).getByText("Expense summary")).toBeTruthy();
     expect(within(context).getByText("Budget")).toBeTruthy();
     expect(within(context).getByText("Accommodation")).toBeTruthy();

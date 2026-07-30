@@ -3,7 +3,10 @@ import { decodeEventNote, decodeEventSubitem, decodeTripActivity } from "./repos
 
 describe("collaboration Firestore decoders", () => {
   const createdAt = new Date("2026-08-01T08:00:00.000Z");
-  const timestamp = { toDate: () => createdAt };
+  const timestamp = {
+    toDate() { return new Date(this.toMillis()); },
+    toMillis() { return createdAt.getTime(); },
+  };
 
   it("decodes server timestamps for notes, sub-items, and activity", () => {
     expect(decodeEventNote("note-1", { eventId: "event-1", body: "Meet at exit 4.", createdBy: "user-1", createdAt: timestamp })).toMatchObject({ createdAt: createdAt.toISOString() });

@@ -23,6 +23,10 @@ service cloud.firestore {
         && member(tripId, request.auth.uid).data.role == "lead";
     }
 
+    function eventExists(tripId, eventId) {
+      return exists(/databases/$(database)/documents/trips/$(tripId)/events/$(eventId));
+    }
+
     function hasOnlyKeys(data, keys) {
       return data.keys().hasOnly(keys) && data.keys().hasAll(keys);
     }
@@ -92,6 +96,39 @@ service cloud.firestore {
         && (!("category" in data) || (data.category == "transport" || data.category == "accommodation" || data.category == "food" || data.category == "activities" || data.category == "other"))
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
+    }
+
+    function validNote(data) {
+      return hasOnlyKeys(data, ["eventId", "body", "createdBy", "createdAt"])
+        && data.eventId is string
+        && data.body is string
+        && data.body.size() > 0
+        && data.body.size() <= 1000
+        && data.createdBy is string
+        && data.createdAt is timestamp;
+    }
+
+    function validSubitem(data) {
+      return hasOnlyKeys(data, ["eventId", "title", "completed", "createdBy", "createdAt", "updatedAt"])
+        && data.eventId is string
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 160
+        && data.completed is bool
+        && data.createdBy is string
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validActivity(data) {
+      return hasOnlyKeys(data, ["kind", "eventId", "actorId", "label", "createdAt"])
+        && (data.kind == "note_added" || data.kind == "subitem_added" || data.kind == "subitem_completed" || data.kind == "subitem_reopened")
+        && data.eventId is string
+        && data.actorId is string
+        && data.label is string
+        && data.label.size() > 0
+        && data.label.size() <= 220
+        && data.createdAt is timestamp;
     }
 
     match /users/{uid} {
@@ -178,6 +215,39 @@ service cloud.firestore {
           && request.resource.data.createdBy == resource.data.createdBy
           && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy);
+      }
+
+      match /notes/{noteId} {
+        allow get, list: if isMember(tripId);
+        allow create: if isMember(tripId) && validNote(request.resource.data)
+          && request.resource.data.createdBy == request.auth.uid
+          && eventExists(tripId, request.resource.data.eventId);
+        allow update: if false;
+        allow delete: if isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy);
+      }
+
+      match /subitems/{subitemId} {
+        allow get, list: if isMember(tripId);
+        allow create: if isMember(tripId) && validSubitem(request.resource.data)
+          && request.resource.data.createdBy == request.auth.uid
+          && eventExists(tripId, request.resource.data.eventId);
+        allow update: if validSubitem(request.resource.data) && (
+          isLead(tripId)
+          || (isMember(tripId) && request.auth.uid == resource.data.createdBy)
+        ) && request.resource.data.eventId == resource.data.eventId
+          && request.resource.data.title == resource.data.title
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["completed", "updatedAt"]);
+        allow delete: if isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy);
+      }
+
+      match /activity/{activityId} {
+        allow get, list: if isMember(tripId);
+        allow create: if isMember(tripId) && validActivity(request.resource.data)
+          && request.resource.data.actorId == request.auth.uid
+          && eventExists(tripId, request.resource.data.eventId);
+        allow update, delete: if false;
       }
     }
   }

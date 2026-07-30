@@ -281,6 +281,66 @@ export function App({ backend, demoMode = false }: AppProps) {
     }
   }
 
+  async function createEventNote(eventId: string, body: string) {
+    if (!backend.createEventNote) throw new Error("Notes are unavailable in this backend.");
+    if (!tripId) throw new Error("Select a trip before adding a note.");
+    try {
+      await backend.createEventNote(tripId, eventId, body);
+      setNotice("Note added.");
+      setError("");
+    } catch (cause) {
+      throwMutationFailure(cause, "Unable to add the note.");
+    }
+  }
+
+  async function deleteEventNote(noteId: string) {
+    if (!backend.deleteEventNote) throw new Error("Notes are unavailable in this backend.");
+    if (!tripId) throw new Error("Select a trip before deleting a note.");
+    try {
+      await backend.deleteEventNote(tripId, noteId);
+      setNotice("Note deleted.");
+      setError("");
+    } catch (cause) {
+      throwMutationFailure(cause, "Unable to delete the note.");
+    }
+  }
+
+  async function createEventSubitem(eventId: string, title: string) {
+    if (!backend.createEventSubitem) throw new Error("Sub-items are unavailable in this backend.");
+    if (!tripId) throw new Error("Select a trip before adding a sub-item.");
+    try {
+      await backend.createEventSubitem(tripId, eventId, title);
+      setNotice("Sub-item added.");
+      setError("");
+    } catch (cause) {
+      throwMutationFailure(cause, "Unable to add the sub-item.");
+    }
+  }
+
+  async function toggleEventSubitem(subitemId: string, completed: boolean) {
+    if (!backend.toggleEventSubitem) throw new Error("Sub-items are unavailable in this backend.");
+    if (!tripId) throw new Error("Select a trip before updating a sub-item.");
+    try {
+      await backend.toggleEventSubitem(tripId, subitemId, completed);
+      setNotice("Sub-item updated.");
+      setError("");
+    } catch (cause) {
+      throwMutationFailure(cause, "Unable to update the sub-item.");
+    }
+  }
+
+  async function deleteEventSubitem(subitemId: string) {
+    if (!backend.deleteEventSubitem) throw new Error("Sub-items are unavailable in this backend.");
+    if (!tripId) throw new Error("Select a trip before deleting a sub-item.");
+    try {
+      await backend.deleteEventSubitem(tripId, subitemId);
+      setNotice("Sub-item deleted.");
+      setError("");
+    } catch (cause) {
+      throwMutationFailure(cause, "Unable to delete the sub-item.");
+    }
+  }
+
   async function createExpense(input: Parameters<ExpenseFeature["create"]>[0]) {
     if (!expenseFeature) return;
     try {
@@ -395,6 +455,13 @@ export function App({ backend, demoMode = false }: AppProps) {
       onMove={reorderEvent}
       onSync={syncEventStatuses}
       onUpdate={updateEvent}
+      notes={selectedSnapshot.notes ?? []}
+      subitems={selectedSnapshot.subitems ?? []}
+      onCreateNote={createEventNote}
+      onDeleteNote={deleteEventNote}
+      onCreateSubitem={createEventSubitem}
+      onToggleSubitem={toggleEventSubitem}
+      onDeleteSubitem={deleteEventSubitem}
       role={role}
     />
   ) : activeView === "expenses" ? (
