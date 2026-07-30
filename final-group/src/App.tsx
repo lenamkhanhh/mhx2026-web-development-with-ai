@@ -342,6 +342,28 @@ export function App({ backend, demoMode = false }: AppProps) {
     return <ScreenMessage title="Đang tải bảng điều khiển chuyến đi…" />;
   }
 
+  async function handleShareTrip() {
+    const shareText = `${selectedSnapshot.trip.name} · Mã tham gia ${selectedSnapshot.trip.joinCode}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: selectedSnapshot.trip.name,
+          text: shareText,
+          url: window.location.href,
+        });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${shareText}\n${window.location.href}`);
+      } else {
+        throw new Error("Clipboard unavailable");
+      }
+      setNotice("Đã chuẩn bị thông tin chia sẻ chuyến đi.");
+      setError("");
+    } catch (cause) {
+      if (cause instanceof DOMException && cause.name === "AbortError") return;
+      setError("Không thể chia sẻ tự động. Bạn có thể sao chép mã trong màn Thành viên.");
+    }
+  }
+
   const pendingCount = selectedSnapshot.events.filter((event) => event.status === "pending").length;
   const currentScreen = activeView === "overview" ? (
     <WorkbenchOverview
@@ -394,7 +416,9 @@ export function App({ backend, demoMode = false }: AppProps) {
       displayName={currentMember.displayName}
       memberCount={selectedSnapshot.members.length}
       onChangeView={setActiveView}
+      onInvite={() => setActiveView("members")}
       onLogout={handleLogout}
+      onShare={handleShareTrip}
       pendingCount={pendingCount}
       role={role}
       topbarAction={

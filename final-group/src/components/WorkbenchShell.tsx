@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import {
   CalendarBlank,
@@ -30,7 +30,9 @@ export interface WorkbenchShellProps {
   displayName: string;
   memberCount: number;
   onChangeView: (view: WorkbenchView) => void;
+  onInvite?: () => void;
   onLogout: () => void | Promise<void>;
+  onShare?: () => void | Promise<void>;
   pendingCount: number;
   role: WorkbenchRole;
   topbarAction?: ReactNode;
@@ -77,13 +79,16 @@ export function WorkbenchShell({
   displayName,
   memberCount,
   onChangeView,
+  onInvite,
   onLogout,
+  onShare,
   pendingCount,
   role,
   topbarAction,
   trip,
 }: WorkbenchShellProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const activeItem = NAV_ITEMS.find((item) => item.id === activeView) ?? NAV_ITEMS[0];
   const searchResults = useMemo(() => {
     const query = normalized(searchQuery.trim());
@@ -91,10 +96,37 @@ export function WorkbenchShell({
     return NAV_ITEMS.filter((item) => normalized(`${item.label} ${item.searchTerms}`).includes(query));
   }, [searchQuery]);
 
-  const changeView = (view: WorkbenchView) => {
+  const changeView = useCallback((view: WorkbenchView) => {
     onChangeView(view);
     setSearchQuery("");
-  };
+    window.scrollTo({ behavior: "auto", top: 0 });
+  }, [onChangeView]);
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isEditable = Boolean(target?.closest("input, textarea, select, [contenteditable='true']"));
+      const key = event.key.toLowerCase();
+
+      if ((event.ctrlKey || event.metaKey) && key === "k") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+
+      if (isEditable) return;
+      if (key === "n") {
+        event.preventDefault();
+        changeView("schedule");
+      } else if (key === "e") {
+        event.preventDefault();
+        changeView("expenses");
+      }
+    };
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [changeView]);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -174,9 +206,13 @@ export function WorkbenchShell({
               <MagnifyingGlass aria-hidden="true" size={18} />
               <input
                 aria-label="Tìm nhanh trong TripFlow"
+                ref={searchInputRef}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Escape") setSearchQuery("");
+                  if (event.key === "Escape") {
+                    setSearchQuery("");
+                    event.currentTarget.blur();
+                  }
                 }}
                 placeholder="Tìm chuyến đi, lịch trình, chi phí, thành viên..."
                 type="search"
@@ -221,9 +257,13 @@ export function WorkbenchShell({
                   <span><HashStraight aria-hidden="true" size={16} /> # {trip.id.toLocaleUpperCase("vi-VN")}</span>
                 </div>
               </div>
-              <span className={`workbench-role-label ${role}`}>
-                {role === "lead" ? "Lead chuyến đi" : "Thành viên"}
-              </span>
+              <div className="workbench-title-actions">
+                {onInvite ? <button className="workbench-header-action workbench-header-action--primary" onClick={() => { onInvite(); window.scrollTo({ behavior: "auto", top: 0 }); }} type="button">Mời thành viên</button> : null}
+                {onShare ? <button className="workbench-header-action" onClick={() => void onShare()} type="button">Chia sẻ chuyến đi</button> : null}
+                <span className={`workbench-role-label ${role}`}>
+                  {role === "lead" ? "Lead chuyến đi" : "Thành viên"}
+                </span>
+              </div>
             </div>
 
             <nav aria-label="Màn hình chuyến đi" className="workbench-page-tabs">
