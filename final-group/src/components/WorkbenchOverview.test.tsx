@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TripSnapshot } from "../firebase/contracts";
 import { WorkbenchOverview } from "./WorkbenchOverview";
@@ -116,5 +117,34 @@ describe("WorkbenchOverview", () => {
     expect(within(context).getAllByText("1.800.000 ₫").length).toBeGreaterThan(0);
     expect(within(context).getByText("Chi gần đây")).toBeTruthy();
     expect(within(context).getByText("Khách sạn")).toBeTruthy();
+  });
+
+  it("sorts real itinerary rows and opens the selected event in Timeline", async () => {
+    const user = userEvent.setup();
+    const onOpenSchedule = vi.fn();
+    render(
+      <WorkbenchOverview
+        currentUserId="user-1"
+        onOpenExpenses={vi.fn()}
+        onOpenSchedule={onOpenSchedule}
+        snapshot={snapshot}
+      />,
+    );
+
+    const table = screen.getByRole("table", { name: "Danh sách hoạt động" });
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Sắp xếp hoạt động" }),
+      "time-desc",
+    );
+    expect(within(table).getAllByRole("row")[1].textContent).toContain(
+      "Tham quan vườn hoa",
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Mở Nhận phòng trong lịch trình",
+      }),
+    );
+    expect(onOpenSchedule).toHaveBeenCalledWith("event-1");
   });
 });
