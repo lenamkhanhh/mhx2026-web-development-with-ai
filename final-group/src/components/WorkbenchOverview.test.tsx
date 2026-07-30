@@ -15,6 +15,7 @@ const snapshot: TripSnapshot = {
     destination: "Đà Lạt",
     startDate: "2026-08-01",
     endDate: "2026-08-03",
+    budgetVnd: 3_000_000,
     leadId: "user-1",
     joinCode: "DALAT26",
   },
@@ -48,6 +49,9 @@ const snapshot: TripSnapshot = {
       participantIds: ["user-1"],
       createdBy: "user-1",
       approvedBy: "user-1",
+      location: "Lien Khuong Airport",
+      assigneeUid: "user-1",
+      priority: "high",
       createdAt: "2026-08-01T07:30:00.000Z",
     },
     {
@@ -61,6 +65,9 @@ const snapshot: TripSnapshot = {
       participantIds: ["user-1", "user-2"],
       createdBy: "user-2",
       approvedBy: null,
+      location: "Da Lat Flower Park",
+      assigneeUid: "user-2",
+      priority: "medium",
       createdAt: "2026-08-01T07:45:00.000Z",
     },
   ],
@@ -73,6 +80,7 @@ const snapshot: TripSnapshot = {
       splitAmong: ["user-1", "user-2"],
       status: "settled",
       createdBy: "user-1",
+      category: "accommodation",
       createdAt: "2026-08-01T07:50:00.000Z",
     },
   ],
@@ -95,7 +103,9 @@ describe("WorkbenchOverview", () => {
     expect(table).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Item" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Date & time" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Participants" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Location" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Assignee" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Priority" })).toBeTruthy();
     expect(within(table).getByText("Nhận phòng")).toBeTruthy();
     expect(within(table).getByText("Tham quan vườn hoa")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Open 1" })).toBeTruthy();
@@ -117,6 +127,8 @@ describe("WorkbenchOverview", () => {
     expect(within(context).getByText("Activity feed")).toBeTruthy();
     expect(within(context).getByText("Added item “Nhận phòng”")).toBeTruthy();
     expect(within(context).getByText("Expense summary")).toBeTruthy();
+    expect(within(context).getByText("Budget")).toBeTruthy();
+    expect(within(context).getByText("Accommodation")).toBeTruthy();
     expect(within(context).getAllByText("1.800.000 ₫").length).toBeGreaterThan(0);
     expect(within(context).getByText("Recent expenses")).toBeTruthy();
     expect(within(context).getByText("Khách sạn")).toBeTruthy();
