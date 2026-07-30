@@ -32,7 +32,7 @@ export async function authenticate(backend: AuthBackend, mode: AuthMode, input: 
 
 export function logout(backend: Pick<TripBackend, "logout">): Promise<void> { return backend.logout(); }
 
-export function AuthFlow({ backend, onAuthenticated }: { backend: AuthBackend; onAuthenticated: (session: AuthenticatedSession) => void }) {
+export function AuthFlow({ backend, onAuthenticated, onOpenDemo }: { backend: AuthBackend; onAuthenticated: (session: AuthenticatedSession) => void; onOpenDemo?: () => void }) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [input, setInput] = useState<RegistrationInput>({ displayName: "", email: "", password: "", confirmPassword: "" });
   const [errors, setErrors] = useState<AuthFieldErrors>({});
@@ -86,6 +86,10 @@ export function AuthFlow({ backend, onAuthenticated }: { backend: AuthBackend; o
         {requestError ? <p className={styles.errorNotice} role="alert">{requestError}</p> : null}{success ? <p className={styles.successNotice} role="status">{success}</p> : null}
         <button className={styles.primaryAction} disabled={submitting} type="submit">{submitLabel}</button>
       </form>
+      {onOpenDemo ? <section aria-label="Interactive demo access" className={styles.demoAccess}>
+        <div><strong>Need a quick walkthrough?</strong><span>Explore synthetic trip data without creating an account.</span></div>
+        <button disabled={submitting} onClick={onOpenDemo} type="button">Explore interactive demo</button>
+      </section> : null}
     </article>
   </section>;
 }

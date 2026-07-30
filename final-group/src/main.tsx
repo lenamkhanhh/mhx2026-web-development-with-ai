@@ -8,9 +8,21 @@ import "./styles.css";
 const root = createRoot(document.getElementById("root")!);
 const demoMode = shouldUseLocalDemoPreview(window.location.search, import.meta.env.DEV);
 
+function openDemo(): void {
+  const url = new URL(window.location.href);
+  url.searchParams.set("demo", "1");
+  window.location.assign(url.toString());
+}
+
+function exitDemo(): void {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("demo");
+  window.location.assign(url.toString());
+}
+
 try {
   const backend = demoMode ? createLocalDemoTripBackend() : createFirebaseTripBackend();
-  root.render(<StrictMode><App backend={backend} demoMode={demoMode} /></StrictMode>);
+  root.render(<StrictMode><App backend={backend} demoMode={demoMode} onExitDemo={exitDemo} onOpenDemo={openDemo} /></StrictMode>);
 } catch (error) {
   root.render(
     <main className="screen-message" role="alert">

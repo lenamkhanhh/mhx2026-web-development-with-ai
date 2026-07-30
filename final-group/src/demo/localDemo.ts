@@ -103,14 +103,16 @@ const DANANG_TRIP: TripRecord = {
 };
 
 /**
- * The rich board is an opt-in local preview. It has no Firebase adapter,
- * contains only synthetic identities, and resets whenever the page reloads.
+ * The rich board is an opt-in interactive sandbox. It has no Firebase
+ * adapter, contains only synthetic identities, and resets whenever the page
+ * reloads. It is safe to expose publicly because every mutation stays in the
+ * current browser memory.
  */
 export function shouldUseLocalDemoPreview(
   search: string,
-  isDevelopment: boolean,
+  _isDevelopment: boolean,
 ): boolean {
-  return isDevelopment && new URLSearchParams(search).get("demo") === LOCAL_DEMO_QUERY_VALUE;
+  return new URLSearchParams(search).get("demo") === LOCAL_DEMO_QUERY_VALUE;
 }
 
 export function createLocalDemoTripBackend(): TripBackend {

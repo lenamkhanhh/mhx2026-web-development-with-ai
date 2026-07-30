@@ -46,6 +46,8 @@ export interface AppProps {
   backend: TripBackend;
   /** Makes the local, synthetic preview explicit without changing feature contracts. */
   demoMode?: boolean;
+  onExitDemo?: () => void;
+  onOpenDemo?: () => void;
 }
 
 /**
@@ -53,7 +55,7 @@ export interface AppProps {
  * category/status is rendered directly from the approved vocabulary; this App
  * deliberately does not coerce records into the older dashboard domain.
  */
-export function App({ backend, demoMode = false }: AppProps) {
+export function App({ backend, demoMode = false, onExitDemo, onOpenDemo }: AppProps) {
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [profile, setProfile] = useState<UserRecord | null>(null);
   const [trips, setTrips] = useState<TripRecord[]>([]);
@@ -387,7 +389,7 @@ export function App({ backend, demoMode = false }: AppProps) {
 
   if (loading) return <ScreenMessage title="Checking your session…" />;
   if (!user || !profile) {
-    return <AuthFlow backend={backend} onAuthenticated={(session) => void handleAuthenticated(session)} />;
+    return <AuthFlow backend={backend} onAuthenticated={(session) => void handleAuthenticated(session)} onOpenDemo={onOpenDemo} />;
   }
   if (!tripId) {
     return (
@@ -516,7 +518,8 @@ export function App({ backend, demoMode = false }: AppProps) {
         {demoMode ? (
           <p className="local-demo-notice" data-testid="local-demo-notice" role="status">
             <strong>Local demo data</strong>
-            <span> For preview only; every change resets on reload.</span>
+            <span> Interactive sandbox only; every change resets on reload and never syncs to Firebase.</span>
+            {onExitDemo ? <button onClick={onExitDemo} type="button">Exit demo</button> : null}
           </p>
         ) : null}
         {error ? <p className="app-alert error" role="alert">{error}</p> : null}
