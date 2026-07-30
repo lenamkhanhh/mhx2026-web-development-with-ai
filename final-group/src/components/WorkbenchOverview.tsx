@@ -1,5 +1,6 @@
 import {
   AirplaneTilt,
+  ArrowsDownUp,
   Bed,
   CalendarBlank,
   Check,
@@ -186,6 +187,9 @@ export function WorkbenchOverview({
           <div className="workbench-table-footer">
             <button onClick={() => onOpenSchedule()} type="button"><Plus aria-hidden="true" size={15} /> Thêm hoạt động</button>
             <span>{visibleEvents.length} mục</span>
+            <button className="workbench-table-reorder-link" onClick={() => onOpenSchedule()} type="button">
+              <ArrowsDownUp aria-hidden="true" size={14} /> Sắp xếp lại ở Lịch trình
+            </button>
           </div>
         </div>
       </section>

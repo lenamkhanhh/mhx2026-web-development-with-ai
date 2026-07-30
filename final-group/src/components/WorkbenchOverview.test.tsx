@@ -147,4 +147,21 @@ describe("WorkbenchOverview", () => {
     );
     expect(onOpenSchedule).toHaveBeenCalledWith("event-1");
   });
+
+  it("links the overview footer to the real reorder workflow in Timeline", async () => {
+    const user = userEvent.setup();
+    const onOpenSchedule = vi.fn();
+    render(
+      <WorkbenchOverview
+        currentUserId="user-1"
+        onOpenExpenses={vi.fn()}
+        onOpenSchedule={onOpenSchedule}
+        snapshot={snapshot}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Sắp xếp lại ở Lịch trình" }));
+
+    expect(onOpenSchedule).toHaveBeenCalledWith();
+  });
 });
