@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TripSnapshot } from "../firebase/contracts";
 import { WorkbenchOverview } from "./WorkbenchOverview";
+
+afterEach(cleanup);
 
 const snapshot: TripSnapshot = {
   trip: {

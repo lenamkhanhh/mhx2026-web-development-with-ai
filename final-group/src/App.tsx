@@ -392,6 +392,7 @@ export function App({ backend, demoMode = false }: AppProps) {
     <WorkbenchShell
       activeView={activeView}
       displayName={currentMember.displayName}
+      memberCount={selectedSnapshot.members.length}
       onChangeView={setActiveView}
       onLogout={handleLogout}
       pendingCount={pendingCount}
