@@ -10,9 +10,9 @@ import {
 } from "./localDemo";
 
 describe("local rich TripFlow demo", () => {
-  it("is opt-in and development-only", () => {
+  it("is opt-in and can power the public interactive sandbox", () => {
     expect(shouldUseLocalDemoPreview("?demo=1", true)).toBe(true);
-    expect(shouldUseLocalDemoPreview("?demo=1", false)).toBe(false);
+    expect(shouldUseLocalDemoPreview("?demo=1", false)).toBe(true);
     expect(shouldUseLocalDemoPreview("?demo=0", true)).toBe(false);
     expect(shouldUseLocalDemoPreview("", true)).toBe(false);
   });

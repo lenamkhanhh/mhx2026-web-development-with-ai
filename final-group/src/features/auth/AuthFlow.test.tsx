@@ -49,6 +49,14 @@ describe("AuthFlow", () => {
     expect(screen.getByText("TRIPFLOW WORKBENCH")).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Log in" }).getAttribute("aria-selected")).toBe("true");
   });
+  it("opens an explicitly supplied interactive demo without submitting credentials", async () => {
+    const actor = userEvent.setup(); const onOpenDemo = vi.fn(); const backend = createBackend();
+    render(<AuthFlow backend={backend} onAuthenticated={vi.fn()} onOpenDemo={onOpenDemo} />);
+    await actor.click(screen.getByRole("button", { name: "Explore interactive demo" }));
+    expect(onOpenDemo).toHaveBeenCalledOnce();
+    expect(backend.login).not.toHaveBeenCalled();
+    expect(backend.register).not.toHaveBeenCalled();
+  });
   it("reveals and hides passwords without changing their values", async () => {
     const actor = userEvent.setup(); render(<AuthFlow backend={createBackend()} onAuthenticated={vi.fn()} />);
     const password = screen.getByLabelText("Password") as HTMLInputElement;
