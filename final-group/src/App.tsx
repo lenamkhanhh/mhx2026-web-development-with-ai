@@ -370,6 +370,11 @@ export function App({ backend, demoMode = false }: AppProps) {
     setFocusedEventId(eventId ?? null);
     setActiveView("schedule");
   };
+  const searchRecords = [
+    ...selectedSnapshot.events.map((event) => ({ id: event.id, label: event.title, meta: "Timeline item", view: "schedule" as const })),
+    ...selectedSnapshot.expenses.map((expense) => ({ id: expense.id, label: expense.title, meta: "Expense", view: "expenses" as const })),
+    ...selectedSnapshot.members.map((member) => ({ id: member.uid, label: member.displayName, meta: "Member", view: "members" as const })),
+  ];
   const currentScreen = activeView === "overview" ? (
     <WorkbenchOverview
       currentUserId={user.uid}
@@ -421,10 +426,15 @@ export function App({ backend, demoMode = false }: AppProps) {
       memberCount={selectedSnapshot.members.length}
       onChangeView={setActiveView}
       onInvite={() => setActiveView("members")}
+      onOpenSearchResult={(result) => {
+        if (result.view === "schedule") openSchedule(result.id);
+        else setActiveView(result.view);
+      }}
       onLogout={handleLogout}
       onShare={handleShareTrip}
       pendingCount={pendingCount}
       role={role}
+      searchRecords={searchRecords}
       topbarAction={
         <label className="workbench-trip-switcher">
           <span>Trip</span>

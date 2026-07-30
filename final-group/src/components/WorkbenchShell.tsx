@@ -15,6 +15,12 @@ import "./workbench.css";
 
 export type WorkbenchView = "overview" | "schedule" | "expenses" | "members";
 export type WorkbenchRole = "lead" | "member";
+export interface WorkbenchSearchRecord {
+  id: string;
+  label: string;
+  meta: string;
+  view: WorkbenchView;
+}
 
 export interface WorkbenchTripSummary {
   id: string;
@@ -31,10 +37,12 @@ export interface WorkbenchShellProps {
   memberCount: number;
   onChangeView: (view: WorkbenchView) => void;
   onInvite?: () => void;
+  onOpenSearchResult?: (result: Pick<WorkbenchSearchRecord, "id" | "view">) => void;
   onLogout: () => void | Promise<void>;
   onShare?: () => void | Promise<void>;
   pendingCount: number;
   role: WorkbenchRole;
+  searchRecords?: WorkbenchSearchRecord[];
   topbarAction?: ReactNode;
   trip: WorkbenchTripSummary;
 }
@@ -80,10 +88,12 @@ export function WorkbenchShell({
   memberCount,
   onChangeView,
   onInvite,
+  onOpenSearchResult,
   onLogout,
   onShare,
   pendingCount,
   role,
+  searchRecords = [],
   topbarAction,
   trip,
 }: WorkbenchShellProps) {
@@ -93,8 +103,11 @@ export function WorkbenchShell({
   const searchResults = useMemo(() => {
     const query = normalized(searchQuery.trim());
     if (!query) return [];
-    return NAV_ITEMS.filter((item) => normalized(`${item.label} ${item.searchTerms}`).includes(query));
-  }, [searchQuery]);
+    return [
+      ...NAV_ITEMS.filter((item) => normalized(`${item.label} ${item.searchTerms}`).includes(query)).map((item) => ({ id: item.id, label: item.label, meta: "Work area", view: item.id })),
+      ...searchRecords.filter((record) => normalized(`${record.label} ${record.meta}`).includes(query)),
+    ];
+  }, [searchQuery, searchRecords]);
 
   const changeView = useCallback((view: WorkbenchView) => {
     onChangeView(view);
@@ -225,11 +238,16 @@ export function WorkbenchShell({
                     <button
                       aria-label={`Open ${item.label}`}
                       key={item.id}
-                      onClick={() => changeView(item.id)}
+                      onClick={() => {
+                        if (onOpenSearchResult && searchRecords.some((record) => record.id === item.id && record.view === item.view)) {
+                          onOpenSearchResult({ id: item.id, view: item.view });
+                        } else {
+                          changeView(item.view);
+                        }
+                      }}
                       type="button"
                     >
-                      <item.icon aria-hidden="true" size={17} />
-                      <span>{item.label}</span>
+                      <span>{item.label}</span><small>{item.meta}</small>
                     </button>
                   )) : <span>No matching work area.</span>}
                 </div>
