@@ -163,6 +163,17 @@ describe("WorkbenchOverview", () => {
     expect(onOpenSchedule).toHaveBeenCalledWith("event-1");
   });
 
+  it("filters itinerary rows by persisted category", async () => {
+    const user = userEvent.setup();
+    render(<WorkbenchOverview currentUserId="user-1" onOpenExpenses={vi.fn()} onOpenSchedule={vi.fn()} snapshot={snapshot} />);
+    const table = screen.getByRole("table", { name: "Trip itinerary" });
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Filter itinerary" }), "activity");
+
+    expect(within(table).getByText("Tham quan vÆ°á»n hoa")).toBeTruthy();
+    expect(within(table).queryByText("Nháº­n phÃ²ng")).toBeNull();
+  });
+
   it("links the overview footer to the real reorder workflow in Timeline", async () => {
     const user = userEvent.setup();
     const onOpenSchedule = vi.fn();
