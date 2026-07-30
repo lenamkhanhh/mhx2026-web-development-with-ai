@@ -46,15 +46,15 @@ const NAV_ITEMS: Array<{
   icon: typeof Compass;
   searchTerms: string;
 }> = [
-  { id: "overview", label: "Tổng quan", pageLabel: "TỔNG QUAN", icon: Compass, searchTerms: "tong quan overview" },
-  { id: "schedule", label: "Lịch trình", pageLabel: "LỊCH TRÌNH", icon: CalendarBlank, searchTerms: "lich trinh timeline su kien hoat dong" },
-  { id: "expenses", label: "Chi phí", pageLabel: "CHI PHÍ", icon: CurrencyCircleDollar, searchTerms: "chi phi expenses khoan chi" },
-  { id: "members", label: "Thành viên", pageLabel: "THÀNH VIÊN", icon: UsersThree, searchTerms: "thanh vien members nhom" },
+  { id: "overview", label: "Overview", pageLabel: "WORKBENCH", icon: Compass, searchTerms: "overview trip workspace" },
+  { id: "schedule", label: "Timeline", pageLabel: "TIMELINE", icon: CalendarBlank, searchTerms: "timeline itinerary events activities" },
+  { id: "expenses", label: "Expenses", pageLabel: "EXPENSES", icon: CurrencyCircleDollar, searchTerms: "expenses costs spending" },
+  { id: "members", label: "Members", pageLabel: "MEMBERS", icon: UsersThree, searchTerms: "members team people" },
 ];
 
 function formatDate(value: string): string {
   const date = new Date(`${value}T00:00:00`);
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -70,7 +70,7 @@ function normalized(value: string): string {
   return value
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
-    .toLocaleLowerCase("vi-VN");
+    .toLocaleLowerCase("en-US");
 }
 
 export function WorkbenchShell({
@@ -145,11 +145,11 @@ export function WorkbenchShell({
             <strong>{trip.name}</strong>
             <span className="workbench-trip-state">
               <span aria-hidden="true" className="workbench-online-dot" />
-              Đồng bộ
+              Synced
             </span>
           </div>
 
-          <nav aria-label="Điều hướng TripFlow" className="workbench-nav">
+          <nav aria-label="TripFlow navigation" className="workbench-nav">
             {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
               const isActive = activeView === id;
               return (
@@ -176,12 +176,12 @@ export function WorkbenchShell({
           </nav>
 
           <div className="workbench-sidebar-shortcuts">
-            <span className="workbench-sidebar-label">PHÍM TẮT</span>
+            <span className="workbench-sidebar-label">SHORTCUTS</span>
             <button onClick={() => changeView("schedule")} type="button">
-              Hoạt động mới <kbd>N</kbd>
+              New item <kbd>N</kbd>
             </button>
             <button onClick={() => changeView("expenses")} type="button">
-              Khoản chi mới <kbd>E</kbd>
+              New expense <kbd>E</kbd>
             </button>
           </div>
 
@@ -190,12 +190,12 @@ export function WorkbenchShell({
               <span aria-hidden="true" className="workbench-avatar">{initials(displayName)}</span>
               <span>
                 <strong>{displayName}</strong>
-                <small>{role === "lead" ? "Lead chuyến đi" : "Thành viên"}</small>
+                <small>{role === "lead" ? "Trip lead" : "Trip member"}</small>
               </span>
             </div>
-            <button aria-label="Đăng xuất" className="workbench-logout" onClick={() => void onLogout()} type="button">
+            <button aria-label="Sign out" className="workbench-logout" onClick={() => void onLogout()} type="button">
               <SignOut aria-hidden="true" size={17} />
-              <span>Đăng xuất</span>
+              <span>Sign out</span>
             </button>
           </div>
         </aside>
@@ -205,7 +205,7 @@ export function WorkbenchShell({
             <div className="workbench-search">
               <MagnifyingGlass aria-hidden="true" size={18} />
               <input
-                aria-label="Tìm nhanh trong TripFlow"
+                aria-label="Search TripFlow"
                 ref={searchInputRef}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 onKeyDown={(event) => {
@@ -214,7 +214,7 @@ export function WorkbenchShell({
                     event.currentTarget.blur();
                   }
                 }}
-                placeholder="Tìm chuyến đi, lịch trình, chi phí, thành viên..."
+                placeholder="Search trips, itinerary, expenses, members..."
                 type="search"
                 value={searchQuery}
               />
@@ -223,7 +223,7 @@ export function WorkbenchShell({
                 <div className="workbench-search-results">
                   {searchResults.length ? searchResults.map((item) => (
                     <button
-                      aria-label={`Mở ${item.label}`}
+                      aria-label={`Open ${item.label}`}
                       key={item.id}
                       onClick={() => changeView(item.id)}
                       type="button"
@@ -231,14 +231,14 @@ export function WorkbenchShell({
                       <item.icon aria-hidden="true" size={17} />
                       <span>{item.label}</span>
                     </button>
-                  )) : <span>Không tìm thấy màn hình phù hợp.</span>}
+                  )) : <span>No matching work area.</span>}
                 </div>
               ) : null}
             </div>
 
             <div className="workbench-topbar-actions">
               {topbarAction}
-              <div aria-label="Trạng thái hệ thống" className="workbench-system-status" role="status">
+              <div aria-label="System status" className="workbench-system-status" role="status">
                 <span aria-hidden="true" className="workbench-online-dot" />
                 <span>Firebase: ready</span>
                 <span className="workbench-status-separator">·</span>
@@ -250,23 +250,23 @@ export function WorkbenchShell({
           <header className="workbench-page-header">
             <div className="workbench-title-row">
               <div>
-                <h1>{trip.name.toLocaleUpperCase("vi-VN")} / {activeItem.pageLabel}</h1>
+                <h1>{trip.name.toLocaleUpperCase("en-US")} / {activeItem.pageLabel}</h1>
                 <div className="workbench-page-meta">
                   <span><CalendarBlank aria-hidden="true" size={16} /> {formatDate(trip.startDate)} — {formatDate(trip.endDate)}</span>
-                  <span><UsersThree aria-hidden="true" size={16} /> {memberCount} thành viên</span>
-                  <span><HashStraight aria-hidden="true" size={16} /> # {trip.id.toLocaleUpperCase("vi-VN")}</span>
+                  <span><UsersThree aria-hidden="true" size={16} /> {memberCount} {memberCount === 1 ? "member" : "members"}</span>
+                  <span><HashStraight aria-hidden="true" size={16} /> # {trip.id.toLocaleUpperCase("en-US")}</span>
                 </div>
               </div>
               <div className="workbench-title-actions">
-                {onInvite ? <button className="workbench-header-action workbench-header-action--primary" onClick={() => { onInvite(); window.scrollTo({ behavior: "auto", top: 0 }); }} type="button">Mời thành viên</button> : null}
-                {onShare ? <button className="workbench-header-action" onClick={() => void onShare()} type="button">Chia sẻ chuyến đi</button> : null}
+                {onInvite ? <button className="workbench-header-action workbench-header-action--primary" onClick={() => { onInvite(); window.scrollTo({ behavior: "auto", top: 0 }); }} type="button">Invite</button> : null}
+                {onShare ? <button className="workbench-header-action" onClick={() => void onShare()} type="button">Share</button> : null}
                 <span className={`workbench-role-label ${role}`}>
-                  {role === "lead" ? "Lead chuyến đi" : "Thành viên"}
+                  {role === "lead" ? "Trip lead" : "Trip member"}
                 </span>
               </div>
             </div>
 
-            <nav aria-label="Màn hình chuyến đi" className="workbench-page-tabs">
+            <nav aria-label="Trip views" className="workbench-page-tabs">
               {NAV_ITEMS.map((item) => (
                 <button
                   aria-selected={activeView === item.id}
@@ -299,7 +299,7 @@ export function WorkbenchShell({
 
           <footer className="workbench-footer">
             <ChartBar aria-hidden="true" size={14} />
-            <span>Trip workspace · dữ liệu cập nhật theo thời gian thực</span>
+            <span>Trip workspace · realtime data updates</span>
           </footer>
         </section>
       </div>
