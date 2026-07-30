@@ -33,6 +33,8 @@ describe("TripFlow Firestore record contract", () => {
   });
 
   it("decodes an event using the approved Firestore status vocabulary", () => {
+    const createdAt = new Date("2026-08-01T07:00:00.000Z");
+    const updatedAt = new Date("2026-08-01T08:30:00.000Z");
     expect(
       decodeEventRecord("event-1", {
         title: "Airport transfer",
@@ -44,6 +46,8 @@ describe("TripFlow Firestore record contract", () => {
         createdBy: "lead-1",
         approvedBy: "lead-1",
         order: 3,
+        createdAt: { toDate: () => createdAt },
+        updatedAt: { toDate: () => updatedAt },
       }),
     ).toMatchObject({
       id: "event-1",
@@ -51,7 +55,22 @@ describe("TripFlow Firestore record contract", () => {
       status: "approved",
       approvedBy: "lead-1",
       order: 3,
+      createdAt: createdAt.toISOString(),
+      updatedAt: updatedAt.toISOString(),
     });
+  });
+
+  it("decodes persisted expense timestamps for a truthful recent-expenses view", () => {
+    const createdAt = new Date("2026-08-01T09:00:00.000Z");
+    expect(decodeExpenseRecord("expense-1", {
+      title: "Hotel",
+      amount: 1_800_000,
+      paidBy: "lead-1",
+      splitAmong: ["lead-1", "member-1"],
+      status: "pending",
+      createdBy: "lead-1",
+      createdAt: { toDate: () => createdAt },
+    })).toMatchObject({ createdAt: createdAt.toISOString() });
   });
 
   it("rejects non-integer and negative VND expense amounts from Firestore", () => {
