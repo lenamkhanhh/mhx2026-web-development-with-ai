@@ -21,6 +21,7 @@ type Feedback = { kind: "saving" | "success" | "error"; message: string } | null
 export interface EventsWorkbenchProps {
   currentUserId: string;
   events: EventRecord[];
+  initialSelectedEventId?: string;
   members: MemberRecord[];
   role: FirestoreMemberRole;
   onCreate: (input: CreateEventInput) => Promise<void>;
@@ -33,8 +34,12 @@ export interface EventsWorkbenchProps {
 }
 
 export function EventsWorkbench(props: EventsWorkbenchProps) {
-  const { currentUserId, events, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate } = props;
+  const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate } = props;
   const [draft, setDraft] = useState({ title: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[] });
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<FirestoreEventStatus | "all">("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [saving, setSaving] = useState(false);
   const [runningAction, setRunningAction] = useState<string | null>(null);
@@ -47,10 +52,23 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   const isLead = role === "lead";
   const optimisticOrder = optimisticState?.order ?? null;
   const timeline = useMemo(() => orderEvents(events, optimisticOrder), [events, optimisticOrder]);
+  const visibleTimeline = useMemo(
+    () => timeline.filter((event) => {
+      const eventDate = event.startAt.slice(0, 10);
+      if (statusFilter !== "all" && event.status !== statusFilter) return false;
+      if (fromDate && eventDate < fromDate) return false;
+      if (toDate && eventDate > toDate) return false;
+      return true;
+    }),
+    [fromDate, statusFilter, timeline, toDate],
+  );
   const reorderPending = optimisticOrder !== null;
   const selectedEvent = useMemo(
-    () => timeline.find((item) => item.id === selectedEventId) ?? null,
-    [selectedEventId, timeline],
+    () => timeline.find((item) => item.id === selectedEventId)
+      ?? timeline.find((item) => item.id === initialSelectedEventId)
+      ?? timeline[0]
+      ?? null,
+    [initialSelectedEventId, selectedEventId, timeline],
   );
 
   useEffect(() => {
@@ -106,21 +124,32 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   return <section className={styles.workbench} data-reduced-motion={reducedMotion} data-testid="events-workbench">
     <header className={styles.header}>
       <div><p className={styles.kicker}>Trip timeline · realtime workspace</p><h2>Lịch trình</h2><p className={styles.intro}>Tạo một nhịp đi chung; đề xuất của member sẽ chờ Lead duyệt.</p></div>
-      {isLead ? <button className={styles.syncButton} disabled={runningAction === "sync"} onClick={() => void runAction("sync", "Đã yêu cầu đồng bộ trạng thái.", onSync)} type="button">Đồng bộ trạng thái</button> : null}
+      <div className={styles.headerActions}>
+        {isLead ? <button className={styles.syncButton} disabled={runningAction === "sync"} onClick={() => void runAction("sync", "Đã yêu cầu đồng bộ trạng thái.", onSync)} type="button">Đồng bộ trạng thái</button> : null}
+        <button aria-expanded={composerOpen} className={styles.addButton} onClick={() => setComposerOpen((open) => !open)} type="button">Thêm hoạt động</button>
+      </div>
     </header>
     {feedback ? <p className={`${styles.feedback} ${styles[feedback.kind]}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.message}</p> : null}
-    <form className={styles.composer} onSubmit={(event) => void submit(event)}>
-      <div className={styles.composerHeader}><span>01</span><div><strong>Thêm một điểm chạm</strong><small>{isLead ? "Tạo mới sẽ được duyệt ngay" : "Tạo mới sẽ vào hàng chờ duyệt"}</small></div></div>
+    {composerOpen ? <form aria-label="Tạo hoạt động mới" className={styles.composer} onSubmit={(event) => void submit(event)}>
+      <div className={styles.composerHeader}><span>+</span><div><strong>Thêm một điểm chạm</strong><small>{isLead ? "Tạo mới sẽ được duyệt ngay" : "Tạo mới sẽ vào hàng chờ duyệt"}</small></div><button aria-label="Đóng trình tạo hoạt động" disabled={saving} onClick={() => setComposerOpen(false)} type="button">×</button></div>
       <label>Tên hoạt động<input disabled={saving} maxLength={120} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Ví dụ: Ngắm bình minh" required value={draft.title} /></label>
       <label>Loại<select disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value as FirestoreEventCategory }))} value={draft.category}>{CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}</select></label>
       <label>Bắt đầu<input disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, startAt: event.target.value }))} required type="datetime-local" value={draft.startAt} /></label>
       <label>Kết thúc<input disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, endAt: event.target.value }))} required type="datetime-local" value={draft.endAt} /></label>
       <fieldset className={styles.participants} disabled={saving}><legend>Ai tham gia?</legend>{members.map((member) => <label key={member.uid}><input checked={draft.participantIds.includes(member.uid)} disabled={saving} onChange={() => toggleParticipant(member.uid)} type="checkbox" />{member.displayName}</label>)}</fieldset>
       <button className={styles.createButton} disabled={saving} type="submit">{saving ? "Đang lưu hoạt động…" : "Thêm vào lịch trình"}</button>
-    </form>
+    </form> : null}
     <div className={styles.timelineWorkspace}>
-    <div className={styles.timelineHeader}><span>02</span><strong>Timeline có thể hành động</strong><small>{timeline.length} hoạt động</small></div>
-    {timeline.length === 0 ? <div className={styles.empty}><strong>Timeline còn trống</strong><p>Chưa có hoạt động nào trong hành trình này.</p></div> : <ol aria-label="Timeline hoạt động" className={styles.timeline}>{timeline.map((item, index) => {
+    <div className={styles.timelineToolbar}>
+      <div className={styles.timelineHeader}><span>01</span><strong>Timeline có thể hành động</strong><small>{visibleTimeline.length}/{timeline.length} hoạt động</small></div>
+      <div className={styles.filters}>
+        <label>Trạng thái<select aria-label="Lọc trạng thái" onChange={(event) => setStatusFilter(event.target.value as FirestoreEventStatus | "all")} value={statusFilter}><option value="all">Tất cả</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label>Từ ngày<input aria-label="Từ ngày" onChange={(event) => setFromDate(event.target.value)} type="date" value={fromDate} /></label>
+        <label>Đến ngày<input aria-label="Đến ngày" onChange={(event) => setToDate(event.target.value)} type="date" value={toDate} /></label>
+      </div>
+    </div>
+    {timeline.length === 0 ? <div className={styles.empty}><strong>Timeline còn trống</strong><p>Chưa có hoạt động nào trong hành trình này.</p></div> : visibleTimeline.length === 0 ? <div className={styles.empty}><strong>Không có hoạt động phù hợp</strong><p>Hãy đổi trạng thái hoặc khoảng ngày đang lọc.</p></div> : <ol aria-label="Timeline hoạt động" className={styles.timeline}>{visibleTimeline.map((item) => {
+      const index = timeline.findIndex((event) => event.id === item.id);
       const canDelete = isLead || (item.createdBy === currentUserId && item.status === "pending");
       const moving = movingId === item.id;
       return <li className={styles.timelineItem} data-event-id={item.id} data-motion={moving ? "reordering" : "idle"} data-testid={`event-${item.id}`} key={item.id}>
@@ -196,6 +225,12 @@ function EventDetailPanel({ canEdit, event, members, onUpdate }: EventDetailPane
     <div className={styles.detailHeader}>
       <div><p className={styles.detailKicker}>Chi tiết hoạt động</p><h3>{event.title}</h3></div>
       <span className={`${styles.status} ${styles[`status_${event.status}`]}`}>{STATUS_LABELS[event.status]}</span>
+    </div>
+    <div aria-label="Chi tiết hoạt động" className={styles.detailTabs} role="tablist">
+      <button aria-selected="true" role="tab" type="button">Chi tiết</button>
+      <button aria-selected="false" disabled role="tab" type="button">Ghi chú</button>
+      <button aria-selected="false" disabled role="tab" type="button">Tệp</button>
+      <button aria-selected="false" disabled role="tab" type="button">Mục con</button>
     </div>
     <dl className={styles.detailList}>
       <div><dt>Loại</dt><dd>{CATEGORY_LABELS[event.category]}</dd></div>

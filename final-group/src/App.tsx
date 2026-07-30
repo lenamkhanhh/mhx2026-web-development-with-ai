@@ -61,6 +61,7 @@ export function App({ backend, demoMode = false }: AppProps) {
   const [tripId, setTripId] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<TripSnapshot | null>(null);
   const [activeView, setActiveView] = useState<WorkbenchView>("overview");
+  const [focusedEventId, setFocusedEventId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -365,17 +366,22 @@ export function App({ backend, demoMode = false }: AppProps) {
   }
 
   const pendingCount = selectedSnapshot.events.filter((event) => event.status === "pending").length;
+  const openSchedule = (eventId?: string) => {
+    setFocusedEventId(eventId ?? null);
+    setActiveView("schedule");
+  };
   const currentScreen = activeView === "overview" ? (
     <WorkbenchOverview
       currentUserId={user.uid}
       onOpenExpenses={() => setActiveView("expenses")}
-      onOpenSchedule={() => setActiveView("schedule")}
+      onOpenSchedule={openSchedule}
       snapshot={selectedSnapshot}
     />
   ) : activeView === "schedule" ? (
     <EventsWorkbench
       currentUserId={user.uid}
       events={selectedSnapshot.events}
+      initialSelectedEventId={focusedEventId ?? undefined}
       members={selectedSnapshot.members}
       onApprove={approveEvent}
       onCancel={cancelEvent}

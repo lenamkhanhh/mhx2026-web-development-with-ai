@@ -100,6 +100,7 @@ describe("TripFlow App composition", () => {
 
     await render(<App backend={backend} />);
     await openWorkbenchView("schedule");
+    await actor.click(screen.getByRole("button", { name: "Thêm hoạt động" }));
 
     await actor.type(screen.getByLabelText("Tên hoạt động"), "Chợ đêm");
     const dateInputs = container?.querySelectorAll<HTMLInputElement>(
