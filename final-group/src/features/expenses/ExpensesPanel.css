@@ -62,7 +62,7 @@
 .expense-workbench__metrics small {
   color: #74808d;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: .05em;
   text-transform: uppercase;
 }
@@ -259,15 +259,26 @@
 }
 
 .expense-workbench .balance-row {
+  grid-template-columns: minmax(72px, 1.35fr) repeat(3, minmax(0, 1fr));
+  gap: 6px;
   min-height: 36px;
+  padding: 8px 0;
   border-bottom: 1px solid #edf0f3;
   font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.expense-workbench .balance-row > * {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .expense-workbench .balance-row.table-head {
   color: #667380;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -284,13 +295,13 @@
 .expense-workbench .expense-item h4 {
   margin: 0;
   color: #2b353f;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .expense-workbench .expense-item p {
   margin: 3px 0 0;
   color: #7b8692;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .expense-workbench__item:hover {
@@ -305,7 +316,7 @@
   border: 1px solid;
   border-radius: 4px;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -423,7 +434,7 @@
   padding: 8px 9px;
   border-bottom: 1px solid #edf0f3;
   color: #46515d;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .expense-workbench__table-row:last-child {

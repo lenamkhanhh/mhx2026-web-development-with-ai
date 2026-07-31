@@ -146,7 +146,14 @@ export function WorkbenchShell({
       <div className="workbench-shell">
         <aside className="workbench-sidebar">
           <div className="workbench-brand">
-            <span aria-hidden="true" className="workbench-brand-mark">↗</span>
+            <span aria-label="TripFlow route mark" className="workbench-brand-mark" role="img">
+              <svg aria-hidden="true" fill="none" viewBox="0 0 32 32">
+                <path d="M8 23c4.3 0 2.8-13 9-13 3.2 0 2.4 7 7 7" stroke="currentColor" strokeLinecap="round" strokeWidth="2.4" />
+                <circle cx="8" cy="23" fill="currentColor" r="2.2" />
+                <circle cx="17" cy="10" fill="#efffc8" r="2.2" />
+                <circle cx="24" cy="17" fill="currentColor" r="2.2" />
+              </svg>
+            </span>
             <span>
               <strong>TripFlow</strong>
               <small>Workbench</small>

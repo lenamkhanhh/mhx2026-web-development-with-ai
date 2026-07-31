@@ -4,7 +4,6 @@ import {
   Bed,
   CalendarBlank,
   Check,
-  CurrencyCircleDollar,
   DotsThree,
   ForkKnife,
   ArrowCounterClockwise,
@@ -49,6 +48,18 @@ const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   food: "Food & drinks",
   activities: "Activities",
   other: "Other",
+};
+
+const EXPENSE_CATEGORY_META: Record<
+  ExpenseCategory | "uncategorized",
+  { icon: ComponentType<{ "aria-hidden"?: boolean; size?: number }>; label: string }
+> = {
+  transport: { icon: AirplaneTilt, label: "Transport" },
+  accommodation: { icon: Bed, label: "Accommodation" },
+  food: { icon: ForkKnife, label: "Food & drinks" },
+  activities: { icon: MapPinLine, label: "Activities" },
+  other: { icon: SquaresFour, label: "Other" },
+  uncategorized: { icon: SquaresFour, label: "Uncategorized" },
 };
 
 const ACTIVITY_META = {
@@ -291,10 +302,17 @@ export function WorkbenchOverview({
           {recentExpenses.length ? (
             <ul className="workbench-context-list expenses">
               {recentExpenses.map((expense) => (
-                <li key={expense.id}>
-                  <span className="workbench-context-icon expense">
-                    <CurrencyCircleDollar aria-hidden="true" size={15} />
-                  </span>
+                <li data-expense-category={expense.category ?? "uncategorized"} data-testid={`recent-expense-${expense.id}`} key={expense.id}>
+                  {(() => {
+                    const category = expense.category ?? "uncategorized";
+                    const meta = EXPENSE_CATEGORY_META[category];
+                    const Icon = meta.icon;
+                    return (
+                      <span aria-label={meta.label} className={`workbench-context-icon expense expense-${category}`} role="img">
+                        <Icon aria-hidden={true} size={15} />
+                      </span>
+                    );
+                  })()}
                   <span>
                     <strong>{expense.title}</strong>
                     <small>{formatExpenseMeta(expense.createdAt!, memberById.get(expense.paidBy)?.displayName ?? "Member")}</small>

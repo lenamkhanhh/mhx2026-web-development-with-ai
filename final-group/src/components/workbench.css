@@ -59,9 +59,11 @@
   border-radius: 6px;
   color: var(--wb-lime);
   background: #0d1216;
-  font-size: 24px;
-  font-weight: 900;
-  transform: rotate(-18deg);
+}
+
+.workbench-brand-mark svg {
+  width: 25px;
+  height: 25px;
 }
 
 .workbench-brand strong,
@@ -475,10 +477,10 @@
   margin: 0;
   color: #111419;
   font-family: "Barlow Condensed", "Arial Narrow", "Inter", sans-serif;
-  font-size: clamp(27px, 2vw, 32px);
+  font-size: clamp(28px, 2vw, 33px);
   font-weight: 800;
-  letter-spacing: -.035em;
-  line-height: .95;
+  letter-spacing: -.025em;
+  line-height: 1;
 }
 
 .workbench-page-meta {
@@ -515,7 +517,7 @@
   border-radius: 5px;
   color: #27313d;
   background: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 750;
 }
 
@@ -888,13 +890,13 @@
   place-items: center;
   color: #075bc4;
   background: #eaf3ff;
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .workbench-participants small {
   margin-left: 5px;
   color: #687481;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .workbench-event-status {
@@ -905,7 +907,7 @@
   border: 1px solid;
   border-radius: 4px;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1110,8 +1112,34 @@
 }
 
 .workbench-context-icon.expense {
-  color: #14713b;
-  background: #e4f5e9;
+  color: #4c5966;
+  background: #eef1f4;
+}
+
+.workbench-context-icon.expense-transport {
+  color: #0866ed;
+  background: #e7f0ff;
+}
+
+.workbench-context-icon.expense-accommodation {
+  color: #6e43bb;
+  background: #f1eaff;
+}
+
+.workbench-context-icon.expense-food {
+  color: #a75600;
+  background: #fff0de;
+}
+
+.workbench-context-icon.expense-activities {
+  color: #547000;
+  background: #efffc8;
+}
+
+.workbench-context-icon.expense-other,
+.workbench-context-icon.expense-uncategorized {
+  color: #51606d;
+  background: #eef1f4;
 }
 
 .workbench-context-list li > span:nth-child(2) {
@@ -1122,7 +1150,7 @@
 .workbench-context-list strong {
   overflow: hidden;
   color: #303944;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1191,7 +1219,7 @@
   margin: 0;
   padding: 0 13px 11px;
   color: #4c5763;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .workbench-expense-breakdown div {
@@ -1380,8 +1408,19 @@
     padding: 18px 12px 0;
   }
 
+  .workbench-title-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
   .workbench-title-row h1 {
-    font-size: 28px;
+    font-size: 26px;
+    line-height: 1.02;
+  }
+
+  .workbench-title-actions {
+    justify-content: flex-start;
   }
 
   .workbench-role-label,
