@@ -185,6 +185,31 @@ describe("WorkbenchOverview", () => {
     expect(within(table).getByText("Activity")).toBeTruthy();
   });
 
+  it("keeps the overview activity rail as a compact five-entry audit preview", () => {
+    const activities = Array.from({ length: 6 }, (_, index) => ({
+      id: `activity-${index}`,
+      kind: "note_added" as const,
+      eventId: "event-1",
+      actorId: "user-1",
+      label: `Activity ${index}`,
+      createdAt: `2026-08-01T0${index}:10:00.000Z`,
+    }));
+    render(
+      <WorkbenchOverview
+        currentUserId="user-1"
+        onOpenExpenses={vi.fn()}
+        onOpenSchedule={vi.fn()}
+        snapshot={{ ...snapshot, activity: activities }}
+      />,
+    );
+
+    const context = screen.getByRole("complementary", { name: "Trip context" });
+    const activityList = context.querySelector(".workbench-context-list:not(.expenses)");
+    expect(activityList?.querySelectorAll(":scope > li")).toHaveLength(5);
+    expect(within(context).getByText("Activity 0")).toBeTruthy();
+    expect(within(context).queryByText("Activity 5")).toBeNull();
+  });
+
   it("links the overview footer to the real reorder workflow in Timeline", async () => {
     const user = userEvent.setup();
     const onOpenSchedule = vi.fn();
