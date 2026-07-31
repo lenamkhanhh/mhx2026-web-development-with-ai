@@ -1510,3 +1510,22 @@
 .workbench-shell :is(span, small, p, label, button, input, select, code, dt, dd, th, td) {
   font-size: max(10px, 1em);
 }
+
+/* Keep metadata quiet so the workbench hierarchy is carried by headings and values. */
+.workbench-shell .workbench-page-meta {
+  gap: 14px;
+  color: #66727f;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.workbench-shell .workbench-event-cell small,
+.workbench-shell .workbench-context-list small,
+.workbench-shell .workbench-date-cell,
+.workbench-shell .workbench-location-cell {
+  font-weight: 500;
+}
+
+.workbench-shell .workbench-status-filter {
+  font-weight: 600;
+}

@@ -176,7 +176,7 @@ export function MembersPanel({
               <span>{lastActivity ? formatActivityTime(lastActivity.createdAt) : "No persisted activity"}</span>
             </div>
             <div className="members-panel__actions">
-              {mayEdit ? <button disabled={memberFeedback === "saving" || draft.trim() === member.responsibility} onClick={() => void updateResponsibility(member)} type="button">Save responsibility</button> : <span className="members-panel__locked">Only this member can edit it</span>}
+              {mayEdit ? <button disabled={memberFeedback === "saving" || draft.trim() === member.responsibility} onClick={() => void updateResponsibility(member)} type="button">Save responsibility</button> : <span aria-label="Only this member can edit it" className="members-panel__locked" title="Only this member can edit it">Locked</span>}
               {mayRemove ? <button aria-label={`Remove ${member.displayName} from this trip`} className="members-panel__remove" disabled={memberFeedback === "saving"} onClick={() => setPendingRemoval(member)} type="button">Remove from trip</button> : null}
             </div>
             {memberFeedback !== "idle" ? <p className="members-panel__feedback" data-state={memberFeedback} data-testid={`responsibility-status-${member.uid}`} role="status">{memberFeedback === "saving" ? "Saving responsibility…" : memberFeedback === "saved" ? "Responsibility saved" : "Unable to save responsibility. Try again."}</p> : null}
@@ -251,6 +251,13 @@ export function MembersPanel({
       <aside aria-label="Join information" className="members-panel__join-card">
         <span>Trip ID</span><strong>{trip.id}</strong>
         <span>Join code</span><code>{trip.joinCode}</code>
+        <label className="members-panel__default-role">
+          <span>Default role</span>
+          <select aria-label="Default member role" disabled value="member" onChange={() => undefined}>
+            <option value="member">Member</option>
+          </select>
+          <small>Lead controls this setting.</small>
+        </label>
         <p className="members-panel__verification" data-state="required" data-testid="join-code-verification">Server verification required. This code does not prove membership by itself.</p>
         <button aria-label="Copy join code" className="members-panel__copy" onClick={() => void copyJoinCode()} type="button">Copy code</button>
         <p data-state={displayedCopyState} data-testid="join-code-status" role="status">

@@ -34,7 +34,7 @@ describe("ExpensesPanel", () => {
     expect(screen.getByLabelText("Balance table")).toBeTruthy();
     expect(screen.getByText("+100.000 ₫")).toBeTruthy();
     expect(screen.getByText("−100.000 ₫")).toBeTruthy();
-    expect(screen.getByText("Xe di chuyển")).toBeTruthy();
+    expect(screen.getAllByText("Xe di chuyển").length).toBeGreaterThanOrEqual(1);
     const table = screen.getByRole("table", { name: "Expense table" });
     expect(within(table).getByRole("columnheader", { name: "Category" })).toBeTruthy();
     expect(within(table).getByText("Transport")).toBeTruthy();
@@ -165,6 +165,8 @@ describe("ExpensesPanel", () => {
       "Minh pays Khánh",
     );
     expect(screen.getByRole("button", { name: "Export CSV" })).toBeTruthy();
+    expect(screen.getByRole("complementary", { name: "Expense summary" })).toBeTruthy();
+    expect(screen.getByRole("complementary", { name: "Recent expenses" })).toBeTruthy();
 
     await actor.selectOptions(
       screen.getByRole("combobox", { name: "Filter expense status" }),

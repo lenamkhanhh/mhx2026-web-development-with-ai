@@ -83,9 +83,9 @@ describe("EventsWorkbench", () => {
     const pendingActions = await openActions(user, "Proposal");
 
     expect(pending.getByText("In review")).toBeTruthy();
-    expect(pending.getByText(/Food & drinks ·/)).toBeTruthy();
+    expect(pending.getByText(/^Food & drinks$/)).toBeTruthy();
     expect(approved.getByText("Open")).toBeTruthy();
-    expect(approved.getByText(/Activity ·/)).toBeTruthy();
+    expect(approved.getByText(/^Activity$/)).toBeTruthy();
     expect(pendingActions.getByRole("button", { name: "Delete" })).toBeTruthy();
     expect(pendingActions.queryByRole("button", { name: "Approve" })).toBeNull();
     expect(pendingActions.queryByRole("button", { name: "Cancel" })).toBeNull();
@@ -108,7 +108,7 @@ describe("EventsWorkbench", () => {
     for (const item of cases) {
       const row = within(screen.getByTestId(`event-${item.id}`));
       expect(row.getByText(item.statusLabel)).toBeTruthy();
-      expect(row.getByText(new RegExp(`^${item.categoryLabel} ·`))).toBeTruthy();
+      expect(row.getByText(new RegExp(`^${item.categoryLabel}$`))).toBeTruthy();
       const actions = await openActions(user, item.title);
       expect(actions.getByRole("button", { name: "Delete" })).toBeTruthy();
     }

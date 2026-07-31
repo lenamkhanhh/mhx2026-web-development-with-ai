@@ -229,6 +229,8 @@
   grid-template-areas:
     "register balances"
     "register settlements"
+    "register summary"
+    "register recent"
     "register detail";
   grid-template-columns: minmax(0, 1fr) minmax(300px, 320px) !important;
   align-content: start;
@@ -537,6 +539,78 @@
   gap: 9px;
 }
 
+.expense-workbench__summary-rail,
+.expense-workbench__recent-rail {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.expense-workbench__summary-rail {
+  grid-area: summary;
+}
+
+.expense-workbench__recent-rail {
+  grid-area: recent;
+}
+
+.expense-workbench__summary-list,
+.expense-workbench__recent-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.expense-workbench__summary-list li,
+.expense-workbench__recent-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf0f3;
+  color: #485461;
+  font-size: 10px;
+}
+
+.expense-workbench__summary-list li:last-child,
+.expense-workbench__recent-list li:last-child {
+  border-bottom: 0;
+}
+
+.expense-workbench__summary-list strong,
+.expense-workbench__recent-list b {
+  color: #27333f;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.expense-workbench__recent-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.expense-workbench__recent-copy strong {
+  overflow: hidden;
+  color: #2e3945;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-workbench__recent-copy small {
+  overflow: hidden;
+  color: #7a8590;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .expense-workbench__settlement-rail ol {
   display: grid;
   gap: 0;
@@ -621,7 +695,9 @@
 
   .expense-workbench__ledger > .panel-card:first-child,
   .expense-workbench__ledger > .panel-card:nth-child(2),
-  .expense-workbench__settlement-rail {
+  .expense-workbench__settlement-rail,
+  .expense-workbench__summary-rail,
+  .expense-workbench__recent-rail {
     grid-area: auto;
   }
 

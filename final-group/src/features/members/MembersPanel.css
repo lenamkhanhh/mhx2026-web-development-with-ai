@@ -138,6 +138,34 @@
   text-align: center;
 }
 
+.members-panel__default-role {
+  display: grid;
+  gap: 4px;
+  color: #647181;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.members-panel__default-role select {
+  min-height: 29px;
+  width: 100%;
+  margin: 0;
+  color: #647181;
+  background: #f7f9fb;
+}
+
+.members-panel__default-role small {
+  color: #89939e;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .members-panel__copy,
 .members-panel__actions button {
   min-height: 28px;
@@ -374,8 +402,20 @@
 }
 
 .members-panel__locked {
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  padding: 0 7px;
+  border: 1px solid #dbe1e8;
+  border-radius: 4px;
   color: #7b8692;
+  background: #f8fafb;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 9px;
+  font-weight: 650;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .members-panel__feedback {

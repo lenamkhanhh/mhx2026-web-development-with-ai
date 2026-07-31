@@ -89,6 +89,23 @@ export function ExpensesPanel({
     .reduce((sum, expense) => sum + expense.amount, 0);
   const currentBalance = ledger.balances.find((member) => member.memberId === currentUserId)?.balance ?? 0;
   const settlementSuggestions = calculateSettlementSuggestions(ledger.balances);
+  const categoryTotals = (Object.keys(EXPENSE_CATEGORY_META) as Array<ExpenseCategory | "uncategorized">)
+    .filter((value) => value !== "uncategorized")
+    .map((value) => ({
+      category: value,
+      ...EXPENSE_CATEGORY_META[value],
+      amount: ledger.includedExpenses
+        .filter((expense) => (expense.category ?? "uncategorized") === value)
+        .reduce((sum, expense) => sum + expense.amount, 0),
+    }))
+    .filter((entry) => entry.amount > 0);
+  const uncategorizedTotal = ledger.includedExpenses
+    .filter((expense) => !expense.category)
+    .reduce((sum, expense) => sum + expense.amount, 0);
+  const summaryCategories = uncategorizedTotal > 0
+    ? [...categoryTotals, { category: "uncategorized" as const, ...EXPENSE_CATEGORY_META.uncategorized, amount: uncategorizedTotal }]
+    : categoryTotals;
+  const recentExpenses = [...ledger.includedExpenses].reverse().slice(0, 3);
 
   async function submitExpense(event: FormEvent<HTMLFormElement>) {
 
@@ -492,6 +509,55 @@ export function ExpensesPanel({
           ) : (
             <p>The current ledger is balanced.</p>
           )}
+        </aside>
+        <aside aria-label="Expense summary" className="panel-card expense-workbench__summary-rail">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Expense summary</span>
+              <h3>By category</h3>
+            </div>
+          </div>
+          {summaryCategories.length > 0 ? (
+            <ul className="expense-workbench__summary-list">
+              {summaryCategories.map(({ category, icon: Icon, label, amount }) => (
+                <li key={category}>
+                  <span className={`expense-workbench__category-icon expense-workbench__category-icon--${category}`} aria-hidden="true">
+                    <Icon size={14} />
+                  </span>
+                  <span>{label}</span>
+                  <strong>{formatVnd(amount)}</strong>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="expense-workbench__rail-note">No categorized expenses yet.</p>}
+        </aside>
+        <aside aria-label="Recent expenses" className="panel-card expense-workbench__recent-rail">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Recent expenses</span>
+              <h3>Latest activity</h3>
+            </div>
+          </div>
+          {recentExpenses.length > 0 ? (
+            <ul className="expense-workbench__recent-list">
+              {recentExpenses.map((expense) => {
+                const category = expense.category ?? "uncategorized";
+                const Icon = EXPENSE_CATEGORY_META[category].icon;
+                return (
+                  <li key={expense.id}>
+                    <span className={`expense-workbench__category-icon expense-workbench__category-icon--${category}`} aria-hidden="true">
+                      <Icon size={14} />
+                    </span>
+                    <span className="expense-workbench__recent-copy">
+                      <strong>{expense.title}</strong>
+                      <small>{expense.status === "settled" ? "Settled" : "Pending"} · {members.find((member) => member.uid === expense.paidBy)?.displayName ?? expense.paidBy}</small>
+                    </span>
+                    <b>{formatVnd(expense.amount)}</b>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : <p className="expense-workbench__rail-note">No expenses recorded yet.</p>}
         </aside>
         {selectedExpense ? <ExpenseDetailPanel
           canManage={canSettle || Boolean(currentUserId && selectedExpense.createdBy === currentUserId)}
