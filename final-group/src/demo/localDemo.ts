@@ -598,7 +598,14 @@ function createInitialSnapshots(): TripSnapshot[] {
     ...snapshot,
     notes: index === 0 ? [{ id: "demo-note-1", eventId: "bkk-01", body: "Meet beside exit 4 before collecting bags.", createdBy: "demo-lead", createdAt: demoRecordTimestamp("bkk-01") }] : [],
     subitems: index === 0 ? [{ id: "demo-subitem-1", eventId: "bkk-01", title: "Confirm airport pickup contact", completed: true, createdBy: "demo-tuan", createdAt: demoRecordTimestamp("bkk-01"), updatedAt: demoRecordTimestamp("bkk-01") }] : [],
-    activity: index === 0 ? [{ id: "demo-activity-1", kind: "note_added", eventId: "bkk-01", actorId: "demo-lead", label: "Added a note", createdAt: demoRecordTimestamp("bkk-01") }] : [],
+    activity: index === 0 ? [
+      { id: "demo-activity-1", kind: "note_added", eventId: "bkk-01", actorId: "demo-lead", label: "Added a note", createdAt: demoRecordTimestamp("bkk-01") },
+      { id: "demo-activity-2", kind: "subitem_completed", eventId: "bkk-02", actorId: "demo-ha", label: "Check-in hostel Ari marked DONE", createdAt: demoRecordTimestamp("bkk-02") },
+      { id: "demo-activity-3", kind: "subitem_added", eventId: "bkk-06", actorId: "demo-tuan", label: "Added an airport transfer follow-up", createdAt: demoRecordTimestamp("bkk-06") },
+      { id: "demo-activity-4", kind: "subitem_completed", eventId: "bkk-07", actorId: "demo-linh", label: "Street food Yaowarat checklist completed", createdAt: demoRecordTimestamp("bkk-07") },
+      { id: "demo-activity-5", kind: "note_added", eventId: "bkk-08", actorId: "demo-ha", label: "Added a note to the MOCA proposal", createdAt: demoRecordTimestamp("bkk-08") },
+      { id: "demo-activity-6", kind: "note_added", eventId: "bkk-10", actorId: "demo-lead", label: "Added departure coordination notes", createdAt: demoRecordTimestamp("bkk-10") },
+    ] : [],
   }));
 }
 

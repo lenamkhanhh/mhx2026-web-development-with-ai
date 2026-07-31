@@ -144,7 +144,7 @@ export function MembersPanel({
       {state === "ready" && members.length === 0 ? <div className="members-panel__state" data-state="empty" data-testid="members-state">No other members are in this trip yet.</div> : null}
 
       {state === "ready" && members.length > 0 ? <div className="members-panel__table-wrap" role="region" aria-label="Member list">
-        <div className="members-panel__table-head" aria-hidden="true"><span>Member</span><span>Responsibility</span><span>Actions</span></div>
+        <div className="members-panel__table-head" aria-hidden="true"><span>Member</span><span>Role</span><span>Responsibility</span><span>Actions</span></div>
         <ul aria-label="Member list" className="members-panel__list">
         {visibleMembers.map((member) => {
           const mayEdit = canEditResponsibility(currentUserId, member);
@@ -155,10 +155,10 @@ export function MembersPanel({
             <div className="members-panel__identity">
               <span aria-hidden="true" className="members-panel__avatar">{member.displayName.slice(0, 1).toUpperCase()}</span>
               <div><h3>{member.displayName}</h3><p>{member.email}</p></div>
-              <span className={`members-panel__role members-panel__role--${member.role}`}>{member.role === "lead" ? "Lead" : "Member"}</span>
             </div>
+            <span className={`members-panel__role members-panel__role--${member.role}`}>{member.role === "lead" ? "Lead" : "Member"}</span>
             <label className="members-panel__responsibility">Responsibility
-              <input aria-label={`${member.displayName}'s responsibility`} disabled={!mayEdit || memberFeedback === "saving"} onChange={(event) => setDrafts((value) => ({ ...value, [member.uid]: event.target.value }))} value={draft} />
+              {mayEdit ? <input aria-label={`${member.displayName}'s responsibility`} disabled={memberFeedback === "saving"} onChange={(event) => setDrafts((value) => ({ ...value, [member.uid]: event.target.value }))} value={draft} /> : <strong>{member.responsibility || "Not set"}</strong>}
             </label>
             <div className="members-panel__actions">
               {mayEdit ? <button disabled={memberFeedback === "saving" || draft.trim() === member.responsibility} onClick={() => void updateResponsibility(member)} type="button">Save responsibility</button> : <span className="members-panel__locked">Only this member can edit it</span>}
