@@ -24,6 +24,7 @@ describe("ExpensesPanel", () => {
             splitAmong: ["lead-1", "member-1"],
             status: "pending",
             createdBy: "lead-1",
+            category: "transport",
           },
         ]}
       />,
@@ -34,6 +35,10 @@ describe("ExpensesPanel", () => {
     expect(screen.getByText("+100.000 ₫")).toBeTruthy();
     expect(screen.getByText("−100.000 ₫")).toBeTruthy();
     expect(screen.getByText("Xe di chuyển")).toBeTruthy();
+    const table = screen.getByRole("table", { name: "Expense table" });
+    expect(within(table).getByRole("columnheader", { name: "Category" })).toBeTruthy();
+    expect(within(table).getByText("Transport")).toBeTruthy();
+    expect(within(table).getByTestId("expense-category-expense-1").getAttribute("data-expense-category")).toBe("transport");
   });
 
   it("creates an expense and exposes lead-only settlement", async () => {
