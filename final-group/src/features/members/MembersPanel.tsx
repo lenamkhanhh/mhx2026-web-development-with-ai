@@ -1,7 +1,9 @@
+import { CheckCircle, NotePencil, PlusCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import type {
   ExpenseRecord,
   MemberRecord,
+  TripActivity,
   TripRecord,
 } from "../../firebase/contracts";
 import { formatVnd } from "../expenses/expense-calculations";
@@ -14,6 +16,7 @@ export interface MembersPanelProps {
   trip: Pick<TripRecord, "id" | "joinCode">;
   members: MemberRecord[];
   expenses?: ExpenseRecord[];
+  activity?: TripActivity[];
   currentUserId: string;
   state?: MembersPanelState;
   errorMessage?: string;
@@ -27,6 +30,7 @@ export function MembersPanel({
   trip,
   members,
   expenses = [],
+  activity = [],
   currentUserId,
   state = "ready",
   errorMessage,
@@ -55,6 +59,12 @@ export function MembersPanel({
     return matchesRole && matchesQuery;
   });
   const recentExpenses = expenses.slice(-4).reverse();
+  const orderedActivity = activity.slice().sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
+  const recentActivity = orderedActivity.slice(0, 5);
+  const latestActivityByMember = new Map<string, TripActivity>();
+  orderedActivity.forEach((item) => {
+    if (!latestActivityByMember.has(item.actorId)) latestActivityByMember.set(item.actorId, item);
+  });
 
   const updateResponsibility = async (member: MemberRecord) => {
     if (!canEditResponsibility(currentUserId, member)) return;
@@ -144,13 +154,14 @@ export function MembersPanel({
       {state === "ready" && members.length === 0 ? <div className="members-panel__state" data-state="empty" data-testid="members-state">No other members are in this trip yet.</div> : null}
 
       {state === "ready" && members.length > 0 ? <div className="members-panel__table-wrap" role="region" aria-label="Member list">
-        <div className="members-panel__table-head" aria-hidden="true"><span>Member</span><span>Role</span><span>Responsibility</span><span>Actions</span></div>
+        <div className="members-panel__table-head" aria-hidden="true"><span>Member</span><span>Role</span><span>Responsibility</span><span>Last activity</span><span>Actions</span></div>
         <ul aria-label="Member list" className="members-panel__list">
         {visibleMembers.map((member) => {
           const mayEdit = canEditResponsibility(currentUserId, member);
           const mayRemove = canRemoveMember(currentUserId, currentMember?.role, member);
           const draft = drafts[member.uid] ?? member.responsibility;
           const memberFeedback = feedback[member.uid] ?? "idle";
+          const lastActivity = latestActivityByMember.get(member.uid);
           return <li key={member.uid} className="members-panel__card">
             <div className="members-panel__identity">
               <span aria-hidden="true" className="members-panel__avatar">{member.displayName.slice(0, 1).toUpperCase()}</span>
@@ -160,6 +171,10 @@ export function MembersPanel({
             <label className="members-panel__responsibility">Responsibility
               {mayEdit ? <input aria-label={`${member.displayName}'s responsibility`} disabled={memberFeedback === "saving"} onChange={(event) => setDrafts((value) => ({ ...value, [member.uid]: event.target.value }))} value={draft} /> : <strong>{member.responsibility || "Not set"}</strong>}
             </label>
+            <div className={`members-panel__activity-state ${lastActivity ? "members-panel__activity-state--recorded" : ""}`}>
+              <strong>{lastActivity ? "Recorded" : "No record"}</strong>
+              <span>{lastActivity ? formatActivityTime(lastActivity.createdAt) : "No persisted activity"}</span>
+            </div>
             <div className="members-panel__actions">
               {mayEdit ? <button disabled={memberFeedback === "saving" || draft.trim() === member.responsibility} onClick={() => void updateResponsibility(member)} type="button">Save responsibility</button> : <span className="members-panel__locked">Only this member can edit it</span>}
               {mayRemove ? <button aria-label={`Remove ${member.displayName} from this trip`} className="members-panel__remove" disabled={memberFeedback === "saving"} onClick={() => setPendingRemoval(member)} type="button">Remove from trip</button> : null}
@@ -189,6 +204,23 @@ export function MembersPanel({
           <div><dt>Total members</dt><dd>{members.length}</dd></div>
           <div><dt>Leads</dt><dd>{members.filter((member) => member.role === "lead").length}</dd></div>
         </dl>
+        <section aria-label="Member activity">
+          <div className="members-panel__context-heading">
+            <span>Activity feed</span>
+            <b>{recentActivity.length}</b>
+          </div>
+          {recentActivity.length > 0 ? (
+            <ul className="members-panel__activity-list">
+              {recentActivity.map((item) => {
+                const Icon = item.kind === "note_added" ? NotePencil : item.kind === "subitem_added" ? PlusCircle : CheckCircle;
+                return <li key={item.id}>
+                  <span className="members-panel__activity-icon" aria-hidden="true"><Icon size={15} /></span>
+                  <div><strong>{item.label}</strong><span>{members.find((member) => member.uid === item.actorId)?.displayName ?? "Trip member"} · {formatActivityTime(item.createdAt)}</span></div>
+                </li>;
+              })}
+            </ul>
+          ) : <p>No persisted activity to display yet.</p>}
+        </section>
         <section>
           <div className="members-panel__context-heading">
             <span>Recent expenses</span>
@@ -230,6 +262,10 @@ export function MembersPanel({
       </div>
     </section>
   );
+}
+
+function formatActivityTime(value: string): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value));
 }
 
 function PermissionMatrix() {

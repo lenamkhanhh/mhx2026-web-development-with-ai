@@ -157,6 +157,8 @@ describe("ExpensesPanel", () => {
     expect(within(metrics).getByText("Pending amount")).toBeTruthy();
     expect(within(metrics).getByText("200.000 ₫")).toBeTruthy();
     expect(within(metrics).getByText("Settled amount")).toBeTruthy();
+    expect(within(metrics).getByText("Balance")).toBeTruthy();
+    expect(within(metrics).getByText(/^\+/).className).toContain("balance-positive");
     expect(within(metrics).getByText("400.000 ₫")).toBeTruthy();
     expect(screen.getByRole("table", { name: "Expense table" })).toBeTruthy();
     expect(screen.getByRole("complementary", { name: "Settlement suggestions" }).textContent).toContain(

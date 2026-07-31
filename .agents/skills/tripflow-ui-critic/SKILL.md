@@ -91,6 +91,27 @@ an actionable finding even when the overall region layout looks correct.
   after edits, run GREEN plus a desktop and 390px capture. Do not claim visual
   parity from source inspection alone.
 
+### Full reference parity extension
+
+- Timeline parity includes day-group headings, category line icons, note
+  previews sourced from `EventNote`, and an audit-activity rail sourced from
+  `TripActivity` when those records exist. Keep the realtime detail rail and
+  pending/reorder locks intact.
+- Members parity includes identity, role, responsibility, last-recorded
+  activity, invite/join context, persisted activity, recent expenses, and the
+  permission matrix. Presence may be labelled only when a persisted presence
+  field exists; otherwise render `No record` rather than inventing online or
+  away state.
+- Expenses parity keeps `Total spent`, `Pending`, `Settled`, and the current
+  user's `Balance` comparable in the KPI row. The add-expense composer may be
+  a right-side surface, but it must keep the ledger and category selector
+  usable and must persist the selected category through the real create
+  contract.
+- When a reference-visible surface has no backing field in the current
+  Firestore contract, document the limitation and render an honest empty or
+  unavailable state; never seed production or fabricate member presence,
+  audit history, balances, or expense categories for screenshot parity.
+
 ## Change workflow
 
 When the user authorizes implementation:

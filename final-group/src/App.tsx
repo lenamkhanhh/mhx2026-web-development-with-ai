@@ -449,6 +449,7 @@ export function App({ backend, demoMode = false, onExitDemo, onOpenDemo }: AppPr
       currentUserId={user.uid}
       events={selectedSnapshot.events}
       initialSelectedEventId={focusedEventId ?? undefined}
+      activity={selectedSnapshot.activity ?? []}
       members={selectedSnapshot.members}
       onApprove={approveEvent}
       onCancel={cancelEvent}
@@ -479,6 +480,7 @@ export function App({ backend, demoMode = false, onExitDemo, onOpenDemo }: AppPr
     />
   ) : (
     <MembersPanel
+      activity={selectedSnapshot.activity ?? []}
       currentUserId={user.uid}
       expenses={selectedSnapshot.expenses}
       members={selectedSnapshot.members}

@@ -4,7 +4,7 @@ import type { ComponentProps } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { EventRecord, MemberRecord } from "../../firebase/contracts";
+import type { EventRecord, MemberRecord, TripActivity } from "../../firebase/contracts";
 import { EventsWorkbench } from "./EventsWorkbench";
 
 const members: MemberRecord[] = [
@@ -39,6 +39,21 @@ beforeEach(() => vi.stubGlobal("matchMedia", vi.fn().mockImplementation(() => ({
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("EventsWorkbench", () => {
+  it("groups the timeline by day and previews persisted notes in each event row", () => {
+    const first = event({ id: "first", title: "Arrive", startAt: "2026-07-30T08:00:00.000Z", endAt: "2026-07-30T09:00:00.000Z" });
+    const second = event({ id: "second", title: "Dinner", startAt: "2026-07-31T18:00:00.000Z", endAt: "2026-07-31T19:00:00.000Z" });
+    renderWorkbench({ events: [first, second], notes: [{ id: "note-1", eventId: "first", body: "Meet at arrivals", createdBy: "lead-1", createdAt: "2026-07-30T07:00:00.000Z" }] });
+    expect(screen.getAllByTestId("timeline-day")).toHaveLength(2);
+    expect(screen.getByText(/Notes: Meet at arrivals/)).toBeTruthy();
+    expect(within(screen.getByTestId("event-first")).getByText("Arrive").dataset.eventCategory).toBe("food");
+  });
+
+  it("shows persisted audit activity in the selected event detail rail", () => {
+    const activity: TripActivity[] = [{ id: "activity-1", kind: "note_added", eventId: "event-1", actorId: "member-1", label: "Added a note", createdAt: "2026-07-30T10:00:00.000Z" }];
+    renderWorkbench({ events: [event({ id: "event-1" })], activity });
+    expect(screen.getByRole("region", { name: "Audit activity" })).toBeTruthy();
+    expect(screen.getByText("Added a note")).toBeTruthy();
+  });
   it("keeps lead-only mutating commands inside a compact event actions menu", async () => {
     const user = userEvent.setup();
     renderWorkbench({ events: [event({ id: "breakfast", title: "Breakfast" })] });

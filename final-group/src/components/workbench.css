@@ -1505,3 +1505,8 @@
     transition: none;
   }
 }
+
+/* The reference is dense, not microscopic: retain a readable floor for compact UI copy. */
+.workbench-shell :is(span, small, p, label, button, input, select, code, dt, dd, th, td) {
+  font-size: max(10px, 1em);
+}

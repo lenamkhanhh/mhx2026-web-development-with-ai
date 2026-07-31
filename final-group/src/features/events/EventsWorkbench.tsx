@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { AirplaneTilt, Bed, ForkKnife, MapPinLine, SquaresFour } from "@phosphor-icons/react";
+import { useEffect, useMemo, useState, type ComponentType, type FormEvent } from "react";
 import type {
   CreateEventInput,
   EventNote,
@@ -9,12 +10,20 @@ import type {
   FirestoreEventStatus,
   FirestoreMemberRole,
   MemberRecord,
+  TripActivity,
   UpdateEventInput,
 } from "../../firebase/contracts";
 import styles from "./EventsWorkbench.module.css";
 
 const CATEGORY_LABELS: Record<FirestoreEventCategory, string> = {
   transport: "Transport", stay: "Stay", food: "Food & drinks", activity: "Activity", other: "Other",
+};
+const CATEGORY_ICONS: Record<FirestoreEventCategory, ComponentType<{ "aria-hidden"?: boolean; size?: number }>> = {
+  transport: AirplaneTilt,
+  stay: Bed,
+  food: ForkKnife,
+  activity: MapPinLine,
+  other: SquaresFour,
 };
 const STATUS_LABELS: Record<FirestoreEventStatus, string> = {
   pending: "In review", approved: "Open", happening: "In progress", completed: "Done", cancelled: "Cancelled",
@@ -38,6 +47,7 @@ export interface EventsWorkbenchProps {
   onUpdate: (eventId: string, patch: UpdateEventInput) => Promise<void>;
   notes: EventNote[];
   subitems: EventSubitem[];
+  activity?: TripActivity[];
   onCreateNote: (eventId: string, body: string) => Promise<void>;
   onDeleteNote: (noteId: string) => Promise<void>;
   onCreateSubitem: (eventId: string, title: string) => Promise<void>;
@@ -46,7 +56,7 @@ export interface EventsWorkbenchProps {
 }
 
 export function EventsWorkbench(props: EventsWorkbenchProps) {
-  const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate, notes, subitems, onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem } = props;
+  const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate, notes, subitems, activity = [], onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem } = props;
   const [draft, setDraft] = useState({ title: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[], location: "", assigneeUid: "", priority: "" as FirestoreEventPriority | "" });
   const [composerOpen, setComposerOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<FirestoreEventStatus | "all">("all");
@@ -173,16 +183,21 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
         <label>To<input aria-label="To date" onChange={(event) => setToDate(event.target.value)} type="date" value={toDate} /></label>
       </div>
     </div>
-    {timeline.length === 0 ? <div className={styles.empty}><strong>Timeline is empty</strong><p>No items have been added to this trip yet.</p></div> : visibleTimeline.length === 0 ? <div className={styles.empty}><strong>No matching items</strong><p>Change the active status or date range filter.</p></div> : <ol aria-label="Trip timeline" className={styles.timeline}>{visibleTimeline.map((item) => {
+    {timeline.length === 0 ? <div className={styles.empty}><strong>Timeline is empty</strong><p>No items have been added to this trip yet.</p></div> : visibleTimeline.length === 0 ? <div className={styles.empty}><strong>No matching items</strong><p>Change the active status or date range filter.</p></div> : <ol aria-label="Trip timeline" className={styles.timeline}>{visibleTimeline.map((item, itemIndex) => {
       const index = timeline.findIndex((event) => event.id === item.id);
       const canDelete = isLead || (item.createdBy === currentUserId && item.status === "pending");
       const moving = movingId === item.id;
       const actionMenuOpen = actionMenuEventId === item.id;
       const assignee = item.assigneeUid ? members.find((member) => member.uid === item.assigneeUid) : undefined;
       const isSelected = selectedEvent?.id === item.id;
+      const previousItem = visibleTimeline[itemIndex - 1];
+      const showDayHeading = !previousItem || previousItem.startAt.slice(0, 10) !== item.startAt.slice(0, 10);
+      const itemNotes = notes.filter((note) => note.eventId === item.id);
+      const CategoryIcon = CATEGORY_ICONS[item.category];
       return <li className={`${styles.timelineItem} ${isSelected ? styles.timelineItemSelected : ""}`} data-event-id={item.id} data-motion={moving ? "reordering" : "idle"} data-selected={isSelected} data-testid={`event-${item.id}`} key={item.id}>
+        {showDayHeading ? <div className={styles.dayHeading} data-testid="timeline-day"><strong>{formatTimelineDay(item.startAt)}</strong><span>{new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(item.startAt))}</span></div> : null}
         <span aria-hidden="true" className={styles.railMarker}>{formatTimelineTime(item.startAt)}</span>
-        <article className={`${styles.eventCard} ${isSelected ? styles.eventCardSelected : ""}`}><div className={styles.eventContent}><span className={`${styles.status} ${styles[`status_${item.status}`]}`}>{STATUS_LABELS[item.status]}</span><h3>{item.title}</h3><p>{CATEGORY_LABELS[item.category]} · {formatDateTime(item.startAt)}</p><small>{formatDateTime(item.endAt)} · {item.participantIds.length} participants</small></div>
+        <article className={`${styles.eventCard} ${isSelected ? styles.eventCardSelected : ""}`}><div className={styles.eventContent}><span className={`${styles.status} ${styles[`status_${item.status}`]}`}>{STATUS_LABELS[item.status]}</span><h3 data-event-category={item.category}><CategoryIcon aria-hidden={true} size={15} />{item.title}</h3><p>{CATEGORY_LABELS[item.category]} · {formatDateTime(item.startAt)}</p><small>{formatDateTime(item.endAt)} · {item.participantIds.length} participants</small>{itemNotes[0] ? <span className={styles.notePreview}>Notes: {itemNotes[0].body}</span> : null}</div>
           <div className={styles.eventMeta}><span>Location</span><strong>{item.location || "—"}</strong></div>
           <div className={styles.eventMeta}><span>Assignee</span><strong>{assignee?.displayName ?? "Unassigned"}</strong></div>
           <div className={styles.eventMeta}><span>Participants</span><strong>{item.participantIds.length}</strong></div>
@@ -207,6 +222,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
         currentUserId={currentUserId}
         event={selectedEvent}
         members={members}
+        activity={activity.filter((item) => item.eventId === selectedEvent.id)}
         notes={notes.filter((note) => note.eventId === selectedEvent.id)}
         subitems={subitems.filter((subitem) => subitem.eventId === selectedEvent.id)}
         onCreateNote={onCreateNote}
@@ -226,6 +242,7 @@ interface EventDetailPanelProps {
   currentUserId: string;
   event: EventRecord;
   members: MemberRecord[];
+  activity: TripActivity[];
   notes: EventNote[];
   subitems: EventSubitem[];
   onCreateNote: (eventId: string, body: string) => Promise<void>;
@@ -236,7 +253,7 @@ interface EventDetailPanelProps {
   onUpdate: (eventId: string, patch: UpdateEventInput) => Promise<void>;
 }
 
-function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, event, members, notes, subitems, onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem, onUpdate }: EventDetailPanelProps) {
+function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, event, members, activity, notes, subitems, onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem, onUpdate }: EventDetailPanelProps) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(event.title);
   const [location, setLocation] = useState(event.location ?? "");
@@ -386,6 +403,7 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
       })}</ul> : <p className={styles.collaborationEmpty}>No sub-items yet. Break the work into an actionable step.</p>}
     </section> : null}
     {collaborationFeedback ? <p className={`${styles.detailFeedback} ${styles[collaborationFeedback.kind]}`} role={collaborationFeedback.kind === "error" ? "alert" : "status"}>{collaborationFeedback.message}</p> : null}
+    {activity.length ? <section aria-label="Audit activity" className={styles.auditActivity}><div><span>Audit activity</span><b>{activity.length}</b></div><ul>{activity.slice(0, 5).map((item) => <li key={item.id}><strong>{item.label}</strong><small>{members.find((member) => member.uid === item.actorId)?.displayName ?? "Trip member"} · {formatDateTime(item.createdAt)}</small></li>)}</ul></section> : null}
     <p className={styles.detailAudit}>Synced from the realtime snapshot. A change is complete only when the updated record appears in the timeline.</p>
   </aside>;
 }
@@ -436,4 +454,5 @@ function useReducedMotion(): boolean {
 }
 function formatDateTime(value: string): string { return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
 function formatTimelineTime(value: string): string { return new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value)); }
+function formatTimelineDay(value: string): string { return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric" }).format(new Date(value)); }
 function rollbackMessage(error: unknown, fallback: string): string { const detail = error instanceof Error && error.message ? error.message : fallback; return `${detail} The form or timeline was rolled back so you can try again.`; }

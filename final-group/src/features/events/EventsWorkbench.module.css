@@ -339,6 +339,71 @@
   min-width: 0;
 }
 
+.dayHeading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 12px 0 2px;
+  padding-left: 64px;
+  color: #111419;
+  border-bottom: 1px solid #d8dde4;
+}
+
+.dayHeading strong {
+  font-size: 13px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.dayHeading span {
+  color: #6c7784;
+  font-size: 11px;
+}
+
+.notePreview {
+  display: block;
+  grid-column: 2;
+  margin-top: 5px;
+  color: #657282;
+  font-size: 10px;
+}
+
+.auditActivity {
+  margin-top: 14px;
+  border-top: 1px solid #e1e6ec;
+}
+
+.auditActivity > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0 7px;
+  color: #52606e;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.auditActivity ul {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.auditActivity li {
+  display: grid;
+  gap: 3px;
+  padding: 8px 0;
+  border-top: 1px solid #eef1f4;
+}
+
+.auditActivity strong { font-size: 11px; }
+.auditActivity small { color: #718090; font-size: 10px; }
+
 .railMarker {
   position: absolute;
   top: 15px;
@@ -399,6 +464,9 @@
 }
 
 .eventContent h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   grid-column: 2;
   margin: 2px 0 1px;
   overflow: hidden;
@@ -408,6 +476,11 @@
   line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.eventContent h3 svg {
+  flex: 0 0 auto;
+  color: #516878;
 }
 
 .eventContent p,

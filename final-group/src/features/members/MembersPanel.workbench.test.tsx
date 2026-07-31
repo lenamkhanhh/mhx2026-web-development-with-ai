@@ -3,7 +3,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { MemberRecord } from "../../firebase/contracts";
+import type { MemberRecord, TripActivity } from "../../firebase/contracts";
 import { MembersPanel, type MembersPanelProps } from "./MembersPanel";
 
 const members: MemberRecord[] = [
@@ -51,6 +51,18 @@ describe("MembersPanel workbench", () => {
     const matrix = screen.getByRole("table", { name: "Permission matrix" });
     expect(within(matrix).getByText("Approve / cancel items")).toBeTruthy();
     expect(within(matrix).getByText("Lead only")).toBeTruthy();
+  });
+
+  it("shows persisted activity alongside the invite and recent-expense context", () => {
+    const activity: TripActivity[] = [
+      { id: "activity-1", kind: "note_added", eventId: "event-1", actorId: "member-1", label: "Added a coordination note", createdAt: "2026-07-30T10:00:00.000Z" },
+    ];
+    render(panel({ activity } as Partial<MembersPanelProps>));
+    const rail = screen.getByRole("complementary", { name: "Member context" });
+    expect(within(rail).getByText("Activity feed")).toBeTruthy();
+    expect(within(rail).getByText("Added a coordination note")).toBeTruthy();
+    expect(screen.getByText("Last activity")).toBeTruthy();
+    expect(screen.getByText("Recorded")).toBeTruthy();
   });
 
   it("waits for a lead confirmation before removing a member", async () => {

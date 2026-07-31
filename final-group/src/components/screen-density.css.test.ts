@@ -15,4 +15,8 @@ describe("screen density at compact desktop widths", () => {
       /@media \(max-width: 760px\)[\s\S]*?\.expense-workbench \.expense-workbench__ledger[\s\S]*?grid-template-columns:\s*1fr\s*!important;/,
     );
   });
+
+  it("sets a 10px minimum type floor for compact workbench metadata and controls", () => {
+    expect(styles("./workbench.css")).toMatch(/\.workbench-shell :is\(span, small, p, label, button, input, select, code, dt, dd, th, td\)[\s\S]*?font-size:\s*max\(10px, 1em\);/);
+  });
 });

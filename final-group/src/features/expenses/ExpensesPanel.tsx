@@ -87,6 +87,7 @@ export function ExpensesPanel({
   const settledAmount = ledger.includedExpenses
     .filter((expense) => expense.status === "settled")
     .reduce((sum, expense) => sum + expense.amount, 0);
+  const currentBalance = ledger.balances.find((member) => member.memberId === currentUserId)?.balance ?? 0;
   const settlementSuggestions = calculateSettlementSuggestions(ledger.balances);
 
   async function submitExpense(event: FormEvent<HTMLFormElement>) {
@@ -228,9 +229,9 @@ export function ExpensesPanel({
           <small>{settledCount} {settledCount === 1 ? "expense" : "expenses"} marked settled</small>
         </article>
         <article>
-          <span>Suggested transfers</span>
-          <strong>{settlementSuggestions.length}</strong>
-          <small>Derived from the current ledger</small>
+          <span>Balance</span>
+          <strong className={currentBalance >= 0 ? "balance-positive" : "balance-negative"}>{formatSignedVnd(currentBalance)}</strong>
+          <small>{currentBalance >= 0 ? "Owed to you" : "You owe"}</small>
         </article>
       </section>
 
