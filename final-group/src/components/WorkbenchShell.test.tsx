@@ -159,5 +159,7 @@ describe("WorkbenchShell", () => {
 
     expect(onInvite).toHaveBeenCalledTimes(1);
     expect(onShare).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Invite" }).querySelector("svg")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Share" }).querySelector("svg")).toBeTruthy();
   });
 });

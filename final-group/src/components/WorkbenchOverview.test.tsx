@@ -22,7 +22,7 @@ const snapshot: TripSnapshot = {
   members: [
     {
       uid: "user-1",
-      displayName: "Lan",
+      displayName: "Lan Nguyen",
       email: "lan@example.com",
       role: "lead",
       responsibility: "Lịch trình",
@@ -30,7 +30,7 @@ const snapshot: TripSnapshot = {
     },
     {
       uid: "user-2",
-      displayName: "Minh",
+      displayName: "Minh Tran",
       email: "minh@example.com",
       role: "member",
       responsibility: "Chi phí",
@@ -121,6 +121,11 @@ describe("WorkbenchOverview", () => {
     expect(screen.getByRole("button", { name: "Open 1" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "In review 1" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Done 0" })).toBeTruthy();
+    expect(within(table).getByText("Lan Nguyen")).toBeTruthy();
+    expect(within(table).getByText("Minh Tran")).toBeTruthy();
+    const highPriority = within(table).getByLabelText("High priority");
+    expect(highPriority.textContent).toBe("High");
+    expect(highPriority.querySelector("svg")).toBeTruthy();
   });
 
   it("provides a truthful activity feed and real expense context", () => {
@@ -143,6 +148,10 @@ describe("WorkbenchOverview", () => {
     expect(within(context).getByText("Recent expenses")).toBeTruthy();
     expect(within(context).getByText("Khách sạn")).toBeTruthy();
     expect(within(context).getByTestId("recent-expense-expense-1").getAttribute("data-expense-category")).toBe("accommodation");
+    expect(context.querySelectorAll(":scope > section")).toHaveLength(3);
+    expect(context.querySelector(".workbench-current-role")).toBeNull();
+    expect(within(context).getByTestId("recent-expense-expense-1").querySelector("[data-category-visual='stay']")).toBeTruthy();
+    expect(screen.getByTestId("event-category-event-1").getAttribute("data-category-visual")).toBe("stay");
   });
 
   it("sorts real itinerary rows and opens the selected event in Timeline", async () => {
@@ -158,10 +167,10 @@ describe("WorkbenchOverview", () => {
     );
 
     const table = screen.getByRole("table", { name: "Trip itinerary" });
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Sort itinerary" }),
-      "time-desc",
-    );
+    expect(screen.queryByRole("combobox", { name: "Sort itinerary" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Sort" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Sort itinerary" }), "time-desc");
+    expect(screen.queryByRole("combobox", { name: "Sort itinerary" })).toBeNull();
     expect(within(table).getAllByRole("row")[1].textContent).toContain(
       "Tham quan vườn hoa",
     );
@@ -179,7 +188,10 @@ describe("WorkbenchOverview", () => {
     render(<WorkbenchOverview currentUserId="user-1" onOpenExpenses={vi.fn()} onOpenSchedule={vi.fn()} snapshot={snapshot} />);
     const table = screen.getByRole("table", { name: "Trip itinerary" });
 
+    expect(screen.queryByRole("combobox", { name: "Filter itinerary" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Filter" }));
     await user.selectOptions(screen.getByRole("combobox", { name: "Filter itinerary" }), "activity");
+    expect(screen.queryByRole("combobox", { name: "Filter itinerary" })).toBeNull();
 
     expect(within(table).getAllByRole("row")).toHaveLength(2);
     expect(within(table).getByText("Activity")).toBeTruthy();
