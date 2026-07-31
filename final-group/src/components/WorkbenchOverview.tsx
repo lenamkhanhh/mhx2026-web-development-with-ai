@@ -1,21 +1,24 @@
 import {
   AirplaneTilt,
+  ArrowDown,
+  ArrowUp,
   ArrowsDownUp,
-  Bed,
-  CalendarBlank,
+  Buildings,
+  CaretDown,
   Check,
   DotsThree,
+  Funnel,
   ForkKnife,
   ArrowCounterClockwise,
   CheckCircle,
   ListPlus,
+  Minus,
   NotePencil,
   MapPinLine,
   Plus,
   SquaresFour,
-  UsersThree,
 } from "@phosphor-icons/react";
-import { createElement, useMemo, useState } from "react";
+import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType } from "react";
 import type { EventRecord, ExpenseCategory, FirestoreEventCategory, TripSnapshot } from "../firebase/contracts";
 import { formatVnd } from "../features/expenses/expense-calculations";
@@ -30,16 +33,23 @@ interface WorkbenchOverviewProps {
 type OverviewFilter = "all" | "open" | "pending" | "done";
 type OverviewSort = "time-asc" | "time-desc" | "title";
 type OverviewCategoryFilter = "all" | FirestoreEventCategory;
+type CategoryVisual = "transport" | "stay" | "food" | "activity" | "other" | "uncategorized";
 
-const CATEGORY_META: Record<
-  FirestoreEventCategory,
-  { icon: ComponentType<{ "aria-hidden"?: boolean; size?: number }>; label: string }
-> = {
+const CATEGORY_VISUALS: Record<CategoryVisual, { icon: ComponentType<{ "aria-hidden"?: boolean; size?: number }>; label: string }> = {
   transport: { icon: AirplaneTilt, label: "Transport" },
-  stay: { icon: Bed, label: "Stay" },
+  stay: { icon: Buildings, label: "Stay" },
   food: { icon: ForkKnife, label: "Food & drinks" },
   activity: { icon: MapPinLine, label: "Activity" },
   other: { icon: SquaresFour, label: "Other" },
+  uncategorized: { icon: SquaresFour, label: "Uncategorized" },
+};
+
+const CATEGORY_META: Record<FirestoreEventCategory, { label: string; visual: CategoryVisual }> = {
+  transport: { label: "Transport", visual: "transport" },
+  stay: { label: "Stay", visual: "stay" },
+  food: { label: "Food & drinks", visual: "food" },
+  activity: { label: "Activity", visual: "activity" },
+  other: { label: "Other", visual: "other" },
 };
 
 const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
@@ -50,16 +60,13 @@ const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   other: "Other",
 };
 
-const EXPENSE_CATEGORY_META: Record<
-  ExpenseCategory | "uncategorized",
-  { icon: ComponentType<{ "aria-hidden"?: boolean; size?: number }>; label: string }
-> = {
-  transport: { icon: AirplaneTilt, label: "Transport" },
-  accommodation: { icon: Bed, label: "Accommodation" },
-  food: { icon: ForkKnife, label: "Food & drinks" },
-  activities: { icon: MapPinLine, label: "Activities" },
-  other: { icon: SquaresFour, label: "Other" },
-  uncategorized: { icon: SquaresFour, label: "Uncategorized" },
+const EXPENSE_CATEGORY_VISUAL: Record<ExpenseCategory | "uncategorized", CategoryVisual> = {
+  transport: "transport",
+  accommodation: "stay",
+  food: "food",
+  activities: "activity",
+  other: "other",
+  uncategorized: "uncategorized",
 };
 
 const ACTIVITY_META = {
@@ -78,6 +85,29 @@ export function WorkbenchOverview({
   const [filter, setFilter] = useState<OverviewFilter>("all");
   const [sort, setSort] = useState<OverviewSort>("time-asc");
   const [categoryFilter, setCategoryFilter] = useState<OverviewCategoryFilter>("all");
+  const [openToolbarMenu, setOpenToolbarMenu] = useState<"filter" | "sort" | null>(null);
+  const toolbarActionsRef = useRef<HTMLDivElement>(null);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const sortButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!openToolbarMenu) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!toolbarActionsRef.current?.contains(event.target as Node)) setOpenToolbarMenu(null);
+    };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      const trigger = openToolbarMenu === "filter" ? filterButtonRef.current : sortButtonRef.current;
+      setOpenToolbarMenu(null);
+      trigger?.focus();
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeWithEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeWithEscape);
+    };
+  }, [openToolbarMenu]);
   const orderedEvents = useMemo(
     () => [...snapshot.events].sort((left, right) => {
       if (sort === "title") return left.title.localeCompare(right.title, "vi");
@@ -158,22 +188,26 @@ export function WorkbenchOverview({
               tone="done"
             />
           </div>
-          <div className="workbench-table-toolbar-actions">
-            <label className="workbench-sort-control">
-              <span>Filter</span>
-              <select aria-label="Filter itinerary" onChange={(event) => setCategoryFilter(event.target.value as OverviewCategoryFilter)} value={categoryFilter}>
-                <option value="all">All items</option>
-                {Object.entries(CATEGORY_META).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}
-              </select>
-            </label>
-            <label className="workbench-sort-control">
-              <span>Sort</span>
-              <select aria-label="Sort itinerary" onChange={(event) => setSort(event.target.value as OverviewSort)} value={sort}>
-                <option value="time-asc">Time ascending</option>
-                <option value="time-desc">Newest first</option>
-                <option value="title">Title</option>
-              </select>
-            </label>
+          <div className="workbench-table-toolbar-actions" ref={toolbarActionsRef}>
+            <ToolbarPopover icon={Funnel} label="Filter" open={openToolbarMenu === "filter"} onToggle={() => setOpenToolbarMenu(openToolbarMenu === "filter" ? null : "filter")} triggerRef={filterButtonRef}>
+              <label>
+                <span>Category</span>
+                <select aria-label="Filter itinerary" onChange={(event) => { setCategoryFilter(event.target.value as OverviewCategoryFilter); setOpenToolbarMenu(null); }} value={categoryFilter}>
+                  <option value="all">All items</option>
+                  {Object.entries(CATEGORY_META).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}
+                </select>
+              </label>
+            </ToolbarPopover>
+            <ToolbarPopover icon={ArrowsDownUp} label="Sort" open={openToolbarMenu === "sort"} onToggle={() => setOpenToolbarMenu(openToolbarMenu === "sort" ? null : "sort")} triggerRef={sortButtonRef}>
+              <label>
+                <span>Order</span>
+                <select aria-label="Sort itinerary" onChange={(event) => { setSort(event.target.value as OverviewSort); setOpenToolbarMenu(null); }} value={sort}>
+                  <option value="time-asc">Time ascending</option>
+                  <option value="time-desc">Newest first</option>
+                  <option value="title">Title</option>
+                </select>
+              </label>
+            </ToolbarPopover>
             <button className="workbench-table-add" onClick={() => onOpenSchedule()} type="button">
               <Plus aria-hidden="true" size={16} /> Add item
             </button>
@@ -197,14 +231,13 @@ export function WorkbenchOverview({
             <tbody>
               {visibleEvents.length ? visibleEvents.map((event, index) => {
                 const category = CATEGORY_META[event.category];
-                const Icon = category.icon;
                 const assignee = event.assigneeUid ? memberById.get(event.assigneeUid) : undefined;
                 return (
                   <tr key={event.id}>
                     <td className="workbench-row-index">{index + 1}</td>
                     <td>
                       <div className="workbench-event-cell">
-                        <Icon aria-hidden={true} size={17} />
+                        <CategoryGlyph className="workbench-category-glyph" testId={`event-category-${event.id}`} visual={category.visual} />
                         <span>
                           <strong>{event.title}</strong>
                           <small>{category.label}</small>
@@ -217,9 +250,7 @@ export function WorkbenchOverview({
                     <td><span className="workbench-location-cell">{event.location ?? "—"}</span></td>
                     <td>
                       {assignee ? (
-                        <span aria-label={assignee.displayName} className="workbench-mini-avatar">
-                          {initials(assignee.displayName)}
-                        </span>
+                        <span className="workbench-assignee-name" title={assignee.displayName}>{assignee.displayName}</span>
                       ) : <span className="workbench-empty-cell">—</span>}
                     </td>
                     <td><EventStatus status={event.status} /></td>
@@ -255,7 +286,7 @@ export function WorkbenchOverview({
         </div>
       </section>
 
-      <aside aria-label="Trip context" className="workbench-context-rail">
+      <aside aria-label="Trip context" className="workbench-context-rail" data-current-member-role={currentMember?.role ?? "member"}>
         <ContextPanel action="View timeline" onAction={onOpenSchedule} title="Activity feed">
           {activityItems.length ? (
             <ul className="workbench-context-list">
@@ -305,12 +336,8 @@ export function WorkbenchOverview({
                 <li data-expense-category={expense.category ?? "uncategorized"} data-testid={`recent-expense-${expense.id}`} key={expense.id}>
                   {(() => {
                     const category = expense.category ?? "uncategorized";
-                    const meta = EXPENSE_CATEGORY_META[category];
-                    const Icon = meta.icon;
                     return (
-                      <span aria-label={meta.label} className={`workbench-context-icon expense expense-${category}`} role="img">
-                        <Icon aria-hidden={true} size={15} />
-                      </span>
+                      <CategoryGlyph className={`workbench-context-icon expense expense-${category} workbench-category-glyph`} visual={EXPENSE_CATEGORY_VISUAL[category]} />
                     );
                   })()}
                   <span>
@@ -326,11 +353,6 @@ export function WorkbenchOverview({
             <Plus aria-hidden="true" size={15} /> Add expense
           </button>
         </ContextPanel>
-
-        <div className="workbench-current-role">
-          <UsersThree aria-hidden="true" size={16} />
-          <span>{currentMember?.role === "lead" ? "You lead this trip" : "You are a trip member"}</span>
-        </div>
       </aside>
     </div>
   );
@@ -390,7 +412,32 @@ function EventStatus({ status }: { status: EventRecord["status"] }) {
 }
 
 function EventPriority({ priority }: { priority: EventRecord["priority"] }) {
-  return priority ? <span className={`workbench-event-priority ${priority}`}>{priority}</span> : <span className="workbench-empty-cell">—</span>;
+  if (!priority) return <span className="workbench-empty-cell">—</span>;
+  const Icon = priority === "high" ? ArrowUp : priority === "low" ? ArrowDown : Minus;
+  const label = `${priority[0].toUpperCase()}${priority.slice(1)}`;
+  return <span aria-label={`${label} priority`} className={`workbench-event-priority ${priority}`}><Icon aria-hidden="true" size={15} weight="bold" />{label}</span>;
+}
+
+function CategoryGlyph({ className, testId, visual }: { className: string; testId?: string; visual: CategoryVisual }) {
+  const meta = CATEGORY_VISUALS[visual];
+  const Icon = meta.icon;
+  return <span aria-label={meta.label} className={className} data-category-visual={visual} data-testid={testId} role="img"><Icon aria-hidden="true" size={17} /></span>;
+}
+
+function ToolbarPopover({ children, icon: Icon, label, onToggle, open, triggerRef }: {
+  children: React.ReactNode;
+  icon: ComponentType<{ "aria-hidden"?: boolean; size?: number }>;
+  label: string;
+  onToggle: () => void;
+  open: boolean;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
+}) {
+  return <div className="workbench-toolbar-menu">
+    <button aria-expanded={open} aria-haspopup="dialog" className="workbench-toolbar-trigger" onClick={onToggle} ref={triggerRef} type="button">
+      <span>{label}</span><Icon aria-hidden={true} size={16} /><CaretDown aria-hidden={true} className="workbench-toolbar-caret" size={12} />
+    </button>
+    {open ? <div aria-label={`${label} options`} className="workbench-toolbar-popover" role="dialog">{children}</div> : null}
+  </div>;
 }
 
 function formatEventDate(value: string): string {
@@ -413,11 +460,6 @@ function formatActivityTime(value: string): string {
 
 function formatExpenseMeta(createdAt: string, payer: string): string {
   return `${new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" }).format(new Date(createdAt))} · ${payer}`;
-}
-
-function initials(value: string): string {
-  const parts = value.trim().split(/\s+/).filter(Boolean);
-  return (parts.length > 1 ? `${parts[0][0]}${parts.at(-1)?.[0] ?? ""}` : parts[0]?.slice(0, 2) ?? "?").toUpperCase();
 }
 
 function statusLabel(status: EventRecord["status"]): string {

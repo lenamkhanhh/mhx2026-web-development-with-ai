@@ -7,8 +7,10 @@ import {
   Compass,
   CurrencyCircleDollar,
   HashStraight,
+  LinkSimple,
   MagnifyingGlass,
   SignOut,
+  UserPlus,
   UsersThree,
 } from "@phosphor-icons/react";
 import "./workbench.css";
@@ -283,8 +285,8 @@ export function WorkbenchShell({
                 </div>
               </div>
               <div className="workbench-title-actions">
-                {onInvite ? <button className="workbench-header-action workbench-header-action--primary" onClick={() => { onInvite(); window.scrollTo({ behavior: "auto", top: 0 }); }} type="button">Invite</button> : null}
-                {onShare ? <button className="workbench-header-action" onClick={() => void onShare()} type="button">Share</button> : null}
+                {onInvite ? <button className="workbench-header-action workbench-header-action--primary" onClick={() => { onInvite(); window.scrollTo({ behavior: "auto", top: 0 }); }} type="button"><UserPlus aria-hidden="true" size={16} /> Invite</button> : null}
+                {onShare ? <button className="workbench-header-action" onClick={() => void onShare()} type="button"><LinkSimple aria-hidden="true" size={16} /> Share</button> : null}
                 <span className={`workbench-role-label ${role}`}>
                   {role === "lead" ? "Trip lead" : "Trip member"}
                 </span>
