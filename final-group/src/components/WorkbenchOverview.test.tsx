@@ -142,6 +142,7 @@ describe("WorkbenchOverview", () => {
     expect(within(context).getAllByText("1.800.000 ₫").length).toBeGreaterThan(0);
     expect(within(context).getByText("Recent expenses")).toBeTruthy();
     expect(within(context).getByText("Khách sạn")).toBeTruthy();
+    expect(within(context).getByTestId("recent-expense-expense-1").getAttribute("data-expense-category")).toBe("accommodation");
   });
 
   it("sorts real itinerary rows and opens the selected event in Timeline", async () => {

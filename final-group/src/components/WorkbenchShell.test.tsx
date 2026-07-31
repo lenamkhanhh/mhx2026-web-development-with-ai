@@ -48,6 +48,7 @@ describe("WorkbenchShell", () => {
   it("renders only the real TripFlow work areas and marks the active view", () => {
     renderShell("schedule");
 
+    expect(screen.getByRole("img", { name: "TripFlow route mark" })).toBeTruthy();
     const sidebar = screen.getByRole("navigation", { name: "TripFlow navigation" });
     expect(sidebar).toBeTruthy();
     expect(within(sidebar).getByRole("link", { name: "Overview" })).toBeTruthy();
