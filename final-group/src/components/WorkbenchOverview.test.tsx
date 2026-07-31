@@ -206,8 +206,8 @@ describe("WorkbenchOverview", () => {
     const context = screen.getByRole("complementary", { name: "Trip context" });
     const activityList = context.querySelector(".workbench-context-list:not(.expenses)");
     expect(activityList?.querySelectorAll(":scope > li")).toHaveLength(5);
-    expect(within(context).getByText("Activity 0")).toBeTruthy();
-    expect(within(context).queryByText("Activity 5")).toBeNull();
+    expect(within(context).getByText("Activity 5")).toBeTruthy();
+    expect(within(context).queryByText("Activity 0")).toBeNull();
   });
 
   it("links the overview footer to the real reorder workflow in Timeline", async () => {

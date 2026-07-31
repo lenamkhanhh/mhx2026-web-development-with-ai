@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { AirplaneTilt, Bed, ForkKnife, MapPinLine, SquaresFour } from "@phosphor-icons/react";
+import { useState, type ComponentType, type FormEvent } from "react";
 import "./ExpensesPanel.css";
-import type { CreateExpenseInput } from "../../firebase/contracts";
+import type { CreateExpenseInput, ExpenseCategory } from "../../firebase/contracts";
 import {
   calculateExpenseLedger,
   calculateSettlementSuggestions,
@@ -25,6 +26,18 @@ interface ExpensesPanelProps {
   onRetry?: () => void;
 }
 
+const EXPENSE_CATEGORY_META: Record<
+  ExpenseCategory | "uncategorized",
+  { icon: ComponentType<{ "aria-hidden"?: boolean; size?: number }>; label: string }
+> = {
+  transport: { icon: AirplaneTilt, label: "Transport" },
+  accommodation: { icon: Bed, label: "Accommodation" },
+  food: { icon: ForkKnife, label: "Food & drinks" },
+  activities: { icon: MapPinLine, label: "Activities" },
+  other: { icon: SquaresFour, label: "Other" },
+  uncategorized: { icon: SquaresFour, label: "Uncategorized" },
+};
+
 export function ExpensesPanel({
   members,
   expenses,
@@ -45,6 +58,7 @@ export function ExpensesPanel({
   const [settling, setSettling] = useState(false);
   const [settlementError, setSettlementError] = useState("");
   const [paidBy, setPaidBy] = useState(currentUserId ?? members[0]?.uid ?? "");
+  const [category, setCategory] = useState<ExpenseCategory | "">("");
   const [splitAmong, setSplitAmong] = useState<string[]>(() =>
     members.map((member) => member.uid),
   );
@@ -94,14 +108,17 @@ export function ExpensesPanel({
     setSaving(true);
     setFormError("");
     try {
-      await onCreate({
+      const input: CreateExpenseInput = {
         title: title.trim(),
         amount: normalizedAmount,
         paidBy: effectivePaidBy,
         splitAmong: effectiveSplitAmong,
-      });
+      };
+      if (category) input.category = category;
+      await onCreate(input);
       setTitle("");
       setAmount("");
+      setCategory("");
       setComposerOpen(false);
     } catch (cause) {
       setFormError(
@@ -273,6 +290,21 @@ export function ExpensesPanel({
                 ))}
               </select>
             </label>
+            <label>
+              Category
+              <select
+                aria-label="Expense category"
+                onChange={(event) => setCategory(event.target.value as ExpenseCategory | "")}
+                value={category}
+              >
+                <option value="">Uncategorized</option>
+                <option value="transport">Transport</option>
+                <option value="accommodation">Accommodation</option>
+                <option value="food">Food &amp; drinks</option>
+                <option value="activities">Activities</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
           </div>
           <fieldset className="participant-picker">
             <legend>Split among</legend>
@@ -356,6 +388,7 @@ export function ExpensesPanel({
             >
               <div className="expense-workbench__table-row expense-workbench__table-row--head" role="row">
                 <span role="columnheader">Expense</span>
+                <span role="columnheader">Category</span>
                 <span role="columnheader">Payer</span>
                 <span role="columnheader">Split</span>
                 <span role="columnheader">Amount</span>
@@ -364,7 +397,26 @@ export function ExpensesPanel({
               </div>
               {filteredExpenses.map((expense) => (
                 <div className="expense-workbench__table-row" key={expense.id} role="row">
-                  <strong role="cell">{expense.title}</strong>
+                  <strong className="expense-workbench__expense-cell" role="cell">
+                    {(() => {
+                      const category = expense.category ?? "uncategorized";
+                      const meta = EXPENSE_CATEGORY_META[category];
+                      const Icon = meta.icon;
+                      return (
+                        <span
+                          aria-label={meta.label}
+                          className={`expense-workbench__category-icon expense-workbench__category-icon--${category}`}
+                          data-expense-category={category}
+                          data-testid={`expense-category-${expense.id}`}
+                          role="img"
+                        >
+                          <Icon aria-hidden={true} size={15} />
+                        </span>
+                      );
+                    })()}
+                    <span>{expense.title}</span>
+                  </strong>
+                  <span role="cell">{EXPENSE_CATEGORY_META[expense.category ?? "uncategorized"].label}</span>
                   <span role="cell">
                     {members.find((member) => member.uid === expense.paidBy)?.displayName ??
                       expense.paidBy}

@@ -422,7 +422,8 @@
 .expense-workbench__table-row {
   display: grid;
   grid-template-columns:
-    minmax(150px, 1.25fr)
+    minmax(150px, 1.15fr)
+    minmax(96px, .7fr)
     minmax(90px, .75fr)
     62px
     minmax(90px, .7fr)
@@ -435,6 +436,54 @@
   border-bottom: 1px solid #edf0f3;
   color: #46515d;
   font-size: 10px;
+}
+
+.expense-workbench__expense-cell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.expense-workbench__expense-cell > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-workbench__category-icon {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 5px;
+}
+
+.expense-workbench__category-icon--transport {
+  color: #0866ed;
+  background: #e7f0ff;
+}
+
+.expense-workbench__category-icon--accommodation {
+  color: #6e43bb;
+  background: #f1eaff;
+}
+
+.expense-workbench__category-icon--food {
+  color: #a75600;
+  background: #fff0de;
+}
+
+.expense-workbench__category-icon--activities {
+  color: #547000;
+  background: #efffc8;
+}
+
+.expense-workbench__category-icon--other,
+.expense-workbench__category-icon--uncategorized {
+  color: #51606d;
+  background: #eef1f4;
 }
 
 .expense-workbench__table-row:last-child {

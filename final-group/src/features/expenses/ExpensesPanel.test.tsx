@@ -90,6 +90,33 @@ describe("ExpensesPanel", () => {
     expect(onSettle).toHaveBeenCalledWith("expense-1");
   });
 
+  it("persists the selected expense category from the composer", async () => {
+    const actor = userEvent.setup();
+    const onCreate = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ExpensesPanel
+        currentUserId="lead-1"
+        members={[{ uid: "lead-1", displayName: "Khánh" }]}
+        expenses={[]}
+        onCreate={onCreate}
+      />,
+    );
+
+    await actor.click(screen.getByRole("button", { name: "Add expense" }));
+    await actor.type(screen.getByLabelText("Expense title"), "Museum tickets");
+    await actor.type(screen.getByLabelText("Amount (VND)"), "120000");
+    await actor.selectOptions(screen.getByRole("combobox", { name: "Expense category" }), "activities");
+    await actor.click(screen.getByRole("button", { name: "Save expense" }));
+
+    expect(onCreate).toHaveBeenCalledWith({
+      title: "Museum tickets",
+      amount: 120_000,
+      paidBy: "lead-1",
+      splitAmong: ["lead-1"],
+      category: "activities",
+    });
+  });
+
   it("uses the reference KPI-table-rail anatomy with real filters and settlement suggestions", async () => {
     const actor = userEvent.setup();
     render(

@@ -259,7 +259,7 @@ export function WorkbenchOverview({
         <ContextPanel action="View timeline" onAction={onOpenSchedule} title="Activity feed">
           {activityItems.length ? (
             <ul className="workbench-context-list">
-              {activityItems.map((item) => (
+              {activityItems.slice(0, 5).map((item) => (
                 <li key={item.id}>
                   <span className={`workbench-context-icon activity-${item.meta.tone}`}>{createElement(item.meta.icon, { "aria-hidden": true, size: 15 })}</span>
                   <span>

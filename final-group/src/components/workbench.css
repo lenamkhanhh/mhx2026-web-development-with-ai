@@ -1066,10 +1066,10 @@
 
 .workbench-context-list li {
   display: flex;
-  min-height: 52px;
+  min-height: 46px;
   align-items: center;
   gap: 9px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-bottom: 1px solid #eceef1;
 }
 

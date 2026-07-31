@@ -335,8 +335,15 @@
 }
 
 .members-panel__actions .members-panel__remove {
-  border-color: #efb3b3;
-  color: #a82a2a;
+  border-color: #cbd2dc;
+  color: #51606d;
+  background: #fff;
+}
+
+.members-panel__actions .members-panel__remove:hover:not(:disabled),
+.members-panel__actions .members-panel__remove:focus-visible {
+  border-color: #d53a3a;
+  color: #b01835;
   background: #fff7f7;
 }
 
