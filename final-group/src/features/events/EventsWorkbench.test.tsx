@@ -31,10 +31,26 @@ async function openComposer(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Add item" }));
   return screen.getByRole("form", { name: "Create a timeline item" });
 }
+async function openActions(user: ReturnType<typeof userEvent.setup>, title: string) {
+  await user.click(screen.getByRole("button", { name: `Open actions for ${title}` }));
+  return within(screen.getByLabelText(`Actions for ${title}`));
+}
 beforeEach(() => vi.stubGlobal("matchMedia", vi.fn().mockImplementation(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("EventsWorkbench", () => {
+  it("keeps lead-only mutating commands inside a compact event actions menu", async () => {
+    const user = userEvent.setup();
+    renderWorkbench({ events: [event({ id: "breakfast", title: "Breakfast" })] });
+
+    expect(screen.queryByRole("button", { name: "Move Breakfast up" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Open actions for Breakfast" }));
+
+    const actions = screen.getByLabelText("Actions for Breakfast");
+    expect(within(actions).getByRole("button", { name: "Move Breakfast down" })).toBeTruthy();
+    expect(within(actions).getByRole("button", { name: "Cancel" })).toBeTruthy();
+  });
+
   it("renders a distinct empty state and opens the event composer on demand", async () => {
     const user = userEvent.setup();
     renderWorkbench();
@@ -44,12 +60,12 @@ describe("EventsWorkbench", () => {
     expect(await openComposer(user)).toBeTruthy();
   });
 
-  it("shows canonical status/category labels and only the member-owned pending action", () => {
+  it("shows canonical status/category labels and only the member-owned pending action", async () => {
+    const user = userEvent.setup();
     renderWorkbench({ currentUserId: "member-1", role: "member", events: [event({ id: "pending", title: "Proposal", status: "pending", createdBy: "member-1", approvedBy: null }), event({ id: "approved", title: "Visit", category: "activity" })] });
     const pending = within(screen.getByTestId("event-pending"));
     const approved = within(screen.getByTestId("event-approved"));
-    const pendingActions = within(pending.getByLabelText("Actions for Proposal"));
-    const approvedActions = within(approved.getByLabelText("Actions for Visit"));
+    const pendingActions = await openActions(user, "Proposal");
 
     expect(pending.getByText("In review")).toBeTruthy();
     expect(pending.getByText(/Food & drinks ·/)).toBeTruthy();
@@ -58,11 +74,13 @@ describe("EventsWorkbench", () => {
     expect(pendingActions.getByRole("button", { name: "Delete" })).toBeTruthy();
     expect(pendingActions.queryByRole("button", { name: "Approve" })).toBeNull();
     expect(pendingActions.queryByRole("button", { name: "Cancel" })).toBeNull();
+    const approvedActions = await openActions(user, "Visit");
     expect(approvedActions.queryByRole("button")).toBeNull();
     expect(screen.queryByRole("button", { name: "Sync statuses" })).toBeNull();
   });
 
-  it("renders every persisted status/category label and the lead action matrix", () => {
+  it("renders every persisted status/category label and the lead action matrix", async () => {
+    const user = userEvent.setup();
     const cases = [
       { id: "pending", title: "Train", status: "pending", category: "transport", statusLabel: "In review", categoryLabel: "Transport" },
       { id: "approved", title: "Hotel", status: "approved", category: "stay", statusLabel: "Open", categoryLabel: "Stay" },
@@ -76,16 +94,19 @@ describe("EventsWorkbench", () => {
       const row = within(screen.getByTestId(`event-${item.id}`));
       expect(row.getByText(item.statusLabel)).toBeTruthy();
       expect(row.getByText(new RegExp(`^${item.categoryLabel} ·`))).toBeTruthy();
-      expect(row.getByRole("button", { name: "Delete" })).toBeTruthy();
+      const actions = await openActions(user, item.title);
+      expect(actions.getByRole("button", { name: "Delete" })).toBeTruthy();
     }
 
-    const pendingActions = within(screen.getByLabelText("Actions for Train"));
+    const pendingActions = await openActions(user, "Train");
     expect(pendingActions.getByRole("button", { name: "Approve" })).toBeTruthy();
     expect(pendingActions.getByRole("button", { name: "Cancel" })).toBeTruthy();
-    expect(within(screen.getByLabelText("Actions for Hotel")).queryByRole("button", { name: "Approve" })).toBeNull();
-    expect(within(screen.getByLabelText("Actions for Hotel")).getByRole("button", { name: "Cancel" })).toBeTruthy();
-    expect(within(screen.getByLabelText("Actions for Backup")).queryByRole("button", { name: "Approve" })).toBeNull();
-    expect(within(screen.getByLabelText("Actions for Backup")).queryByRole("button", { name: "Cancel" })).toBeNull();
+    const hotelActions = await openActions(user, "Hotel");
+    expect(hotelActions.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(hotelActions.getByRole("button", { name: "Cancel" })).toBeTruthy();
+    const backupActions = await openActions(user, "Backup");
+    expect(backupActions.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(backupActions.queryByRole("button", { name: "Cancel" })).toBeNull();
     expect(screen.getByRole("button", { name: "Sync statuses" })).toBeTruthy();
   });
 
@@ -141,6 +162,8 @@ describe("EventsWorkbench", () => {
 
     const details = screen.getByRole("complementary", { name: "Event details" });
     expect(within(details).getByText("Selected event")).toBeTruthy();
+    expect(screen.getByTestId("event-selected").getAttribute("data-selected")).toBe("true");
+    expect(screen.getByTestId("event-event-1").getAttribute("data-selected")).toBe("false");
   });
 
   it("lets a permitted member open the Notes workspace for the selected event", async () => {
@@ -282,7 +305,8 @@ describe("EventsWorkbench", () => {
     const user = userEvent.setup(); const move = deferred<void>();
     renderWorkbench({ events: [event({ id: "first", title: "Breakfast" }), event({ id: "second", title: "Visit", order: 1 })], onMove: vi.fn(() => move.promise) });
     await new Promise((resolve) => setTimeout(resolve, 0));
-    const moveButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.includes("Visit") && !button.disabled);
+    await openActions(user, "Visit");
+    const moveButtons = (screen.getAllByRole("button") as HTMLButtonElement[]).filter((button) => button.getAttribute("aria-label")?.includes("Visit") && button.getAttribute("aria-label")?.startsWith("Move ") && !button.disabled);
     await user.click(moveButtons[0]); const timeline = screen.getByRole("list");
     await waitFor(() => expect(within(timeline).getAllByRole("listitem")[0].getAttribute("data-event-id")).toBe("second"));
     expect(within(timeline).getByTestId("event-second").getAttribute("data-motion")).toBe("reordering");
@@ -300,6 +324,7 @@ describe("EventsWorkbench", () => {
     const unrelated = event({ id: "unrelated", title: "Dinner", order: 2 });
     const rendered = renderWorkbench({ events: [first, second], onMove });
 
+    await openActions(user, "Visit");
     await user.click(screen.getByRole("button", { name: "Move Visit up" }));
     await waitFor(() => expect(onMove).toHaveBeenCalledTimes(1));
 

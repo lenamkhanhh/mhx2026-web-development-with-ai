@@ -121,6 +121,11 @@ describe("ExpensesPanel", () => {
     );
 
     expect(screen.getByRole("region", { name: "Expense metrics" })).toBeTruthy();
+    const metrics = screen.getByRole("region", { name: "Expense metrics" });
+    expect(within(metrics).getByText("Pending amount")).toBeTruthy();
+    expect(within(metrics).getByText("200.000 ₫")).toBeTruthy();
+    expect(within(metrics).getByText("Settled amount")).toBeTruthy();
+    expect(within(metrics).getByText("400.000 ₫")).toBeTruthy();
     expect(screen.getByRole("table", { name: "Expense table" })).toBeTruthy();
     expect(screen.getByRole("complementary", { name: "Settlement suggestions" }).textContent).toContain(
       "Minh pays Khánh",

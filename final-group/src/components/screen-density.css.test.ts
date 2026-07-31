@@ -9,4 +9,10 @@ describe("screen density at compact desktop widths", () => {
     expect(styles("../features/expenses/ExpensesPanel.css")).toMatch(/@media \(max-width: 1120px\)[\s\S]*?\.expense-workbench__ledger\s*\{\s*grid-template-columns:\s*1fr;/);
     expect(styles("../features/members/MembersPanel.css")).toMatch(/@media \(max-width: 1120px\)[\s\S]*?\.members-panel\s*\{\s*grid-template-columns:\s*minmax\(0, 1fr\);/);
   });
+
+  it("overrides the global split grid on narrow expense layouts", () => {
+    expect(styles("../features/expenses/ExpensesPanel.css")).toMatch(
+      /@media \(max-width: 760px\)[\s\S]*?\.expense-workbench \.expense-workbench__ledger[\s\S]*?grid-template-columns:\s*1fr\s*!important;/,
+    );
+  });
 });
