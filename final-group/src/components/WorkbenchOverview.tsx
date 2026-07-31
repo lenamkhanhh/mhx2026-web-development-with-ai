@@ -4,16 +4,19 @@ import {
   Bed,
   CalendarBlank,
   Check,
-  Clock,
   CurrencyCircleDollar,
   DotsThree,
   ForkKnife,
+  ArrowCounterClockwise,
+  CheckCircle,
+  ListPlus,
+  NotePencil,
   MapPinLine,
   Plus,
   SquaresFour,
   UsersThree,
 } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { createElement, useMemo, useState } from "react";
 import type { ComponentType } from "react";
 import type { EventRecord, ExpenseCategory, FirestoreEventCategory, TripSnapshot } from "../firebase/contracts";
 import { formatVnd } from "../features/expenses/expense-calculations";
@@ -47,6 +50,13 @@ const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   activities: "Activities",
   other: "Other",
 };
+
+const ACTIVITY_META = {
+  note_added: { icon: NotePencil, tone: "note" },
+  subitem_added: { icon: ListPlus, tone: "add" },
+  subitem_completed: { icon: CheckCircle, tone: "done" },
+  subitem_reopened: { icon: ArrowCounterClockwise, tone: "review" },
+} as const;
 
 export function WorkbenchOverview({
   currentUserId,
@@ -102,7 +112,9 @@ export function WorkbenchOverview({
     .map((activity) => ({
       actorId: activity.actorId,
       id: activity.id,
+      kind: activity.kind,
       label: activity.label,
+      meta: ACTIVITY_META[activity.kind],
       timestamp: activity.createdAt,
     }))
     .sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp))
@@ -238,7 +250,7 @@ export function WorkbenchOverview({
             <ul className="workbench-context-list">
               {activityItems.map((item) => (
                 <li key={item.id}>
-                  <span className="workbench-context-icon pending"><Clock aria-hidden="true" size={15} /></span>
+                  <span className={`workbench-context-icon activity-${item.meta.tone}`}>{createElement(item.meta.icon, { "aria-hidden": true, size: 15 })}</span>
                   <span>
                     <strong>{item.label}</strong>
                     <small>by {memberById.get(item.actorId)?.displayName ?? "Trip member"} · {formatActivityTime(item.timestamp)}</small>

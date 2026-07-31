@@ -140,13 +140,13 @@
 
 .members-panel__copy,
 .members-panel__actions button {
-  min-height: 33px;
-  padding: 0 10px;
+  min-height: 28px;
+  padding: 0 8px;
   border: 1px solid #0866ed;
   border-radius: 5px;
   color: #fff;
   background: #0866ed;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 750;
 }
 
@@ -193,7 +193,7 @@
 .members-panel__table-head,
 .members-panel__card {
   display: grid;
-  grid-template-columns: minmax(190px, 1.25fr) minmax(150px, .9fr) minmax(200px, 1fr);
+  grid-template-columns: minmax(190px, 1.3fr) minmax(72px, .55fr) minmax(180px, 1fr) minmax(120px, .75fr);
   gap: 10px;
   align-items: center;
 }
@@ -302,6 +302,12 @@
   font-weight: 750;
 }
 
+.members-panel__responsibility strong {
+  color: #34404c;
+  font-size: 10px;
+  font-weight: 650;
+}
+
 .members-panel__responsibility input {
   box-sizing: border-box;
   min-height: 32px;
@@ -325,7 +331,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .members-panel__actions .members-panel__remove {

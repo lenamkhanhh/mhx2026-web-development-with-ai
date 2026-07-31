@@ -620,8 +620,8 @@
 .workbench-overview {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr) 292px;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 14px;
 }
 
 .workbench-overview-main {
@@ -629,23 +629,28 @@
 }
 
 .workbench-overview-toolbar {
-  display: flex;
+  display: grid;
+  grid-template-areas: "counters actions";
+  grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
 }
 
 .workbench-status-counters {
+  grid-area: counters;
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
 }
 
 .workbench-table-toolbar-actions {
-  display: flex;
+  grid-area: actions;
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
   align-items: center;
   gap: 7px;
+  min-width: 0;
 }
 
 .workbench-sort-control {
@@ -732,6 +737,7 @@
 }
 
 .workbench-table-frame {
+  max-width: 100%;
   overflow-x: auto;
   border: 1px solid var(--wb-line);
   border-radius: 6px;
@@ -1083,6 +1089,26 @@
   background: #fff1d7;
 }
 
+.workbench-context-icon.activity-note {
+  color: #0866ed;
+  background: #e7f0ff;
+}
+
+.workbench-context-icon.activity-add {
+  color: #5e7500;
+  background: #efffc8;
+}
+
+.workbench-context-icon.activity-done {
+  color: #14713b;
+  background: #e4f5e9;
+}
+
+.workbench-context-icon.activity-review {
+  color: #9b5c00;
+  background: #fff1d7;
+}
+
 .workbench-context-icon.expense {
   color: #14713b;
   background: #e4f5e9;
@@ -1381,8 +1407,11 @@
   }
 
   .workbench-overview-toolbar {
+    grid-template-areas:
+      "counters"
+      "actions";
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
-    flex-direction: column;
   }
 
   .workbench-status-counters {
@@ -1393,6 +1422,25 @@
   .workbench-status-filter {
     padding: 0 6px;
     font-size: 9px;
+  }
+
+  .workbench-table-toolbar-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workbench-sort-control {
+    min-width: 0;
+    padding: 0 7px;
+  }
+
+  .workbench-sort-control select {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .workbench-table-add {
+    grid-column: 1 / -1;
+    min-width: 0;
   }
 
   .workbench-table-frame {

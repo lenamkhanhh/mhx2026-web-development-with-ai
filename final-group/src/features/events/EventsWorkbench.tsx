@@ -59,6 +59,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   const [optimisticState, setOptimisticState] = useState<{
     order: string[];
   } | null>(null);
+  const [actionMenuEventId, setActionMenuEventId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
   const isLead = role === "lead";
@@ -176,15 +177,24 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
       const index = timeline.findIndex((event) => event.id === item.id);
       const canDelete = isLead || (item.createdBy === currentUserId && item.status === "pending");
       const moving = movingId === item.id;
-      return <li className={styles.timelineItem} data-event-id={item.id} data-motion={moving ? "reordering" : "idle"} data-testid={`event-${item.id}`} key={item.id}>
-        <span aria-hidden="true" className={styles.railMarker}>{String(index + 1).padStart(2, "0")}</span>
-        <article className={styles.eventCard}><div className={styles.eventContent}><span className={`${styles.status} ${styles[`status_${item.status}`]}`}>{STATUS_LABELS[item.status]}</span><h3>{item.title}</h3><p>{CATEGORY_LABELS[item.category]} · {formatDateTime(item.startAt)} — {formatDateTime(item.endAt)}</p><small>{item.participantIds.length} participants</small></div>
+      const actionMenuOpen = actionMenuEventId === item.id;
+      const assignee = item.assigneeUid ? members.find((member) => member.uid === item.assigneeUid) : undefined;
+      const isSelected = selectedEvent?.id === item.id;
+      return <li className={`${styles.timelineItem} ${isSelected ? styles.timelineItemSelected : ""}`} data-event-id={item.id} data-motion={moving ? "reordering" : "idle"} data-selected={isSelected} data-testid={`event-${item.id}`} key={item.id}>
+        <span aria-hidden="true" className={styles.railMarker}>{formatTimelineTime(item.startAt)}</span>
+        <article className={`${styles.eventCard} ${isSelected ? styles.eventCardSelected : ""}`}><div className={styles.eventContent}><span className={`${styles.status} ${styles[`status_${item.status}`]}`}>{STATUS_LABELS[item.status]}</span><h3>{item.title}</h3><p>{CATEGORY_LABELS[item.category]} · {formatDateTime(item.startAt)}</p><small>{formatDateTime(item.endAt)} · {item.participantIds.length} participants</small></div>
+          <div className={styles.eventMeta}><span>Location</span><strong>{item.location || "—"}</strong></div>
+          <div className={styles.eventMeta}><span>Assignee</span><strong>{assignee?.displayName ?? "Unassigned"}</strong></div>
+          <div className={styles.eventMeta}><span>Participants</span><strong>{item.participantIds.length}</strong></div>
           <div className={styles.rightControls}>
-            <div aria-label={`Actions for ${item.title}`} className={styles.actions}>
+            <div className={styles.actionMenu}>
+              <button aria-controls={`event-actions-${item.id}`} aria-expanded={actionMenuOpen} aria-label={`Open actions for ${item.title}`} className={styles.actionMenuButton} onClick={() => setActionMenuEventId((current) => current === item.id ? null : item.id)} type="button">•••</button>
+              {actionMenuOpen ? <div aria-label={`Actions for ${item.title}`} className={styles.actions} id={`event-actions-${item.id}`}>
               {isLead ? <><button aria-label={`Move ${item.title} up`} disabled={index === 0 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "up")} type="button">↑</button><button aria-label={`Move ${item.title} down`} disabled={index === timeline.length - 1 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "down")} type="button">↓</button></> : null}
               {isLead && item.status === "pending" ? <button disabled={runningAction !== null} onClick={() => void runAction(`approve-${item.id}`, "Approval requested.", () => onApprove(item.id))} type="button">Approve</button> : null}
               {isLead && item.status !== "cancelled" ? <button disabled={runningAction !== null} onClick={() => void runAction(`cancel-${item.id}`, "Cancellation requested.", () => onCancel(item.id))} type="button">Cancel</button> : null}
               {canDelete ? <button disabled={runningAction !== null} onClick={() => void runAction(`delete-${item.id}`, "Deletion requested.", () => onDelete(item.id))} type="button">Delete</button> : null}
+              </div> : null}
             </div>
             <button aria-label={`Open ${item.title} details`} className={styles.detailButton} onClick={() => setSelectedEventId(item.id)} type="button">Details</button>
           </div>
@@ -425,4 +435,5 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 function formatDateTime(value: string): string { return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
+function formatTimelineTime(value: string): string { return new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value)); }
 function rollbackMessage(error: unknown, fallback: string): string { const detail = error instanceof Error && error.message ? error.message : fallback; return `${detail} The form or timeline was rolled back so you can try again.`; }

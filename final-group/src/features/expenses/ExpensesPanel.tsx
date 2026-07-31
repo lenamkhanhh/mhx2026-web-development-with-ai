@@ -67,6 +67,12 @@ export function ExpensesPanel({
     (expense) => expense.status === "pending",
   ).length;
   const settledCount = ledger.includedExpenses.length - pendingCount;
+  const pendingAmount = ledger.includedExpenses
+    .filter((expense) => expense.status === "pending")
+    .reduce((sum, expense) => sum + expense.amount, 0);
+  const settledAmount = ledger.includedExpenses
+    .filter((expense) => expense.status === "settled")
+    .reduce((sum, expense) => sum + expense.amount, 0);
   const settlementSuggestions = calculateSettlementSuggestions(ledger.balances);
 
   async function submitExpense(event: FormEvent<HTMLFormElement>) {
@@ -195,14 +201,14 @@ export function ExpensesPanel({
           <small>{ledger.includedExpenses.length} valid expenses</small>
         </article>
         <article>
-          <span>Pending</span>
-          <strong>{pendingCount}</strong>
-          <small>Needs lead review</small>
+          <span>Pending amount</span>
+          <strong>{formatVnd(pendingAmount)}</strong>
+          <small>{pendingCount} {pendingCount === 1 ? "expense" : "expenses"} needs lead review</small>
         </article>
         <article>
-          <span>Settled</span>
-          <strong>{settledCount}</strong>
-          <small>Internal marker</small>
+          <span>Settled amount</span>
+          <strong>{formatVnd(settledAmount)}</strong>
+          <small>{settledCount} {settledCount === 1 ? "expense" : "expenses"} marked settled</small>
         </article>
         <article>
           <span>Suggested transfers</span>
