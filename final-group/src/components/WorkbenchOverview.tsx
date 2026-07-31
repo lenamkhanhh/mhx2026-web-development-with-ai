@@ -421,7 +421,7 @@ function EventPriority({ priority }: { priority: EventRecord["priority"] }) {
 function CategoryGlyph({ className, testId, visual }: { className: string; testId?: string; visual: CategoryVisual }) {
   const meta = CATEGORY_VISUALS[visual];
   const Icon = meta.icon;
-  return <span aria-label={meta.label} className={className} data-category-visual={visual} data-testid={testId} role="img"><Icon aria-hidden="true" size={17} /></span>;
+  return <span aria-label={meta.label} className={className} data-category-visual={visual} data-testid={testId} role="img"><Icon aria-hidden={true} size={17} /></span>;
 }
 
 function ToolbarPopover({ children, icon: Icon, label, onToggle, open, triggerRef }: {
