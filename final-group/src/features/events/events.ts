@@ -151,6 +151,33 @@ export class EventFeature {
     );
   }
 
+  async pause(eventId: string): Promise<void> {
+    this.assertLead();
+    const event = this.requireEvent(eventId);
+    if (event.status !== "approved" && event.status !== "happening") {
+      throw new EventActionError("invalid-state", "Only open or happening events can be paused.");
+    }
+    await this.options.backend.approveEvent(this.options.tripId, eventId, "paused");
+  }
+
+  async resume(eventId: string): Promise<void> {
+    this.assertLead();
+    const event = this.requireEvent(eventId);
+    if (event.status !== "paused") {
+      throw new EventActionError("invalid-state", "Only paused events can be resumed.");
+    }
+    await this.options.backend.approveEvent(this.options.tripId, eventId, "approved");
+  }
+
+  async complete(eventId: string): Promise<void> {
+    this.assertLead();
+    const event = this.requireEvent(eventId);
+    if (event.status === "pending" || event.status === "cancelled" || event.status === "completed") {
+      throw new EventActionError("invalid-state", "This event cannot be marked complete.");
+    }
+    await this.options.backend.approveEvent(this.options.tripId, eventId, "completed");
+  }
+
   async reorder(eventId: string, direction: "up" | "down"): Promise<void> {
     this.assertLead();
     const currentIndex = this.events.findIndex((event) => event.id === eventId);
@@ -232,6 +259,8 @@ export class EventFeature {
 export function assertEventInput(input: CreateEventInput): void {
   if (
     !input.title.trim() ||
+    !input.description.trim() ||
+    input.description.trim().length > 1000 ||
     !EVENT_CATEGORIES.has(input.category) ||
     !isDateTime(input.startAt) ||
     !isDateTime(input.endAt) ||
@@ -265,7 +294,7 @@ export function deriveEventStatus(
   event: Pick<EventRecord, "status" | "startAt" | "endAt">,
   now = new Date(),
 ): FirestoreEventStatus {
-  if (event.status === "pending" || event.status === "cancelled") {
+  if (event.status === "pending" || event.status === "cancelled" || event.status === "paused") {
     return event.status;
   }
   const start = Date.parse(event.startAt);
@@ -277,7 +306,7 @@ export function deriveEventStatus(
 }
 
 function occupiesSchedule(status: FirestoreEventStatus): boolean {
-  return status === "approved" || status === "happening";
+  return status === "approved" || status === "happening" || status === "cancelled" || status === "paused";
 }
 
 function isDateTime(value: string): boolean {
@@ -287,6 +316,7 @@ function isDateTime(value: string): boolean {
 function toCreateInput(event: EventRecord): CreateEventInput {
   return {
     title: event.title,
+    description: event.description,
     category: event.category,
     startAt: event.startAt,
     endAt: event.endAt,

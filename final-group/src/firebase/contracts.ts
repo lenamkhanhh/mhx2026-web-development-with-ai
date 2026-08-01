@@ -14,7 +14,8 @@ export type FirestoreEventStatus =
   | "approved"
   | "happening"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "paused";
 export type ExpenseStatus = "pending" | "settled";
 export type FirestoreEventPriority = "low" | "medium" | "high";
 export type ExpenseCategory =
@@ -63,6 +64,8 @@ export interface EventRecord {
   /** Stable, lead-controlled position in the trip itinerary. */
   order: number;
   title: string;
+  /** Empty only for migration-safe legacy documents. New writes require text. */
+  description: string;
   category: FirestoreEventCategory;
   startAt: string;
   endAt: string;
@@ -146,6 +149,7 @@ export interface CreateTripInput {
 
 export interface CreateEventInput {
   title: string;
+  description: string;
   category: FirestoreEventCategory;
   startAt: string;
   endAt: string;

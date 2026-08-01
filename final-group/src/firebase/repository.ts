@@ -458,6 +458,7 @@ export class FirebaseTripBackend implements TripBackend {
     const current = decodeEventRecord(eventId, existing.data());
     validateEventInput({
       title: patch.title ?? current.title,
+      description: patch.description ?? current.description,
       category: patch.category ?? current.category,
       startAt: patch.startAt ?? current.startAt,
       endAt: patch.endAt ?? current.endAt,

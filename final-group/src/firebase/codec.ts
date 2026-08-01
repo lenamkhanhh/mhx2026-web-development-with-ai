@@ -25,14 +25,14 @@ export const EVENT_CATEGORIES = new Set<FirestoreEventCategory>([
   "transport", "stay", "food", "activity", "other",
 ]);
 export const EVENT_STATUSES = new Set<FirestoreEventStatus>([
-  "pending", "approved", "happening", "completed", "cancelled",
+  "pending", "approved", "happening", "completed", "cancelled", "paused",
 ]);
 export const EVENT_PRIORITIES = new Set<FirestoreEventPriority>(["low", "medium", "high"]);
 export const EXPENSE_CATEGORIES = new Set<ExpenseCategory>([
   "transport", "accommodation", "food", "activities", "other",
 ]);
 const APPROVAL_STATUSES = new Set<Exclude<FirestoreEventStatus, "pending">>([
-  "approved", "happening", "completed", "cancelled",
+  "approved", "happening", "completed", "cancelled", "paused",
 ]);
 
 export class FirestoreDataError extends Error {
@@ -96,7 +96,7 @@ export function decodeEventRecord(id: string, data: DocumentData): EventRecord {
   if (typeof order !== "number" || !Number.isSafeInteger(order) || order < 0) {
     throw new FirestoreDataError("Expected order to be a non-negative integer.");
   }
-  return { id, order, title: stringValue(data, "title"), category: enumValue(data, "category", EVENT_CATEGORIES), startAt: isoDateTime(data, "startAt"), endAt: isoDateTime(data, "endAt"), status: enumValue(data, "status", EVENT_STATUSES), participantIds: stringList(data, "participantIds"), createdBy: stringValue(data, "createdBy"), approvedBy, location: optionalString(data, "location"), assigneeUid: optionalString(data, "assigneeUid"), priority: optionalEnumValue(data, "priority", EVENT_PRIORITIES), createdAt: optionalTimestamp(data, "createdAt"), updatedAt: optionalTimestamp(data, "updatedAt") };
+  return { id, order, title: stringValue(data, "title"), description: optionalString(data, "description") ?? "", category: enumValue(data, "category", EVENT_CATEGORIES), startAt: isoDateTime(data, "startAt"), endAt: isoDateTime(data, "endAt"), status: enumValue(data, "status", EVENT_STATUSES), participantIds: stringList(data, "participantIds"), createdBy: stringValue(data, "createdBy"), approvedBy, location: optionalString(data, "location"), assigneeUid: optionalString(data, "assigneeUid"), priority: optionalEnumValue(data, "priority", EVENT_PRIORITIES), createdAt: optionalTimestamp(data, "createdAt"), updatedAt: optionalTimestamp(data, "updatedAt") };
 }
 
 export function decodeExpenseRecord(id: string, data: DocumentData): ExpenseRecord {
@@ -115,8 +115,8 @@ export function resolveFirebaseConfig(environment: Environment): FirebaseClientC
   return { apiKey: values.API_KEY!, authDomain: values.AUTH_DOMAIN!, projectId: values.PROJECT_ID!, appId: values.APP_ID!, ...(environment.VITE_FIREBASE_MESSAGING_SENDER_ID ? { messagingSenderId: environment.VITE_FIREBASE_MESSAGING_SENDER_ID } : {}) };
 }
 
-export function validateEventInput(input: { title: string; category: FirestoreEventCategory; startAt: string; endAt: string; participantIds: string[]; location?: string; assigneeUid?: string; priority?: FirestoreEventPriority }): void {
-  if (!input.title.trim() || !EVENT_CATEGORIES.has(input.category) || !isDateTime(input.startAt) || !isDateTime(input.endAt) || Date.parse(input.endAt) <= Date.parse(input.startAt) || input.participantIds.length === 0) throw new FirestoreDataError("Invalid event input.");
+export function validateEventInput(input: { title: string; description: string; category: FirestoreEventCategory; startAt: string; endAt: string; participantIds: string[]; location?: string; assigneeUid?: string; priority?: FirestoreEventPriority }): void {
+  if (!input.title.trim() || !input.description.trim() || input.description.trim().length > 1000 || !EVENT_CATEGORIES.has(input.category) || !isDateTime(input.startAt) || !isDateTime(input.endAt) || Date.parse(input.endAt) <= Date.parse(input.startAt) || input.participantIds.length === 0) throw new FirestoreDataError("Invalid event input.");
   if (input.location !== undefined && !input.location.trim()) throw new FirestoreDataError("Event location cannot be blank.");
   if (input.assigneeUid !== undefined && !input.assigneeUid.trim()) throw new FirestoreDataError("Event assignee cannot be blank.");
   if (input.priority !== undefined && !EVENT_PRIORITIES.has(input.priority)) throw new FirestoreDataError("Invalid event priority.");
