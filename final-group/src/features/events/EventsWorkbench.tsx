@@ -14,6 +14,7 @@ import type {
   UpdateEventInput,
 } from "../../firebase/contracts";
 import styles from "./EventsWorkbench.module.css";
+import { calculateEventStatistics } from "../statistics/event-statistics";
 
 const CATEGORY_LABELS: Record<FirestoreEventCategory, string> = {
   transport: "Transport", stay: "Stay", food: "Food & drinks", activity: "Activity", other: "Other",
@@ -89,6 +90,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
     [fromDate, statusFilter, timeline, toDate],
   );
   const reorderPending = optimisticOrder !== null;
+  const statistics = useMemo(() => calculateEventStatistics(events), [events]);
   const selectedEvent = useMemo(
     () => timeline.find((item) => item.id === selectedEventId)
       ?? timeline.find((item) => item.id === initialSelectedEventId)
@@ -169,6 +171,11 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
       </div>
     </header>
     {feedback ? <p className={`${styles.feedback} ${styles[feedback.kind]}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.message}</p> : null}
+    <section aria-label="Event statistics" className={styles.statistics}>
+      <div><span>Current event</span><strong>{statistics.currentEvent?.title ?? "No event is happening now"}</strong></div>
+      <div><span>By category</span><strong>{CATEGORIES.filter((category) => statistics.byCategory[category] > 0).map((category) => `${CATEGORY_LABELS[category]} ${statistics.byCategory[category]}`).join(" Â· ") || "No events"}</strong></div>
+      <div><span>By status</span><strong>Open {statistics.byStatus.approved} Â· Live {statistics.byStatus.happening} Â· Review {statistics.byStatus.pending} Â· Done {statistics.byStatus.completed}</strong></div>
+    </section>
     {composerOpen ? <form aria-label="Create a timeline item" className={styles.composer} onSubmit={(event) => void submit(event)}>
       <div className={styles.composerHeader}><span>+</span><div><strong>Add a trip touchpoint</strong><small>{isLead ? "New items are approved immediately" : "New items enter the review queue"}</small></div><button aria-label="Close item composer" disabled={saving} onClick={() => setComposerOpen(false)} type="button">×</button></div>
       <label>Item title<input disabled={saving} maxLength={120} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="For example: Sunrise view" required value={draft.title} /></label>

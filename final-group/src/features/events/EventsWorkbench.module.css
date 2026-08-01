@@ -90,6 +90,32 @@
   font-size: 11px;
 }
 
+.statistics {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.5fr) minmax(260px, 1.4fr);
+  border: 1px solid #d9e0e8;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.statistics > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 11px;
+  border-right: 1px solid #e5e9ee;
+}
+
+.statistics > div:last-child { border-right: 0; }
+.statistics span { color: #75808c; font: 800 9px "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .06em; text-transform: uppercase; }
+.statistics strong { overflow-wrap: anywhere; color: #27303a; font-size: 11px; }
+
+@media (max-width: 900px) {
+  .statistics { grid-template-columns: 1fr; }
+  .statistics > div { border-right: 0; border-bottom: 1px solid #e5e9ee; }
+  .statistics > div:last-child { border-bottom: 0; }
+}
+
 .success {
   border-color: #5aa96c;
   color: #22663a;

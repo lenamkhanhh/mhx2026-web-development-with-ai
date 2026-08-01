@@ -39,6 +39,18 @@ beforeEach(() => vi.stubGlobal("matchMedia", vi.fn().mockImplementation(() => ({
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("EventsWorkbench", () => {
+  it("shows event counts and the current happening event", () => {
+    renderWorkbench({
+      events: [
+        event({ id: "live", title: "Live transfer", status: "happening" }),
+        event({ id: "done", title: "Finished breakfast", status: "completed", order: 1 }),
+      ],
+    });
+    const statistics = screen.getByRole("region", { name: "Event statistics" });
+    expect(within(statistics).getByText("Live transfer")).toBeTruthy();
+    expect(within(statistics).getByText(/Food & drinks 2/)).toBeTruthy();
+    expect(within(statistics).getByText(/Live 1/)).toBeTruthy();
+  });
   it("exposes lead lifecycle controls for pause, resume, and manual completion", async () => {
     const user = userEvent.setup();
     const { props } = renderWorkbench({
