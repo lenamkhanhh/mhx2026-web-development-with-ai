@@ -6,7 +6,7 @@ import type {
   TripBackend,
   TripSnapshot,
 } from "../../firebase/contracts";
-import { EventFeature } from "./events";
+import { deriveEventStatus, EventFeature, hasScheduleConflict } from "./events";
 
 const lead: AuthenticatedUser = {
   uid: "lead-1",
@@ -21,6 +21,7 @@ const member: AuthenticatedUser = {
 
 const input: CreateEventInput = {
   title: "Ăn sáng",
+  description: "Meet in the lobby before leaving for breakfast.",
   category: "food",
   startAt: "2026-07-30T08:00:00.000Z",
   endAt: "2026-07-30T09:00:00.000Z",
@@ -110,6 +111,9 @@ describe("EventFeature", () => {
     await expect(feature.create({ ...input, title: " " })).rejects.toMatchObject({
       code: "invalid-input",
     });
+    await expect(feature.create({ ...input, description: " " })).rejects.toMatchObject({
+      code: "invalid-input",
+    });
     expect(backend.createEvent).toHaveBeenCalledTimes(1);
   });
 
@@ -155,6 +159,41 @@ describe("EventFeature", () => {
 
     expect(backend.approveEvent).toHaveBeenNthCalledWith(1, "trip-1", "pending-1", "approved");
     expect(backend.approveEvent).toHaveBeenNthCalledWith(2, "trip-1", "pending-1", "cancelled");
+  });
+
+  it("supports lead pause, resume, and manual completion without weakening member permissions", async () => {
+    const backend = createBackend();
+    const leadFeature = new EventFeature({ backend, tripId: "trip-1", actor: lead, role: "lead" });
+    leadFeature.replaceEvents([event({ id: "lifecycle-1", status: "approved" })]);
+
+    await leadFeature.pause("lifecycle-1");
+    leadFeature.replaceEvents([event({ id: "lifecycle-1", status: "paused" })]);
+    await leadFeature.resume("lifecycle-1");
+    leadFeature.replaceEvents([event({ id: "lifecycle-1", status: "happening" })]);
+    await leadFeature.complete("lifecycle-1");
+
+    expect(backend.approveEvent).toHaveBeenNthCalledWith(1, "trip-1", "lifecycle-1", "paused");
+    expect(backend.approveEvent).toHaveBeenNthCalledWith(2, "trip-1", "lifecycle-1", "approved");
+    expect(backend.approveEvent).toHaveBeenNthCalledWith(3, "trip-1", "lifecycle-1", "completed");
+
+    const memberFeature = new EventFeature({ backend, tripId: "trip-1", actor: member, role: "member" });
+    memberFeature.replaceEvents([event({ id: "lifecycle-1", status: "approved" })]);
+    await expect(memberFeature.pause("lifecycle-1")).rejects.toMatchObject({ code: "forbidden" });
+  });
+
+  it("preserves paused events during time sync and keeps cancelled events in conflict checks", () => {
+    const paused = event({ status: "paused" });
+    expect(deriveEventStatus(paused, new Date("2026-07-30T12:00:00.000Z"))).toBe("paused");
+
+    const cancelled = event({ id: "cancelled", status: "cancelled" });
+    expect(hasScheduleConflict(
+      event({
+        id: "candidate",
+        startAt: "2026-07-30T08:30:00.000Z",
+        endAt: "2026-07-30T08:45:00.000Z",
+      }),
+      [cancelled],
+    )).toBe(true);
   });
 
   it("allows only an owner to update a pending event", async () => {
