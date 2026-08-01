@@ -175,6 +175,34 @@ export function App({ backend, demoMode = false, onExitDemo, onOpenDemo }: AppPr
     expenseFeature?.replaceExpenses(selectedSnapshot.expenses);
   }, [eventFeature, expenseFeature, membersFeature, selectedSnapshot]);
 
+  useEffect(() => {
+    if (!eventFeature || role !== "lead" || !selectedSnapshot) return;
+    let pending = false;
+    const synchronize = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        await eventFeature.syncStatuses();
+      } catch (cause) {
+        setError(toMessage(cause, "Unable to update timeline statuses."));
+      } finally {
+        pending = false;
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void synchronize();
+    };
+    void synchronize();
+    const intervalId = window.setInterval(() => void synchronize(), 30_000);
+    window.addEventListener("focus", synchronize);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", synchronize);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [eventFeature, role, selectedSnapshot]);
+
   async function handleAuthenticated(session: AuthenticatedSession) {
     setUser(session.user);
     setProfile(session.profile);
@@ -250,6 +278,36 @@ export function App({ backend, demoMode = false, onExitDemo, onOpenDemo }: AppPr
       setNotice("Item cancelled.");
     } catch (cause) {
       throwMutationFailure(cause, "Unable to cancel the item.");
+    }
+  }
+
+  async function pauseEvent(eventId: string) {
+    if (!eventFeature) return;
+    try {
+      await eventFeature.pause(eventId);
+      setNotice("Item paused.");
+    } catch (cause) {
+      throwMutationFailure(cause, "Unable to pause the item.");
+    }
+  }
+
+  async function resumeEvent(eventId: string) {
+    if (!eventFeature) return;
+    try {
+      await eventFeature.resume(eventId);
+      setNotice("Item resumed.");
+    } catch (cause) {
+      throwMutationFailure(cause, "Unable to resume the item.");
+    }
+  }
+
+  async function completeEvent(eventId: string) {
+    if (!eventFeature) return;
+    try {
+      await eventFeature.complete(eventId);
+      setNotice("Item marked complete.");
+    } catch (cause) {
+      throwMutationFailure(cause, "Unable to complete the item.");
     }
   }
 
@@ -453,6 +511,9 @@ export function App({ backend, demoMode = false, onExitDemo, onOpenDemo }: AppPr
       activity={selectedSnapshot.activity ?? []}
       members={selectedSnapshot.members}
       onApprove={approveEvent}
+      onPause={pauseEvent}
+      onResume={resumeEvent}
+      onComplete={completeEvent}
       onCancel={cancelEvent}
       onCreate={createEvent}
       onDelete={deleteEvent}

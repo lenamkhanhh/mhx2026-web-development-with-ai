@@ -40,6 +40,9 @@ export interface EventsWorkbenchProps {
   role: FirestoreMemberRole;
   onCreate: (input: CreateEventInput) => Promise<void>;
   onApprove: (eventId: string) => Promise<void>;
+  onPause: (eventId: string) => Promise<void>;
+  onResume: (eventId: string) => Promise<void>;
+  onComplete: (eventId: string) => Promise<void>;
   onCancel: (eventId: string) => Promise<void>;
   onDelete: (eventId: string) => Promise<void>;
   onMove: (eventId: string, direction: "up" | "down") => Promise<void>;
@@ -56,7 +59,7 @@ export interface EventsWorkbenchProps {
 }
 
 export function EventsWorkbench(props: EventsWorkbenchProps) {
-  const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate, notes, subitems, activity = [], onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem } = props;
+  const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onPause, onResume, onComplete, onCancel, onCreate, onDelete, onMove, onSync, onUpdate, notes, subitems, activity = [], onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem } = props;
   const [draft, setDraft] = useState({ title: "", description: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[], location: "", assigneeUid: "", priority: "" as FirestoreEventPriority | "" });
   const [composerOpen, setComposerOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<FirestoreEventStatus | "all">("all");
@@ -210,6 +213,9 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
               {actionMenuOpen ? <div aria-label={`Actions for ${item.title}`} className={styles.actions} id={`event-actions-${item.id}`}>
               {isLead ? <><button aria-label={`Move ${item.title} up`} disabled={index === 0 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "up")} type="button">↑</button><button aria-label={`Move ${item.title} down`} disabled={index === timeline.length - 1 || runningAction !== null || reorderPending} onClick={() => void move(item.id, "down")} type="button">↓</button></> : null}
               {isLead && item.status === "pending" ? <button disabled={runningAction !== null} onClick={() => void runAction(`approve-${item.id}`, "Approval requested.", () => onApprove(item.id))} type="button">Approve</button> : null}
+              {isLead && (item.status === "approved" || item.status === "happening") ? <button disabled={runningAction !== null} onClick={() => void runAction(`pause-${item.id}`, "Pause requested.", () => onPause(item.id))} type="button">Pause</button> : null}
+              {isLead && item.status === "paused" ? <button disabled={runningAction !== null} onClick={() => void runAction(`resume-${item.id}`, "Resume requested.", () => onResume(item.id))} type="button">Resume</button> : null}
+              {isLead && (item.status === "approved" || item.status === "happening" || item.status === "paused") ? <button disabled={runningAction !== null} onClick={() => void runAction(`complete-${item.id}`, "Completion requested.", () => onComplete(item.id))} type="button">Mark complete</button> : null}
               {isLead && item.status !== "cancelled" ? <button disabled={runningAction !== null} onClick={() => void runAction(`cancel-${item.id}`, "Cancellation requested.", () => onCancel(item.id))} type="button">Cancel</button> : null}
               {canDelete ? <button disabled={runningAction !== null} onClick={() => void runAction(`delete-${item.id}`, "Deletion requested.", () => onDelete(item.id))} type="button">Delete</button> : null}
               </div> : null}
