@@ -65,14 +65,18 @@ service cloud.firestore {
     }
 
     function validEvent(data) {
-      return data.keys().hasOnly(["title", "order", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "location", "assigneeUid", "priority", "createdAt", "updatedAt"])
+      return data.keys().hasOnly(["title", "description", "order", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "location", "assigneeUid", "priority", "createdAt", "updatedAt"])
         && data.keys().hasAll(["title", "category", "startAt", "endAt", "status", "participantIds", "createdBy", "approvedBy", "createdAt", "updatedAt"])
         && data.title is string
+        && ("description" in data)
+        && data.description is string
+        && data.description.size() > 0
+        && data.description.size() <= 1000
         && (!("order" in data) || (data.order is int && data.order >= 0))
         && (data.category == "transport" || data.category == "stay" || data.category == "food" || data.category == "activity" || data.category == "other")
         && data.startAt is string
         && data.endAt is string
-        && (data.status == "pending" || data.status == "approved" || data.status == "happening" || data.status == "completed" || data.status == "cancelled")
+        && (data.status == "pending" || data.status == "approved" || data.status == "happening" || data.status == "completed" || data.status == "cancelled" || data.status == "paused")
         && data.participantIds is list
         && data.createdBy is string
         && (data.approvedBy == null || data.approvedBy is string)
@@ -188,7 +192,7 @@ service cloud.firestore {
             && request.resource.data.createdBy == resource.data.createdBy
             && request.resource.data.approvedBy == null
             && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["title", "category", "startAt", "endAt", "participantIds", "location", "assigneeUid", "priority", "updatedAt"]))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["title", "description", "category", "startAt", "endAt", "participantIds", "location", "assigneeUid", "priority", "updatedAt"]))
         );
         allow delete: if isLead(tripId) || (isMember(tripId) && request.auth.uid == resource.data.createdBy && resource.data.status == "pending");
       }
