@@ -24,7 +24,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 function renderWorkbench(overrides: Partial<ComponentProps<typeof EventsWorkbench>> = {}) {
-  const props: ComponentProps<typeof EventsWorkbench> = { currentUserId: "lead-1", events: [], members, role: "lead", notes: [], subitems: [], onApprove: vi.fn().mockResolvedValue(undefined), onCancel: vi.fn().mockResolvedValue(undefined), onCreate: vi.fn().mockResolvedValue(undefined), onDelete: vi.fn().mockResolvedValue(undefined), onMove: vi.fn().mockResolvedValue(undefined), onSync: vi.fn().mockResolvedValue(undefined), onUpdate: vi.fn().mockResolvedValue(undefined), onCreateNote: vi.fn().mockResolvedValue(undefined), onDeleteNote: vi.fn().mockResolvedValue(undefined), onCreateSubitem: vi.fn().mockResolvedValue(undefined), onToggleSubitem: vi.fn().mockResolvedValue(undefined), onDeleteSubitem: vi.fn().mockResolvedValue(undefined), ...overrides };
+  const props: ComponentProps<typeof EventsWorkbench> = { currentUserId: "lead-1", events: [], members, role: "lead", notes: [], subitems: [], onApprove: vi.fn().mockResolvedValue(undefined), onPause: vi.fn().mockResolvedValue(undefined), onResume: vi.fn().mockResolvedValue(undefined), onComplete: vi.fn().mockResolvedValue(undefined), onCancel: vi.fn().mockResolvedValue(undefined), onCreate: vi.fn().mockResolvedValue(undefined), onDelete: vi.fn().mockResolvedValue(undefined), onMove: vi.fn().mockResolvedValue(undefined), onSync: vi.fn().mockResolvedValue(undefined), onUpdate: vi.fn().mockResolvedValue(undefined), onCreateNote: vi.fn().mockResolvedValue(undefined), onDeleteNote: vi.fn().mockResolvedValue(undefined), onCreateSubitem: vi.fn().mockResolvedValue(undefined), onToggleSubitem: vi.fn().mockResolvedValue(undefined), onDeleteSubitem: vi.fn().mockResolvedValue(undefined), ...overrides };
   return { ...render(<EventsWorkbench {...props} />), props };
 }
 async function openComposer(user: ReturnType<typeof userEvent.setup>) {
@@ -39,6 +39,27 @@ beforeEach(() => vi.stubGlobal("matchMedia", vi.fn().mockImplementation(() => ({
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("EventsWorkbench", () => {
+  it("exposes lead lifecycle controls for pause, resume, and manual completion", async () => {
+    const user = userEvent.setup();
+    const { props } = renderWorkbench({
+      events: [
+        event({ id: "open", title: "Open event", status: "approved" }),
+        event({ id: "paused", title: "Paused event", status: "paused", order: 1 }),
+      ],
+    });
+
+    let actions = await openActions(user, "Open event");
+    await user.click(actions.getByRole("button", { name: "Pause" }));
+    expect(props.onPause).toHaveBeenCalledWith("open");
+
+    actions = await openActions(user, "Paused event");
+    await user.click(actions.getByRole("button", { name: "Resume" }));
+    expect(props.onResume).toHaveBeenCalledWith("paused");
+
+    actions = await openActions(user, "Open event");
+    await user.click(actions.getByRole("button", { name: "Mark complete" }));
+    expect(props.onComplete).toHaveBeenCalledWith("open");
+  });
   it("groups the timeline by day and previews persisted notes in each event row", () => {
     const first = event({ id: "first", title: "Arrive", startAt: "2026-07-30T08:00:00.000Z", endAt: "2026-07-30T09:00:00.000Z" });
     const second = event({ id: "second", title: "Dinner", startAt: "2026-07-31T18:00:00.000Z", endAt: "2026-07-31T19:00:00.000Z" });
