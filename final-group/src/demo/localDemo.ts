@@ -285,6 +285,7 @@ class LocalDemoTripBackend implements TripBackend {
       id: this.nextId("demo-event"),
       order: nextOrder(snapshot.events),
       title: input.title.trim(),
+      description: input.description.trim(),
       category: input.category,
       startAt: input.startAt,
       endAt: input.endAt,
@@ -623,7 +624,7 @@ function event(
 ): EventRecord {
   const timestamp = demoRecordTimestamp(id);
   return {
-    id, order, title: demoRecordTitle(id, title), category, startAt, endAt, status, participantIds, createdBy, approvedBy,
+    id, order, title: demoRecordTitle(id, title), description: `Coordination details for ${demoRecordTitle(id, title)}.`, category, startAt, endAt, status, participantIds, createdBy, approvedBy,
     ...demoEventDetails(id),
     createdAt: timestamp, updatedAt: timestamp,
   };

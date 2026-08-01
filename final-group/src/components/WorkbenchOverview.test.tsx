@@ -41,6 +41,7 @@ const snapshot: TripSnapshot = {
     {
       id: "event-1",
       order: 0,
+      description: "Meet at the airport before checking in.",
       title: "Nhận phòng",
       category: "stay",
       startAt: "2026-08-01T08:00:00.000Z",
@@ -57,6 +58,7 @@ const snapshot: TripSnapshot = {
     {
       id: "event-2",
       order: 1,
+      description: "Review the proposal before confirming.",
       title: "Tham quan vườn hoa",
       category: "activity",
       startAt: "2026-08-01T10:00:00.000Z",

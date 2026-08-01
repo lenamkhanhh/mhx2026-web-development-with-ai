@@ -474,5 +474,7 @@ function statusLabel(status: EventRecord["status"]): string {
       return "Done";
     case "cancelled":
       return "Cancelled";
+    case "paused":
+      return "Paused";
   }
 }

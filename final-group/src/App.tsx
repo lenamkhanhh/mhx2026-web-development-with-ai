@@ -32,6 +32,7 @@ const STATUS_LABELS: Record<FirestoreEventStatus, string> = {
   happening: "In progress",
   completed: "Done",
   cancelled: "Cancelled",
+  paused: "Paused",
 };
 
 export function categoryLabel(category: FirestoreEventCategory): string {

@@ -12,7 +12,7 @@ const members: MemberRecord[] = [
   { uid: "member-1", displayName: "Minh", email: "member@example.com", role: "member", responsibility: "Photos", isDemo: false },
 ];
 function event(overrides: Partial<EventRecord> = {}): EventRecord {
-  return { id: "event-1", title: "Breakfast", category: "food", startAt: "2026-07-30T08:00:00.000Z", endAt: "2026-07-30T09:00:00.000Z", status: "approved", participantIds: ["lead-1", "member-1"], createdBy: "lead-1", approvedBy: "lead-1", order: 0, ...overrides };
+  return { id: "event-1", title: "Breakfast", description: "Meet in the lobby before leaving.", category: "food", startAt: "2026-07-30T08:00:00.000Z", endAt: "2026-07-30T09:00:00.000Z", status: "approved", participantIds: ["lead-1", "member-1"], createdBy: "lead-1", approvedBy: "lead-1", order: 0, ...overrides };
 }
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -226,6 +226,7 @@ describe("EventsWorkbench", () => {
     await openComposer(user);
     const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
     await user.type(screen.getByLabelText("Item title"), "Airport pickup");
+    await user.type(screen.getByLabelText("Description"), "Meet at the terminal exit.");
     await user.type(dateInputs[0], "2026-08-01T09:00");
     await user.type(dateInputs[1], "2026-08-01T10:00");
     await user.click(screen.getAllByRole("checkbox")[0]);
@@ -256,6 +257,7 @@ describe("EventsWorkbench", () => {
     await openComposer(user);
     const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
     await user.type(screen.getByLabelText("Item title"), "Sunrise");
+    await user.type(screen.getByLabelText("Description"), "Leave the hotel before dawn.");
     await user.selectOptions(screen.getByRole("combobox", { name: "Category" }), "transport");
     await user.type(dateInputs[0], "2026-07-30T06:00"); await user.type(dateInputs[1], "2026-07-30T07:00");
     await user.click(screen.getAllByRole("checkbox")[0]); await user.click(container.querySelector('button[type="submit"]')!);
@@ -263,6 +265,7 @@ describe("EventsWorkbench", () => {
     expect(screen.getByRole("status")).toBeTruthy();
     expect(props.onCreate).toHaveBeenCalledWith({
       title: "Sunrise",
+      description: "Leave the hotel before dawn.",
       category: "transport",
       startAt: new Date("2026-07-30T06:00").toISOString(),
       endAt: new Date("2026-07-30T07:00").toISOString(),
@@ -290,6 +293,7 @@ describe("EventsWorkbench", () => {
     )!;
 
     await user.type(title, "Locked draft");
+    await user.type(screen.getByLabelText("Description"), "Keep every control locked while saving.");
     await user.type(dateInputs[0], "2026-07-30T06:00");
     await user.type(dateInputs[1], "2026-07-30T07:00");
     await user.click(participant);
@@ -310,6 +314,7 @@ describe("EventsWorkbench", () => {
     await openComposer(user);
     const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
     await user.type(screen.getByLabelText("Item title"), "Night market");
+    await user.type(screen.getByLabelText("Description"), "Meet beside the market entrance.");
     await user.type(dateInputs[0], "2026-07-30T18:00"); await user.type(dateInputs[1], "2026-07-30T19:00");
     await user.click(screen.getAllByRole("checkbox")[0]); await user.click(container.querySelector('button[type="submit"]')!);
     await waitFor(() => expect(screen.getByRole("alert").textContent?.length).toBeGreaterThan(0));

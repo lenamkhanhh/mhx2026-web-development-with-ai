@@ -26,7 +26,7 @@ const CATEGORY_ICONS: Record<FirestoreEventCategory, ComponentType<{ "aria-hidde
   other: SquaresFour,
 };
 const STATUS_LABELS: Record<FirestoreEventStatus, string> = {
-  pending: "In review", approved: "Open", happening: "In progress", completed: "Done", cancelled: "Cancelled",
+  pending: "In review", approved: "Open", happening: "In progress", completed: "Done", cancelled: "Cancelled", paused: "Paused",
 };
 const CATEGORIES = Object.keys(CATEGORY_LABELS) as FirestoreEventCategory[];
 const PRIORITIES: Array<FirestoreEventPriority> = ["low", "medium", "high"];
@@ -57,7 +57,7 @@ export interface EventsWorkbenchProps {
 
 export function EventsWorkbench(props: EventsWorkbenchProps) {
   const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onCancel, onCreate, onDelete, onMove, onSync, onUpdate, notes, subitems, activity = [], onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem } = props;
-  const [draft, setDraft] = useState({ title: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[], location: "", assigneeUid: "", priority: "" as FirestoreEventPriority | "" });
+  const [draft, setDraft] = useState({ title: "", description: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[], location: "", assigneeUid: "", priority: "" as FirestoreEventPriority | "" });
   const [composerOpen, setComposerOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<FirestoreEventStatus | "all">("all");
   const [fromDate, setFromDate] = useState("");
@@ -109,12 +109,14 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const title = draft.title.trim();
-    if (!title || !draft.startAt || !draft.endAt || draft.participantIds.length === 0) {
-      setFeedback({ kind: "error", message: "Provide a title, time range, and at least one participant." });
+    const description = draft.description.trim();
+    if (!title || !description || !draft.startAt || !draft.endAt || draft.participantIds.length === 0) {
+      setFeedback({ kind: "error", message: "Provide a title, description, time range, and at least one participant." });
       return;
     }
     const input: CreateEventInput = {
       title,
+      description,
       category: draft.category,
       startAt: new Date(draft.startAt).toISOString(),
       endAt: new Date(draft.endAt).toISOString(),
@@ -127,7 +129,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
     setFeedback({ kind: "saving", message: `Adding “${title}” to the timeline…` });
     try {
       await onCreate(input);
-      setDraft({ title: "", category: "activity", startAt: "", endAt: "", participantIds: [], location: "", assigneeUid: "", priority: "" });
+      setDraft({ title: "", description: "", category: "activity", startAt: "", endAt: "", participantIds: [], location: "", assigneeUid: "", priority: "" });
       setFeedback({ kind: "success", message: "Item sent. Waiting for the realtime update." });
     } catch (error) {
       setFeedback({ kind: "error", message: rollbackMessage(error, "Unable to save the item.") });
@@ -165,6 +167,7 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
     {composerOpen ? <form aria-label="Create a timeline item" className={styles.composer} onSubmit={(event) => void submit(event)}>
       <div className={styles.composerHeader}><span>+</span><div><strong>Add a trip touchpoint</strong><small>{isLead ? "New items are approved immediately" : "New items enter the review queue"}</small></div><button aria-label="Close item composer" disabled={saving} onClick={() => setComposerOpen(false)} type="button">×</button></div>
       <label>Item title<input disabled={saving} maxLength={120} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="For example: Sunrise view" required value={draft.title} /></label>
+      <label>Description<textarea disabled={saving} maxLength={1000} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="What should the team know or prepare?" required value={draft.description} /></label>
       <label>Category<select disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value as FirestoreEventCategory }))} value={draft.category}>{CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}</select></label>
       <label>Start<input disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, startAt: event.target.value }))} required type="datetime-local" value={draft.startAt} /></label>
       <label>End<input disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, endAt: event.target.value }))} required type="datetime-local" value={draft.endAt} /></label>

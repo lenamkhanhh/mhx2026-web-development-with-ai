@@ -177,6 +177,7 @@ export function decodeEventRecord(id: string, data: DocumentData): EventRecord {
     id,
     order,
     title: stringValue(data, "title"),
+    description: optionalString(data, "description") ?? "",
     category: enumValue(data, "category", EVENT_CATEGORIES),
     startAt: isoDateTime(data, "startAt"),
     endAt: isoDateTime(data, "endAt"),
