@@ -51,12 +51,20 @@ test("lead approval and member collaboration stay realtime and permission-aware"
     await memberDetails.getByRole("tab", { name: "Notes" }).click();
     await memberDetails.getByLabel("New note").fill("The member has checked transport.");
     await memberDetails.getByRole("button", { name: "Add note" }).click();
-    await expect(memberDetails.getByText("The member has checked transport.")).toBeVisible();
+    await expect(
+      memberDetails
+        .getByRole("region", { name: "Event notes" })
+        .getByText("The member has checked transport."),
+    ).toBeVisible();
 
     await leadPage.getByRole("button", { name: `Open ${memberEvent} details` }).click();
     const leadDetails = leadPage.getByRole("complementary", { name: "Event details" });
     await leadDetails.getByRole("tab", { name: "Notes" }).click();
-    await expect(leadDetails.getByText("The member has checked transport.")).toBeVisible();
+    await expect(
+      leadDetails
+        .getByRole("region", { name: "Event notes" })
+        .getByText("The member has checked transport."),
+    ).toBeVisible();
   } finally {
     await memberContext.close();
   }
