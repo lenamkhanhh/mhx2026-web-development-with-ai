@@ -276,6 +276,11 @@ interface EventDetailPanelProps {
 function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, event, members, activity, notes, subitems, onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem, onUpdate }: EventDetailPanelProps) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(event.title);
+  const [description, setDescription] = useState(event.description);
+  const [category, setCategory] = useState(event.category);
+  const [startAt, setStartAt] = useState(toLocalDateTimeInput(event.startAt));
+  const [endAt, setEndAt] = useState(toLocalDateTimeInput(event.endAt));
+  const [participantIds, setParticipantIds] = useState([...event.participantIds]);
   const [location, setLocation] = useState(event.location ?? "");
   const [assigneeUid, setAssigneeUid] = useState(event.assigneeUid ?? "");
   const [priority, setPriority] = useState<FirestoreEventPriority | "">(event.priority ?? "");
@@ -292,6 +297,11 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
 
   function beginEdit() {
     setTitle(event.title);
+    setDescription(event.description);
+    setCategory(event.category);
+    setStartAt(toLocalDateTimeInput(event.startAt));
+    setEndAt(toLocalDateTimeInput(event.endAt));
+    setParticipantIds([...event.participantIds]);
     setLocation(event.location ?? "");
     setAssigneeUid(event.assigneeUid ?? "");
     setPriority(event.priority ?? "");
@@ -302,13 +312,19 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
   async function save(eventForm: FormEvent<HTMLFormElement>) {
     eventForm.preventDefault();
     const nextTitle = title.trim();
-    if (!nextTitle) {
-      setFeedback({ kind: "error", message: "Item title is required." });
+    const nextDescription = description.trim();
+    if (!nextTitle || !nextDescription || !startAt || !endAt || participantIds.length === 0 || Date.parse(endAt) <= Date.parse(startAt)) {
+      setFeedback({ kind: "error", message: "Title, description, valid times, and at least one participant are required." });
       return;
     }
     const nextLocation = location.trim();
     const patch: UpdateEventInput = {
       ...(nextTitle !== event.title ? { title: nextTitle } : {}),
+      ...(nextDescription !== event.description ? { description: nextDescription } : {}),
+      ...(category !== event.category ? { category } : {}),
+      ...(new Date(startAt).toISOString() !== event.startAt ? { startAt: new Date(startAt).toISOString() } : {}),
+      ...(new Date(endAt).toISOString() !== event.endAt ? { endAt: new Date(endAt).toISOString() } : {}),
+      ...(!sameOrder(participantIds, event.participantIds) ? { participantIds } : {}),
       ...(nextLocation !== (event.location ?? "") ? { location: nextLocation || null } : {}),
       ...(assigneeUid !== (event.assigneeUid ?? "") ? { assigneeUid: assigneeUid || null } : {}),
       ...(priority !== (event.priority ?? "") ? { priority: priority || null } : {}),
@@ -383,6 +399,7 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
     {activeTab === "details" ? <>
     <dl className={styles.detailList}>
       <div><dt>Category</dt><dd>{CATEGORY_LABELS[event.category]}</dd></div>
+      <div><dt>Description</dt><dd>{event.description || "No description"}</dd></div>
       <div><dt>Time</dt><dd>{formatDateTime(event.startAt)} — {formatDateTime(event.endAt)}</dd></div>
       <div><dt>Participants</dt><dd>{participants}</dd></div>
       <div><dt>Location</dt><dd>{event.location ?? "Not set"}</dd></div>
@@ -393,6 +410,11 @@ function EventDetailPanel({ canEdit, canManageCollaboration, currentUserId, even
     {feedback ? <p className={`${styles.detailFeedback} ${styles[feedback.kind]}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.message}</p> : null}
     {canEdit ? editing ? <form className={styles.editForm} onSubmit={(eventForm) => void save(eventForm)}>
       <label>Activity title<input aria-label="Activity title" disabled={saving} maxLength={120} onChange={(eventInput) => setTitle(eventInput.target.value)} required value={title} /></label>
+      <label>Description<textarea aria-label="Event description" disabled={saving} maxLength={1000} onChange={(eventInput) => setDescription(eventInput.target.value)} required value={description} /></label>
+      <label>Category<select aria-label="Event category" disabled={saving} onChange={(eventInput) => setCategory(eventInput.target.value as FirestoreEventCategory)} value={category}>{CATEGORIES.map((item) => <option key={item} value={item}>{CATEGORY_LABELS[item]}</option>)}</select></label>
+      <label>Start<input aria-label="Event start" disabled={saving} onChange={(eventInput) => setStartAt(eventInput.target.value)} required type="datetime-local" value={startAt} /></label>
+      <label>End<input aria-label="Event end" disabled={saving} onChange={(eventInput) => setEndAt(eventInput.target.value)} required type="datetime-local" value={endAt} /></label>
+      <fieldset className={styles.participants} disabled={saving}><legend>Participants</legend>{members.map((member) => <label key={member.uid}><input checked={participantIds.includes(member.uid)} onChange={() => setParticipantIds((current) => current.includes(member.uid) ? current.filter((uid) => uid !== member.uid) : [...current, member.uid])} type="checkbox" />{member.displayName}</label>)}</fieldset>
       <label>Location<input aria-label="Location" disabled={saving} maxLength={160} onChange={(eventInput) => setLocation(eventInput.target.value)} value={location} /></label>
       <label>Assignee<select aria-label="Assignee" disabled={saving} onChange={(eventInput) => setAssigneeUid(eventInput.target.value)} value={assigneeUid}><option value="">Unassigned</option>{members.map((member) => <option key={member.uid} value={member.uid}>{member.displayName}</option>)}</select></label>
       <label>Priority<select aria-label="Priority" disabled={saving} onChange={(eventInput) => setPriority(eventInput.target.value as FirestoreEventPriority | "")} value={priority}><option value="">Not set</option>{PRIORITIES.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
@@ -473,6 +495,7 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 function formatDateTime(value: string): string { return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
+function toLocalDateTimeInput(value: string): string { const date = new Date(value); const offset = date.getTimezoneOffset() * 60_000; return new Date(date.getTime() - offset).toISOString().slice(0, 16); }
 function formatTimelineTime(value: string): string { return new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value)); }
 function formatTimelineDay(value: string): string { return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric" }).format(new Date(value)); }
 function rollbackMessage(error: unknown, fallback: string): string { const detail = error instanceof Error && error.message ? error.message : fallback; return `${detail} The form or timeline was rolled back so you can try again.`; }

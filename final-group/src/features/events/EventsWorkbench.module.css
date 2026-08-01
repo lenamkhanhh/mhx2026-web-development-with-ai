@@ -216,7 +216,9 @@
 .composer input,
 .composer select,
 .composer textarea,
-.editForm input {
+.editForm input,
+.editForm select,
+.editForm textarea {
   box-sizing: border-box;
   min-height: 36px;
   width: 100%;
@@ -235,10 +237,18 @@
   resize: vertical;
 }
 
+.editForm textarea {
+  min-height: 78px;
+  padding: 9px;
+  resize: vertical;
+}
+
 .composer input:focus-visible,
 .composer select:focus-visible,
 .composer textarea:focus-visible,
-.editForm input:focus-visible {
+.editForm input:focus-visible,
+.editForm select:focus-visible,
+.editForm textarea:focus-visible {
   border-color: #0866ed;
   outline: 2px solid rgb(8 102 237 / 14%);
   outline-offset: 1px;

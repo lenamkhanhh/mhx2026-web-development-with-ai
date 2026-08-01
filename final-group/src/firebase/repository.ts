@@ -18,11 +18,14 @@ import {
   doc,
   type Firestore,
   getDoc,
+  getDocs,
   onSnapshot,
+  query,
   serverTimestamp,
   setDoc,
   Timestamp,
   updateDoc,
+  where,
   writeBatch,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
@@ -546,13 +549,26 @@ export class FirebaseTripBackend implements TripBackend {
       assigneeUid: patch.assigneeUid === null ? undefined : patch.assigneeUid ?? current.assigneeUid,
       priority: patch.priority === null ? undefined : patch.priority ?? current.priority,
     });
-    await updateDoc(eventRef, {
+    const eventUpdate = {
       ...patch,
       ...(patch.location === null ? { location: deleteField() } : {}),
       ...(patch.assigneeUid === null ? { assigneeUid: deleteField() } : {}),
       ...(patch.priority === null ? { priority: deleteField() } : {}),
       updatedAt: serverTimestamp(),
-    });
+    };
+    const linkedExpenses = await getDocs(query(
+      collection(this.firestore, "trips", tripId, "expenses"),
+      where("eventId", "==", eventId),
+    ));
+    const batch = writeBatch(this.firestore);
+    batch.update(eventRef, eventUpdate);
+    linkedExpenses.docs.forEach((expense) => batch.update(expense.ref, {
+      ...(patch.title !== undefined ? { title: patch.title.trim() } : {}),
+      ...(patch.participantIds !== undefined ? { splitAmong: [...patch.participantIds] } : {}),
+      ...(patch.category !== undefined ? { category: expenseCategoryForEvent(patch.category) } : {}),
+      updatedAt: serverTimestamp(),
+    }));
+    await batch.commit();
   }
 
   approveEvent(tripId: string, eventId: string, status: Exclude<FirestoreEventStatus, "pending">): Promise<void> {

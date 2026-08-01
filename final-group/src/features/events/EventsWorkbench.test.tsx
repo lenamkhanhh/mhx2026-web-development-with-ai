@@ -284,6 +284,26 @@ describe("EventsWorkbench", () => {
     }));
   });
 
+  it("edits the full required event record from the inspector", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    renderWorkbench({ events: [event()], onUpdate });
+    const details = screen.getByRole("complementary", { name: "Event details" });
+    await user.click(within(details).getByRole("button", { name: "Edit event" }));
+    const description = within(details).getByRole("textbox", { name: "Event description" });
+    await user.clear(description);
+    await user.type(description, "Updated coordination instructions.");
+    await user.selectOptions(within(details).getByRole("combobox", { name: "Event category" }), "activity");
+    await user.click(within(details).getByRole("checkbox", { name: "Minh" }));
+    await user.click(within(details).getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(onUpdate).toHaveBeenCalledWith("event-1", {
+      description: "Updated coordination instructions.",
+      category: "activity",
+      participantIds: ["lead-1"],
+    }));
+  });
+
   it("captures an optional event-linked expense with a participant payer", async () => {
     const user = userEvent.setup();
     const onCreate = vi.fn().mockResolvedValue(undefined);
