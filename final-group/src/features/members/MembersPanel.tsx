@@ -21,6 +21,7 @@ export interface MembersPanelProps {
   state?: MembersPanelState;
   errorMessage?: string;
   onUpdateResponsibility: (memberId: string, responsibility: string) => void | Promise<void>;
+  onUpdateDisplayName?: (memberId: string, displayName: string) => void | Promise<void>;
   onRemoveMember: (memberId: string) => void | Promise<void>;
 }
 
@@ -35,10 +36,12 @@ export function MembersPanel({
   state = "ready",
   errorMessage,
   onUpdateResponsibility,
+  onUpdateDisplayName,
   onRemoveMember,
 }: MembersPanelProps) {
   const currentMember = members.find((member) => member.uid === currentUserId);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<Record<string, Feedback>>({});
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [copyStateCode, setCopyStateCode] = useState<string | null>(null);
@@ -73,6 +76,19 @@ export function MembersPanel({
     setFeedback((value) => ({ ...value, [member.uid]: "saving" }));
     try {
       await onUpdateResponsibility(member.uid, responsibility);
+      setFeedback((value) => ({ ...value, [member.uid]: "saved" }));
+    } catch {
+      setFeedback((value) => ({ ...value, [member.uid]: "error" }));
+    }
+  };
+
+  const updateDisplayName = async (member: MemberRecord) => {
+    if (member.uid !== currentUserId || !onUpdateDisplayName) return;
+    const displayName = (nameDrafts[member.uid] ?? member.displayName).trim();
+    if (!displayName || displayName === member.displayName) return;
+    setFeedback((value) => ({ ...value, [member.uid]: "saving" }));
+    try {
+      await onUpdateDisplayName(member.uid, displayName);
       setFeedback((value) => ({ ...value, [member.uid]: "saved" }));
     } catch {
       setFeedback((value) => ({ ...value, [member.uid]: "error" }));
@@ -165,7 +181,7 @@ export function MembersPanel({
           return <li key={member.uid} className="members-panel__card">
             <div className="members-panel__identity">
               <span aria-hidden="true" className="members-panel__avatar">{member.displayName.slice(0, 1).toUpperCase()}</span>
-              <div><h3>{member.displayName}</h3><p>{member.email}</p></div>
+              <div>{member.uid === currentUserId && onUpdateDisplayName ? <><input aria-label="Your display name" disabled={memberFeedback === "saving"} maxLength={120} onChange={(event) => setNameDrafts((value) => ({ ...value, [member.uid]: event.target.value }))} value={nameDrafts[member.uid] ?? member.displayName} /><button disabled={memberFeedback === "saving" || !(nameDrafts[member.uid] ?? member.displayName).trim() || (nameDrafts[member.uid] ?? member.displayName).trim() === member.displayName} onClick={() => void updateDisplayName(member)} type="button">Save name</button></> : <h3>{member.displayName}</h3>}<p>{member.email}</p></div>
             </div>
             <span className={`members-panel__role members-panel__role--${member.role}`}>{member.role === "lead" ? "Lead" : "Member"}</span>
             <label className="members-panel__responsibility">Responsibility

@@ -207,6 +207,7 @@ export interface TripBackend {
    */
   joinTrip(joinCode: string, actor: AuthenticatedUser): Promise<TripRecord>;
   updateResponsibility(tripId: string, uid: string, responsibility: string): Promise<void>;
+  updateMemberProfile?(tripId: string, uid: string, patch: { displayName?: string; responsibility?: string }): Promise<void>;
   removeMember(tripId: string, uid: string): Promise<void>;
   createEvent(tripId: string, input: CreateEventInput, actor: AuthenticatedUser): Promise<EventRecord>;
   updateEvent(tripId: string, eventId: string, patch: UpdateEventInput): Promise<void>;

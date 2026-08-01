@@ -269,6 +269,27 @@
   min-width: 0;
 }
 
+.members-panel__identity input {
+  width: min(170px, 100%);
+  min-height: 28px;
+  padding: 4px 7px;
+  border: 1px solid #cfd6df;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 11px;
+}
+
+.members-panel__identity button {
+  min-height: 26px;
+  margin-top: 4px;
+  padding: 0 7px;
+  border: 1px solid #0866ed;
+  border-radius: 4px;
+  color: #0866ed;
+  background: #fff;
+  font-size: 10px;
+}
+
 .members-panel__avatar {
   display: grid;
   width: 28px;

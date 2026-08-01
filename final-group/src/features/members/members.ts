@@ -83,6 +83,21 @@ export class MembersFeature {
     );
   }
 
+  async updateDisplayName(uid: string, displayName: string): Promise<void> {
+    if (uid !== this.options.actor.uid) {
+      throw new MemberActionError("forbidden", "You can update only your own display name.");
+    }
+    this.requireMember(uid);
+    const normalized = displayName.trim();
+    if (!normalized || normalized.length > 120) {
+      throw new MemberActionError("forbidden", "Display name must contain 1 to 120 characters.");
+    }
+    if (!this.options.backend.updateMemberProfile) {
+      throw new MemberActionError("forbidden", "Profile editing is unavailable in this backend.");
+    }
+    await this.options.backend.updateMemberProfile(this.options.tripId, uid, { displayName: normalized });
+  }
+
   async removeMember(uid: string): Promise<void> {
     if (!canRemoveMember(this.options.actor.uid, this.options.role, { uid })) {
       throw new MemberActionError("forbidden", "Only the trip lead can remove another member.");

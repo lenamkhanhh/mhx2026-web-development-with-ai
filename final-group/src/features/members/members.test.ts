@@ -76,6 +76,7 @@ function createBackend(): TripBackend & {
       throw new Error("unsupported");
     }),
     updateResponsibility: vi.fn(async () => undefined),
+    updateMemberProfile: vi.fn(async () => undefined),
     removeMember: vi.fn(async () => undefined),
     createEvent: vi.fn(),
     updateEvent: vi.fn(),
@@ -96,6 +97,14 @@ function createBackend(): TripBackend & {
 }
 
 describe("MembersFeature", () => {
+  it("updates only the authenticated member display name", async () => {
+    const backend = createBackend();
+    const feature = new MembersFeature({ backend, tripId: "trip-1", actor: member, role: "member" });
+    feature.replaceSnapshot(tripSnapshot());
+    await feature.updateDisplayName(member.uid, "Minh Tran");
+    expect(backend.updateMemberProfile).toHaveBeenCalledWith("trip-1", member.uid, { displayName: "Minh Tran" });
+    await expect(feature.updateDisplayName(lead.uid, "Wrong")).rejects.toMatchObject({ code: "forbidden" });
+  });
   it("updates only the authenticated member responsibility", async () => {
     const backend = createBackend();
     const feature = new MembersFeature({

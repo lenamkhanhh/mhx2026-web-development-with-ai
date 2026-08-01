@@ -472,6 +472,21 @@ export class FirebaseTripBackend implements TripBackend {
     return updateDoc(doc(this.firestore, "trips", tripId, "members", uid), { responsibility });
   }
 
+  updateMemberProfile(tripId: string, uid: string, patch: { displayName?: string; responsibility?: string }): Promise<void> {
+    const displayName = patch.displayName?.trim();
+    const responsibility = patch.responsibility?.trim();
+    if (displayName !== undefined && (!displayName || displayName.length > 120)) {
+      return Promise.reject(new FirestoreDataError("Display name must contain 1 to 120 characters."));
+    }
+    if (responsibility !== undefined && responsibility.length > 240) {
+      return Promise.reject(new FirestoreDataError("Responsibility must contain at most 240 characters."));
+    }
+    return updateDoc(doc(this.firestore, "trips", tripId, "members", uid), {
+      ...(displayName !== undefined ? { displayName } : {}),
+      ...(responsibility !== undefined ? { responsibility } : {}),
+    });
+  }
+
   removeMember(tripId: string, uid: string): Promise<void> {
     return deleteDoc(doc(this.firestore, "trips", tripId, "members", uid));
   }

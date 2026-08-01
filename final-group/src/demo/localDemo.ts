@@ -254,6 +254,17 @@ class LocalDemoTripBackend implements TripBackend {
     }));
   }
 
+  async updateMemberProfile(tripId: string, uid: string, patch: { displayName?: string; responsibility?: string }): Promise<void> {
+    this.updateSnapshot(tripId, (snapshot) => ({
+      ...snapshot,
+      members: snapshot.members.map((member) => member.uid === uid ? {
+        ...member,
+        ...(patch.displayName !== undefined ? { displayName: patch.displayName.trim() } : {}),
+        ...(patch.responsibility !== undefined ? { responsibility: patch.responsibility.trim() } : {}),
+      } : member),
+    }));
+  }
+
   async removeMember(tripId: string, uid: string): Promise<void> {
     this.updateSnapshot(tripId, (snapshot) => {
       if (uid === snapshot.trip.leadId) {

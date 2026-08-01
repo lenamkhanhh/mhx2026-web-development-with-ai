@@ -227,6 +227,7 @@ describe("trip and membership boundaries", () => {
     await assertSucceeds(
       updateDoc(doc(memberDb, "trips", TRIP_ID, "members", MEMBER_ID), {
         responsibility: "Đặt xe",
+        displayName: "Member Updated",
       }),
     );
     await assertFails(

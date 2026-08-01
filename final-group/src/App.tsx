@@ -548,6 +548,7 @@ export function App({ backend, demoMode = false, onExitDemo, onOpenDemo }: AppPr
       members={selectedSnapshot.members}
       onRemoveMember={(uid) => membersFeature.removeMember(uid)}
       onUpdateResponsibility={(uid, responsibility) => membersFeature.updateResponsibility(uid, responsibility)}
+      onUpdateDisplayName={(uid, displayName) => membersFeature.updateDisplayName(uid, displayName)}
       trip={selectedSnapshot.trip}
     />
   );

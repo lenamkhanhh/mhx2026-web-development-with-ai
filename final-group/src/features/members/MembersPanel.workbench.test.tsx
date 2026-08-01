@@ -18,6 +18,16 @@ function panel(overrides: Partial<MembersPanelProps> = {}) {
 afterEach(cleanup);
 
 describe("MembersPanel workbench", () => {
+  it("lets the current member update their display name", async () => {
+    const user = userEvent.setup();
+    const onUpdateDisplayName = vi.fn().mockResolvedValue(undefined);
+    render(panel({ currentUserId: "member-1", onUpdateDisplayName }));
+    const input = screen.getByRole("textbox", { name: "Your display name" });
+    await user.clear(input);
+    await user.type(input, "Minh Tran");
+    await user.click(screen.getByRole("button", { name: "Save name" }));
+    expect(onUpdateDisplayName).toHaveBeenCalledWith("member-1", "Minh Tran");
+  });
   it("copies the displayed join code and reports success", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
