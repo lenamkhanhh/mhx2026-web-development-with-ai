@@ -369,6 +369,24 @@ describe("event boundaries", () => {
 });
 
 describe("expense boundaries", () => {
+  it("allows one expense to link to an event created in the same batch", async () => {
+    const leadDb = testEnvironment.authenticatedContext(LEAD_ID).firestore();
+    const batch = writeBatch(leadDb);
+    batch.set(doc(leadDb, "trips", TRIP_ID, "events", "event-with-cost"), eventData(LEAD_ID, "approved"));
+    batch.set(doc(leadDb, "trips", TRIP_ID, "expenses", "linked-expense"), {
+      ...expenseData(LEAD_ID),
+      eventId: "event-with-cost",
+    });
+    await assertSucceeds(batch.commit());
+
+    await assertFails(
+      setDoc(doc(leadDb, "trips", TRIP_ID, "expenses", "orphan-expense"), {
+        ...expenseData(LEAD_ID),
+        eventId: "missing-event",
+      }),
+    );
+  });
+
   it("prevents a member from editing another user's expense", async () => {
     await testEnvironment.withSecurityRulesDisabled(async (context) => {
       await setDoc(

@@ -272,6 +272,27 @@ describe("EventsWorkbench", () => {
     }));
   });
 
+  it("captures an optional event-linked expense with a participant payer", async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn().mockResolvedValue(undefined);
+    const { container } = renderWorkbench({ onCreate });
+    await openComposer(user);
+    const dateInputs = [...container.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
+    await user.type(screen.getByLabelText("Item title"), "Museum tickets");
+    await user.type(screen.getByLabelText("Description"), "Buy tickets for the group.");
+    await user.type(dateInputs[0], "2026-08-01T09:00");
+    await user.type(dateInputs[1], "2026-08-01T10:00");
+    await user.click(screen.getAllByRole("checkbox")[0]);
+    await user.type(screen.getByLabelText("Event cost (VND)"), "500000");
+    await user.selectOptions(screen.getByLabelText("Payer"), "lead-1");
+    await user.click(screen.getByRole("button", { name: "Add to timeline" }));
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
+      expenseAmount: 500_000,
+      expensePaidBy: "lead-1",
+    })));
+  });
+
   it("shows saving feedback, submits typed data, and resets after success", async () => {
     const user = userEvent.setup(); const save = deferred<void>();
     const { container, props } = renderWorkbench({ onCreate: vi.fn(() => save.promise) });

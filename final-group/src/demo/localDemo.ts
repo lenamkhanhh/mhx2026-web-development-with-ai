@@ -299,6 +299,21 @@ class LocalDemoTripBackend implements TripBackend {
     this.updateSnapshot(tripId, (current) => ({
       ...current,
       events: [...current.events, event],
+      expenses: input.expenseAmount !== undefined && input.expensePaidBy
+        ? [...current.expenses, {
+          id: this.nextId("demo-expense"),
+          eventId: event.id,
+          title: event.title,
+          amount: input.expenseAmount,
+          paidBy: input.expensePaidBy,
+          splitAmong: [...event.participantIds],
+          status: "pending" as const,
+          createdBy: actor.uid,
+          category: event.category === "stay" ? "accommodation" : event.category === "activity" ? "activities" : event.category === "food" ? "food" : event.category === "transport" ? "transport" : "other",
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        }]
+        : current.expenses,
     }));
     return copyEvent(event);
   }

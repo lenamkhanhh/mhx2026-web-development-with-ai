@@ -114,6 +114,12 @@ describe("EventFeature", () => {
     await expect(feature.create({ ...input, description: " " })).rejects.toMatchObject({
       code: "invalid-input",
     });
+    await expect(feature.create({ ...input, expenseAmount: 120_000 })).rejects.toMatchObject({
+      code: "invalid-input",
+    });
+    await expect(feature.create({ ...input, expenseAmount: 120_000, expensePaidBy: "outsider" })).rejects.toMatchObject({
+      code: "invalid-input",
+    });
     expect(backend.createEvent).toHaveBeenCalledTimes(1);
   });
 

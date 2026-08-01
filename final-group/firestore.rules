@@ -102,7 +102,7 @@ service cloud.firestore {
     }
 
     function validExpense(data) {
-      return data.keys().hasOnly(["title", "amount", "paidBy", "splitAmong", "status", "createdBy", "category", "createdAt", "updatedAt"])
+      return data.keys().hasOnly(["title", "amount", "paidBy", "splitAmong", "status", "createdBy", "category", "eventId", "createdAt", "updatedAt"])
         && data.keys().hasAll(["title", "amount", "paidBy", "splitAmong", "status", "createdBy", "createdAt", "updatedAt"])
         && data.title is string
         && data.amount is int
@@ -111,6 +111,7 @@ service cloud.firestore {
         && data.splitAmong is list
         && (data.status == "pending" || data.status == "settled")
         && data.createdBy is string
+        && (!("eventId" in data) || data.eventId is string)
         && (!("category" in data) || (data.category == "transport" || data.category == "accommodation" || data.category == "food" || data.category == "activities" || data.category == "other"))
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
@@ -233,7 +234,9 @@ service cloud.firestore {
       match /expenses/{expenseId} {
         allow get, list: if isMember(tripId);
         allow create: if isMember(tripId) && validExpense(request.resource.data)
-          && request.resource.data.createdBy == request.auth.uid;
+          && request.resource.data.createdBy == request.auth.uid
+          && (!("eventId" in request.resource.data)
+            || existsAfter(/databases/$(database)/documents/trips/$(tripId)/events/$(request.resource.data.eventId)));
         allow update: if validExpense(request.resource.data)
           && (
             isLead(tripId)

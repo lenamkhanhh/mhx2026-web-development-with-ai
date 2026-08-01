@@ -95,6 +95,8 @@ export interface ExpenseRecord {
   createdBy: string;
   /** Optional declared expense category; never inferred from a title. */
   category?: ExpenseCategory;
+  /** Optional normalized link to the itinerary item that created this cost. */
+  eventId?: string;
   /** Firestore server timestamps exposed as ISO strings when available. */
   createdAt?: string;
   updatedAt?: string;
@@ -159,6 +161,9 @@ export interface CreateEventInput {
   location?: string;
   assigneeUid?: string;
   priority?: FirestoreEventPriority;
+  /** Optional event cost, persisted as one linked expense document. */
+  expenseAmount?: number;
+  expensePaidBy?: string;
 }
 
 /**
@@ -178,6 +183,7 @@ export interface CreateExpenseInput {
   paidBy: string;
   splitAmong: string[];
   category?: ExpenseCategory;
+  eventId?: string;
 }
 
 export interface TripBackend {

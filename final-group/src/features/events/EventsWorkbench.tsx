@@ -60,7 +60,7 @@ export interface EventsWorkbenchProps {
 
 export function EventsWorkbench(props: EventsWorkbenchProps) {
   const { currentUserId, events, initialSelectedEventId, members, role, onApprove, onPause, onResume, onComplete, onCancel, onCreate, onDelete, onMove, onSync, onUpdate, notes, subitems, activity = [], onCreateNote, onDeleteNote, onCreateSubitem, onToggleSubitem, onDeleteSubitem } = props;
-  const [draft, setDraft] = useState({ title: "", description: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[], location: "", assigneeUid: "", priority: "" as FirestoreEventPriority | "" });
+  const [draft, setDraft] = useState({ title: "", description: "", category: "activity" as FirestoreEventCategory, startAt: "", endAt: "", participantIds: [] as string[], location: "", assigneeUid: "", priority: "" as FirestoreEventPriority | "", expenseAmount: "", expensePaidBy: "" });
   const [composerOpen, setComposerOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<FirestoreEventStatus | "all">("all");
   const [fromDate, setFromDate] = useState("");
@@ -113,7 +113,8 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
     event.preventDefault();
     const title = draft.title.trim();
     const description = draft.description.trim();
-    if (!title || !description || !draft.startAt || !draft.endAt || draft.participantIds.length === 0) {
+    const expenseAmount = draft.expenseAmount ? Number(draft.expenseAmount) : undefined;
+    if (!title || !description || !draft.startAt || !draft.endAt || draft.participantIds.length === 0 || (expenseAmount !== undefined && (!Number.isSafeInteger(expenseAmount) || expenseAmount < 0 || !draft.expensePaidBy))) {
       setFeedback({ kind: "error", message: "Provide a title, description, time range, and at least one participant." });
       return;
     }
@@ -127,12 +128,13 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
       ...(draft.location.trim() ? { location: draft.location.trim() } : {}),
       ...(draft.assigneeUid ? { assigneeUid: draft.assigneeUid } : {}),
       ...(draft.priority ? { priority: draft.priority } : {}),
+      ...(expenseAmount !== undefined ? { expenseAmount, expensePaidBy: draft.expensePaidBy } : {}),
     };
     setSaving(true);
     setFeedback({ kind: "saving", message: `Adding “${title}” to the timeline…` });
     try {
       await onCreate(input);
-      setDraft({ title: "", description: "", category: "activity", startAt: "", endAt: "", participantIds: [], location: "", assigneeUid: "", priority: "" });
+      setDraft({ title: "", description: "", category: "activity", startAt: "", endAt: "", participantIds: [], location: "", assigneeUid: "", priority: "", expenseAmount: "", expensePaidBy: "" });
       setFeedback({ kind: "success", message: "Item sent. Waiting for the realtime update." });
     } catch (error) {
       setFeedback({ kind: "error", message: rollbackMessage(error, "Unable to save the item.") });
@@ -177,6 +179,8 @@ export function EventsWorkbench(props: EventsWorkbenchProps) {
       <label>Location<input disabled={saving} maxLength={160} onChange={(event) => setDraft((current) => ({ ...current, location: event.target.value }))} placeholder="Optional place or address" value={draft.location} /></label>
       <label>Assignee<select disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, assigneeUid: event.target.value }))} value={draft.assigneeUid}><option value="">Unassigned</option>{members.map((member) => <option key={member.uid} value={member.uid}>{member.displayName}</option>)}</select></label>
       <label>Priority<select disabled={saving} onChange={(event) => setDraft((current) => ({ ...current, priority: event.target.value as FirestoreEventPriority | "" }))} value={draft.priority}><option value="">Not set</option>{PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select></label>
+      <label>Event cost (VND)<input disabled={saving} min="0" onChange={(event) => setDraft((current) => ({ ...current, expenseAmount: event.target.value }))} placeholder="Optional integer amount" step="1" type="number" value={draft.expenseAmount} /></label>
+      <label>Payer<select disabled={saving || !draft.expenseAmount} onChange={(event) => setDraft((current) => ({ ...current, expensePaidBy: event.target.value }))} value={draft.expensePaidBy}><option value="">Select payer</option>{members.filter((member) => draft.participantIds.includes(member.uid)).map((member) => <option key={member.uid} value={member.uid}>{member.displayName}</option>)}</select></label>
       <fieldset className={styles.participants} disabled={saving}><legend>Participants</legend>{members.map((member) => <label key={member.uid}><input checked={draft.participantIds.includes(member.uid)} disabled={saving} onChange={() => toggleParticipant(member.uid)} type="checkbox" />{member.displayName}</label>)}</fieldset>
       <button className={styles.createButton} disabled={saving} type="submit">{saving ? "Saving item…" : "Add to timeline"}</button>
     </form> : null}

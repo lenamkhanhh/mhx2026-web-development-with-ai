@@ -213,6 +213,7 @@ export function decodeExpenseRecord(id: string, data: DocumentData): ExpenseReco
     status,
     createdBy: stringValue(data, "createdBy"),
     category: optionalEnumValue(data, "category", EXPENSE_CATEGORIES),
+    eventId: optionalString(data, "eventId"),
     createdAt: optionalTimestamp(data, "createdAt"),
     updatedAt: optionalTimestamp(data, "updatedAt"),
   };
@@ -480,15 +481,36 @@ export class FirebaseTripBackend implements TripBackend {
     const member = await this.getMember(tripId, actor.uid);
     if (!member) throw new FirestoreDataError("Only a trip member can create an event.");
     const eventRef = doc(collection(this.firestore, "trips", tripId, "events"));
+    const { expenseAmount, expensePaidBy, ...eventInput } = input;
     const event: EventRecord = {
       id: eventRef.id,
       order: Date.now(),
-      ...input,
+      ...eventInput,
       status: member.role === "lead" ? "approved" : "pending",
       createdBy: actor.uid,
       approvedBy: member.role === "lead" ? actor.uid : null,
     };
-    await setDoc(eventRef, { ...withoutId(event), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    const batch = writeBatch(this.firestore);
+    batch.set(eventRef, { ...withoutId(event), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    if (expenseAmount !== undefined && expensePaidBy !== undefined) {
+      const payer = await this.getMember(tripId, expensePaidBy);
+      if (!payer || !event.participantIds.includes(expensePaidBy)) {
+        throw new FirestoreDataError("The event payer must be one of its trip participants.");
+      }
+      batch.set(doc(collection(this.firestore, "trips", tripId, "expenses")), {
+        eventId: event.id,
+        title: event.title,
+        amount: expenseAmount,
+        paidBy: expensePaidBy,
+        splitAmong: [...event.participantIds],
+        status: "pending",
+        createdBy: actor.uid,
+        category: expenseCategoryForEvent(event.category),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    }
+    await batch.commit();
     return event;
   }
 
@@ -748,4 +770,12 @@ function createJoinCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const values = crypto.getRandomValues(new Uint8Array(16));
   return Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
+}
+
+function expenseCategoryForEvent(category: FirestoreEventCategory): ExpenseCategory {
+  if (category === "stay") return "accommodation";
+  if (category === "food") return "food";
+  if (category === "activity") return "activities";
+  if (category === "transport") return "transport";
+  return "other";
 }

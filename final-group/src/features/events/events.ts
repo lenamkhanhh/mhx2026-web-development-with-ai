@@ -266,6 +266,9 @@ export function assertEventInput(input: CreateEventInput): void {
     !isDateTime(input.endAt) ||
     Date.parse(input.endAt) <= Date.parse(input.startAt) ||
     input.participantIds.length === 0
+    || ((input.expenseAmount === undefined) !== (input.expensePaidBy === undefined))
+    || (input.expenseAmount !== undefined && (!Number.isSafeInteger(input.expenseAmount) || input.expenseAmount < 0))
+    || (input.expensePaidBy !== undefined && !input.participantIds.includes(input.expensePaidBy))
   ) {
     throw new EventActionError("invalid-input", "Invalid event input.");
   }
