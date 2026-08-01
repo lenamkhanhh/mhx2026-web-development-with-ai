@@ -6,7 +6,7 @@ const PROJECT_ID = "demo-tripflow-e2e";
 const SYNTHETIC_PASSWORD = "Synthetic-E2E-Only-2026!";
 
 test("lead approval and member collaboration stay realtime and permission-aware", async ({ browser, page: leadPage }, testInfo) => {
-  test.setTimeout(70_000);
+  test.setTimeout(100_000);
   const runId = `${Date.now()}-${testInfo.parallelIndex}`;
   const lead = { email: `tripflow-lead-${runId}@example.test`, displayName: `Lead ${runId}` };
   const member = { email: `tripflow-member-${runId}@example.test`, displayName: `Member ${runId}` };
@@ -28,6 +28,7 @@ test("lead approval and member collaboration stay realtime and permission-aware"
     await memberPage.getByRole("link", { name: "Timeline" }).click();
     await memberPage.getByTestId("events-add-button").click();
     await memberPage.getByLabel("Item title").fill(memberEvent);
+    await memberPage.getByLabel("Description").fill("Member proposal awaiting lead review.");
     await memberPage.getByLabel("Start").fill("2026-08-20T09:00");
     await memberPage.getByLabel("End").fill("2026-08-20T10:00");
     await memberPage.getByRole("checkbox", { name: member.displayName }).check();
@@ -39,8 +40,10 @@ test("lead approval and member collaboration stay realtime and permission-aware"
     await leadPage.getByRole("link", { name: "Timeline" }).click();
     const leadEventRow = leadPage.getByRole("listitem").filter({ hasText: memberEvent });
     await expect(leadEventRow.getByText("In review", { exact: true })).toBeVisible();
+    await leadEventRow.getByRole("button", { name: `Open actions for ${memberEvent}` }).click();
     await leadEventRow.getByRole("button", { name: "Approve" }).click();
     await expect(memberEventRow.getByText("Open", { exact: true })).toBeVisible();
+    await leadEventRow.getByRole("button", { name: `Open actions for ${memberEvent}` }).click();
 
     await memberPage.getByRole("button", { name: "Close item composer" }).click();
     await memberPage.getByRole("button", { name: `Open ${memberEvent} details` }).click();

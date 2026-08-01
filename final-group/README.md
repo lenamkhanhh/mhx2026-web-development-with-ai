@@ -13,16 +13,20 @@ expenses, and members in one Firebase-backed workspace.
 
 1. Create an account or sign in with Firebase Email/Password Authentication.
 2. Create a trip in the onboarding flow. The creator becomes the trip lead.
+   A signed-in teammate can join with the generated 16-character code; the
+   code is resolved through a time-limited, SHA-256-addressed Firestore proof.
 3. Use the four workbench screens:
    - **Overview** — status and category filters, sort controls, real global
      search, activity context, and expense summary.
-   - **Timeline** — create, edit, approve, cancel, delete, and reorder
-     itinerary items according to role; add event notes and actionable
-     sub-items from the selected item's inspector.
+   - **Timeline** — create and fully edit events; approve, pause, resume,
+     complete, cancel, delete, and reorder according to role; attach an event
+     cost, add notes/sub-items, and inspect category/status/current-event
+     statistics. Open events advance automatically while the app is active.
    - **Expenses** — create, filter, edit, delete, calculate balances, and
      settle an expense as lead.
-   - **Members** — search/filter members, assign responsibilities, inspect
-     permissions, and remove a member as lead.
+   - **Members** — join by verified code, search/filter members, edit your
+     display name and responsibility, inspect permissions, and remove another
+     member as lead.
 4. Check permission behaviour: members can propose pending itinerary items;
    only the lead can approve/reorder events, settle expenses, or remove another
    member.
@@ -47,10 +51,12 @@ feed is append-only in Security Rules and only shows persisted records. It is
 not presented as a server-forensic audit trail: trusted audit logging would
 require a server-side writer.
 
-Joining an existing trip by code is intentionally shown as unavailable in this
-release. A client-only implementation could let a user self-grant membership,
-so this action remains fail-closed until a server-verifiable join flow is
-available.
+Join codes never authorize membership on their own. New trips atomically create
+a time-limited proof whose document id is the SHA-256 digest of a high-entropy
+code. Rules allow a signed-in caller to create only their own `member` record
+when that proof is active, unexpired, and belongs to the requested trip; the
+same path cannot grant `lead` or add a different uid. Proof collections cannot
+be listed.
 
 ## Local setup
 
@@ -68,8 +74,8 @@ npm run dev -- --host 127.0.0.1
 
 Open `/final-group/` on the local Vite URL.
 
-For a synthetic, development-only preview, append `?demo=1`. It is in-memory,
-visibly labelled, resets on reload, and is intentionally disabled in production.
+For a synthetic preview, append `?demo=1`. It is in-memory, visibly labelled,
+resets on reload, and never writes to Firebase, including on the public build.
 
 ## Verification
 
@@ -88,9 +94,10 @@ powershell -ExecutionPolicy Bypass -File .\final-group\scripts\verify-final-grou
 
 ## Known limitations
 
-The production app does not include a server-verified invite/join-by-code
-endpoint yet. A reviewer can still verify the complete create-trip and
-lead/member management workflow by creating a new account and trip.
+Trips created before the proof-backed join migration do not automatically gain
+a new proof. Create a fresh trip when evaluating join-by-code. Proof rotation
+is protected by Rules but is not exposed as a separate UI control in this
+release.
 
 File uploads remain unavailable because Firebase Storage and its matching
 Security Rules are intentionally not configured in this release.

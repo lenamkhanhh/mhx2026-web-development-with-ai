@@ -17,6 +17,7 @@ test("the public interactive demo needs no account, stays local, and can be exit
   await page.getByRole("link", { name: "Timeline" }).click();
   await page.getByTestId("events-add-button").click();
   await page.getByLabel("Item title").fill(eventTitle);
+  await page.getByLabel("Description").fill("Synthetic local-only timeline item.");
   await page.getByLabel("Start").fill("2026-08-01T09:00");
   await page.getByLabel("End").fill("2026-08-01T10:00");
   await page.getByRole("checkbox", { name: "An Nhiên" }).check();

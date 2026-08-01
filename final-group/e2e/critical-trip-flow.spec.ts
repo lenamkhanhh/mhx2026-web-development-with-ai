@@ -40,6 +40,7 @@ test("a traveller persists timeline notes, sub-items, and activity through Fires
   await page.getByRole("link", { name: "Timeline" }).click();
   await page.getByTestId("events-add-button").click();
   await page.getByLabel("Item title").fill(eventTitle);
+  await page.getByLabel("Description").fill("Meet before sunrise and bring a light jacket.");
   await page.getByLabel("Start").fill("2026-08-10T05:00");
   await page.getByLabel("End").fill("2026-08-10T06:00");
   await page.getByLabel("Location").fill(eventLocation);
@@ -61,7 +62,7 @@ test("a traveller persists timeline notes, sub-items, and activity through Fires
   await details.getByRole("tab", { name: "Sub-items" }).click();
   await details.getByLabel("New sub-item").fill("Confirm the meeting point");
   await details.getByRole("button", { name: "Add sub-item" }).click();
-  await expect(details.getByText("Confirm the meeting point")).toBeVisible();
+  await expect(details.getByText("Confirm the meeting point", { exact: true })).toBeVisible();
   const completionBox = details.getByRole("checkbox", { name: "Mark Confirm the meeting point complete" });
   await completionBox.click();
   await expect(details.getByRole("checkbox", { name: "Mark Confirm the meeting point open" })).toBeChecked();
@@ -78,8 +79,8 @@ test("a traveller persists timeline notes, sub-items, and activity through Fires
   await page.getByRole("link", { name: "Overview" }).click();
   const itinerary = page.getByRole("table", { name: "Trip itinerary" });
   await expect(itinerary.getByText(eventLocation)).toBeVisible();
-  await expect(itinerary.getByLabel(displayName)).toBeVisible();
-  await expect(itinerary.getByText("high", { exact: true })).toBeVisible();
+  await expect(itinerary.getByText(displayName, { exact: true })).toBeVisible();
+  await expect(itinerary.getByText("High", { exact: true })).toBeVisible();
   await expect(page.getByRole("complementary", { name: "Trip context" }).getByText("Completed sub-item “Confirm the meeting point”")).toBeVisible();
   expect(externalRequests).toEqual([]);
 });
