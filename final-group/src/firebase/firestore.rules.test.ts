@@ -42,13 +42,14 @@ function tripData() {
   };
 }
 
-function memberData(role: "lead" | "member", displayName: string) {
+function memberData(role: "lead" | "member", displayName: string, joinedWithProofId?: string) {
   return {
     displayName,
     email: `${displayName.toLowerCase()}@example.com`,
     role,
     responsibility: "",
     isDemo: false,
+    ...(joinedWithProofId ? { joinedWithProofId } : {}),
     joinedAt: now(),
   };
 }
@@ -148,8 +149,76 @@ describe("trip and membership boundaries", () => {
       doc(db, "trips", tripId, "members", OUTSIDER_ID),
       memberData("lead", "Outsider"),
     );
+    batch.set(doc(db, "tripJoinProofs", "new-trip-proof"), {
+      tripId,
+      active: true,
+      expiresAt: Timestamp.fromMillis(Date.now() + 86_400_000),
+      createdBy: OUTSIDER_ID,
+      createdAt: serverTimestamp(),
+    });
 
     await assertSucceeds(batch.commit());
+  });
+
+  it("allows only proof-backed self-join as a member", async () => {
+    const proofId = "proof-for-trip-1";
+    await testEnvironment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "tripJoinProofs", proofId), {
+        tripId: TRIP_ID,
+        active: true,
+        expiresAt: Timestamp.fromMillis(Date.now() + 86_400_000),
+        createdBy: LEAD_ID,
+        createdAt: now(),
+      });
+    });
+    const outsiderDb = testEnvironment.authenticatedContext(OUTSIDER_ID).firestore();
+
+    await assertFails(
+      setDoc(
+        doc(outsiderDb, "trips", TRIP_ID, "members", MEMBER_ID),
+        memberData("member", "Impersonated", proofId),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(outsiderDb, "trips", TRIP_ID, "members", OUTSIDER_ID),
+        memberData("lead", "Escalated", proofId),
+      ),
+    );
+    await assertSucceeds(
+      setDoc(
+        doc(outsiderDb, "trips", TRIP_ID, "members", OUTSIDER_ID),
+        memberData("member", "Outsider", proofId),
+      ),
+    );
+  });
+
+  it("rejects expired or revoked join proofs", async () => {
+    await testEnvironment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "tripJoinProofs", "expired-proof"), {
+        tripId: TRIP_ID,
+        active: true,
+        expiresAt: Timestamp.fromMillis(Date.now() - 60_000),
+        createdBy: LEAD_ID,
+        createdAt: now(),
+      });
+      await setDoc(doc(context.firestore(), "tripJoinProofs", "revoked-proof"), {
+        tripId: TRIP_ID,
+        active: false,
+        expiresAt: Timestamp.fromMillis(Date.now() + 86_400_000),
+        createdBy: LEAD_ID,
+        createdAt: now(),
+      });
+    });
+    const outsiderDb = testEnvironment.authenticatedContext(OUTSIDER_ID).firestore();
+    for (const proofId of ["expired-proof", "revoked-proof"]) {
+      await assertFails(
+        setDoc(
+          doc(outsiderDb, "trips", TRIP_ID, "members", OUTSIDER_ID),
+          memberData("member", "Outsider", proofId),
+        ),
+      );
+    }
   });
 
   it("allows a member to edit only their own responsibility", async () => {

@@ -8,6 +8,18 @@ import {
   decodeExpenseRecord,
   resolveFirebaseConfig,
 } from "./codec";
+import { hashJoinCode, normalizeJoinCode } from "./repository";
+
+describe("join proof identifiers", () => {
+  it("normalizes formatted codes and hashes them deterministically without storing plaintext", async () => {
+    expect(normalizeJoinCode(" abcd-efgh jklm-npqr ")).toBe("ABCDEFGHJKLMNPQR");
+    const first = await hashJoinCode("ABCD-EFGH-JKLM-NPQR");
+    const second = await hashJoinCode("abcdefghjklmnpqr");
+    expect(first).toBe(second);
+    expect(first).toMatch(/^[a-f0-9]{64}$/);
+    expect(first).not.toContain("ABCDEFGH");
+  });
+});
 
 describe("TripFlow Firestore record contract", () => {
   it("creates a trip record that contains only the agreed schema fields", () => {

@@ -57,6 +57,8 @@ export interface MemberRecord {
   role: FirestoreMemberRole;
   responsibility: string;
   isDemo: boolean;
+  /** Present only for members who joined through a server-verifiable proof. */
+  joinedWithProofId?: string;
 }
 
 export interface EventRecord {
@@ -197,7 +199,7 @@ export interface TripBackend {
    * join proof (see the handoff). A client must never be allowed to self-add
    * to a trip merely by knowing its id.
    */
-  joinTrip(joinCode: string, actor: AuthenticatedUser): Promise<never>;
+  joinTrip(joinCode: string, actor: AuthenticatedUser): Promise<TripRecord>;
   updateResponsibility(tripId: string, uid: string, responsibility: string): Promise<void>;
   removeMember(tripId: string, uid: string): Promise<void>;
   createEvent(tripId: string, input: CreateEventInput, actor: AuthenticatedUser): Promise<EventRecord>;

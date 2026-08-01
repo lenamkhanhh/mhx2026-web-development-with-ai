@@ -21,6 +21,7 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  Timestamp,
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
@@ -69,6 +70,7 @@ const EVENT_STATUSES = new Set<FirestoreEventStatus>([
   "happening",
   "completed",
   "cancelled",
+  "paused",
 ]);
 const EVENT_PRIORITIES = new Set<FirestoreEventPriority>(["low", "medium", "high"]);
 const EXPENSE_CATEGORIES = new Set<ExpenseCategory>([
@@ -399,6 +401,7 @@ export class FirebaseTripBackend implements TripBackend {
   async createTrip(input: CreateTripInput, actor: AuthenticatedUser): Promise<TripRecord> {
     const tripRef = doc(collection(this.firestore, "trips"));
     const joinCode = createJoinCode();
+    const proofId = await hashJoinCode(joinCode);
     const trip = { id: tripRef.id, ...createTripRecord(input, actor.uid, joinCode) };
     const batch = writeBatch(this.firestore);
     batch.set(tripRef, { ...withoutId(trip), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
@@ -416,14 +419,52 @@ export class FirebaseTripBackend implements TripBackend {
       tripIds: arrayUnion(trip.id),
       updatedAt: serverTimestamp(),
     }, { merge: true });
+    batch.set(doc(this.firestore, "tripJoinProofs", proofId), {
+      tripId: trip.id,
+      active: true,
+      expiresAt: Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      createdBy: actor.uid,
+      createdAt: serverTimestamp(),
+    });
     await batch.commit();
     return trip;
   }
 
-  async joinTrip(_joinCode: string, _actor: AuthenticatedUser): Promise<never> {
-    throw new UnsupportedTripOperationError(
-      "Joining by code is disabled until a callable function or a server-verifiable join-proof schema is approved.",
-    );
+  async joinTrip(joinCode: string, actor: AuthenticatedUser): Promise<TripRecord> {
+    const normalized = normalizeJoinCode(joinCode);
+    if (!/^[A-Z0-9]{16}$/.test(normalized)) {
+      throw new FirestoreDataError("Enter a valid 16-character join code.");
+    }
+    const proofId = await hashJoinCode(normalized);
+    const proofSnapshot = await getDoc(doc(this.firestore, "tripJoinProofs", proofId));
+    if (!proofSnapshot.exists()) throw new FirestoreDataError("Join code is invalid or expired.");
+    const proof = proofSnapshot.data();
+    const tripId = stringValue(proof, "tripId");
+    if (value(proof, "active") !== true) throw new FirestoreDataError("Join code is invalid or expired.");
+    const expiresAt = value(proof, "expiresAt");
+    if (!expiresAt || typeof expiresAt !== "object" || !("toMillis" in expiresAt) || typeof expiresAt.toMillis !== "function" || expiresAt.toMillis() <= Date.now()) {
+      throw new FirestoreDataError("Join code is invalid or expired.");
+    }
+    const batch = writeBatch(this.firestore);
+    batch.set(doc(this.firestore, "trips", tripId, "members", actor.uid), {
+      displayName: actor.displayName ?? actor.email ?? "Trip member",
+      email: actor.email ?? "",
+      role: "member",
+      responsibility: "",
+      isDemo: false,
+      joinedWithProofId: proofId,
+      joinedAt: serverTimestamp(),
+    });
+    batch.set(doc(this.firestore, "users", actor.uid), {
+      displayName: actor.displayName ?? "",
+      email: actor.email ?? "",
+      tripIds: arrayUnion(tripId),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    await batch.commit();
+    const tripSnapshot = await getDoc(doc(this.firestore, "trips", tripId));
+    if (!tripSnapshot.exists()) throw new FirestoreDataError("Trip is no longer available.");
+    return decodeTripRecord(tripId, tripSnapshot.data());
   }
 
   updateResponsibility(tripId: string, uid: string, responsibility: string): Promise<void> {
@@ -630,7 +671,7 @@ function decodeMemberRecord(uid: string, data: DocumentData): MemberRecord {
   if (role !== "lead" && role !== "member") throw new FirestoreDataError(`Unexpected member role: ${role}.`);
   const isDemo = value(data, "isDemo");
   if (typeof isDemo !== "boolean") throw new FirestoreDataError("Expected isDemo to be boolean.");
-  return { uid, displayName: stringValue(data, "displayName"), email: stringValue(data, "email"), role, responsibility: stringValue(data, "responsibility"), isDemo };
+  return { uid, displayName: stringValue(data, "displayName"), email: stringValue(data, "email"), role, responsibility: stringValue(data, "responsibility"), isDemo, ...(optionalString(data, "joinedWithProofId") ? { joinedWithProofId: optionalString(data, "joinedWithProofId") } : {}) };
 }
 
 export function decodeEventNote(id: string, data: DocumentData): EventNote {
@@ -693,4 +734,18 @@ function isIsoDate(value: string): boolean { return /^\d{4}-\d{2}-\d{2}$/.test(v
 function withoutId<T extends { id: string }>(record: T): Omit<T, "id"> { const { id: _id, ...data } = record; return data; }
 function combineUnsubscribers(unsubscribers: Array<() => void>): () => void { return () => unsubscribers.forEach((unsubscribe) => unsubscribe()); }
 function toAuthenticatedUser(user: { uid: string; email: string | null; displayName: string | null }): AuthenticatedUser { return { uid: user.uid, email: user.email, displayName: user.displayName }; }
-function createJoinCode(): string { return Array.from(crypto.getRandomValues(new Uint32Array(2))).map((value) => value.toString(36).toUpperCase()).join("").slice(0, 10).padEnd(6, "0"); }
+export function normalizeJoinCode(value: string): string {
+  return value.trim().replace(/[\s-]+/g, "").toUpperCase();
+}
+
+export async function hashJoinCode(value: string): Promise<string> {
+  const normalized = normalizeJoinCode(value);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalized));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function createJoinCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const values = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
+}

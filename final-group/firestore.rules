@@ -13,6 +13,18 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/trips/$(tripId)/members/$(uid));
     }
 
+    function joinProof(proofId) {
+      return get(/databases/$(database)/documents/tripJoinProofs/$(proofId));
+    }
+
+    function validJoinProofFor(tripId, proofId) {
+      return proofId is string
+        && exists(/databases/$(database)/documents/tripJoinProofs/$(proofId))
+        && joinProof(proofId).data.tripId == tripId
+        && joinProof(proofId).data.active == true
+        && joinProof(proofId).data.expiresAt > request.time;
+    }
+
     function isMember(tripId) {
       return signedIn()
         && exists(/databases/$(database)/documents/trips/$(tripId)/members/$(request.auth.uid));
@@ -55,12 +67,14 @@ service cloud.firestore {
     }
 
     function validMember(data) {
-      return hasOnlyKeys(data, ["displayName", "email", "role", "responsibility", "isDemo", "joinedAt"])
+      return data.keys().hasOnly(["displayName", "email", "role", "responsibility", "isDemo", "joinedWithProofId", "joinedAt"])
+        && data.keys().hasAll(["displayName", "email", "role", "responsibility", "isDemo", "joinedAt"])
         && data.displayName is string
         && data.email is string
         && (data.role == "lead" || data.role == "member")
         && data.responsibility is string
         && data.isDemo is bool
+        && (!("joinedWithProofId" in data) || data.joinedWithProofId is string)
         && data.joinedAt is timestamp;
     }
 
@@ -144,6 +158,22 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /tripJoinProofs/{proofId} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["tripId", "active", "expiresAt", "createdBy", "createdAt"])
+        && request.resource.data.keys().hasAll(["tripId", "active", "expiresAt", "createdBy", "createdAt"])
+        && request.resource.data.tripId is string
+        && request.resource.data.active == true
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.createdBy == request.auth.uid
+        && getAfter(/databases/$(database)/documents/trips/$(request.resource.data.tripId)).data.leadId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/trips/$(request.resource.data.tripId)/members/$(request.auth.uid)).data.role == "lead";
+      allow update, delete: if signedIn() && isLead(resource.data.tripId);
+    }
+
     match /trips/{tripId} {
       allow get, list: if isMember(tripId);
       allow create: if signedIn() && validTrip(request.resource.data)
@@ -161,17 +191,20 @@ service cloud.firestore {
         allow create: if signedIn() && validMember(request.resource.data) && (
           (request.auth.uid == uid && request.resource.data.role == "lead"
             && getAfter(/databases/$(database)/documents/trips/$(tripId)).data.leadId == uid)
+          || (request.auth.uid == uid && request.resource.data.role == "member"
+            && ("joinedWithProofId" in request.resource.data)
+            && validJoinProofFor(tripId, request.resource.data.joinedWithProofId))
           || isLead(tripId)
         );
         allow update: if validMember(request.resource.data) && (
           isLead(tripId)
           || (request.auth.uid == uid && resource.data.role == "member"
             && request.resource.data.role == resource.data.role
-            && request.resource.data.displayName == resource.data.displayName
             && request.resource.data.email == resource.data.email
             && request.resource.data.isDemo == resource.data.isDemo
             && request.resource.data.joinedAt == resource.data.joinedAt
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["responsibility"]))
+            && request.resource.data.get("joinedWithProofId", "") == resource.data.get("joinedWithProofId", "")
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["displayName", "responsibility"]))
         );
         allow delete: if isLead(tripId) && request.auth.uid != uid;
       }
