@@ -53,8 +53,12 @@ function memberData(role: "lead" | "member", displayName: string) {
   };
 }
 
-function eventData(createdBy: string, status: "pending" | "approved") {
+function eventData(
+  createdBy: string,
+  status: "pending" | "approved" | "paused" | "completed",
+) {
   return {
+    description: "Meet in the lobby before checking in.",
     title: "Nhận phòng",
     order: 0,
     category: "stay",
@@ -201,6 +205,53 @@ describe("event boundaries", () => {
         doc(leadDb, "trips", TRIP_ID, "events", "lead-approved"),
         eventData(LEAD_ID, "approved"),
       ),
+    );
+  });
+
+  it("requires a non-empty event description", async () => {
+    const leadDb = testEnvironment.authenticatedContext(LEAD_ID).firestore();
+    const valid = eventData(LEAD_ID, "approved");
+    const { description: _description, ...withoutDescription } = valid;
+
+    await assertFails(
+      setDoc(
+        doc(leadDb, "trips", TRIP_ID, "events", "missing-description"),
+        withoutDescription,
+      ),
+    );
+    await assertFails(
+      setDoc(doc(leadDb, "trips", TRIP_ID, "events", "blank-description"), {
+        ...valid,
+        description: "",
+      }),
+    );
+    await assertSucceeds(
+      setDoc(
+        doc(leadDb, "trips", TRIP_ID, "events", "valid-description"),
+        valid,
+      ),
+    );
+  });
+
+  it("allows only the lead to pause or manually complete an event", async () => {
+    await testEnvironment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), "trips", TRIP_ID, "events", "lifecycle"),
+        eventData(LEAD_ID, "approved"),
+      );
+    });
+    const memberDb = testEnvironment.authenticatedContext(MEMBER_ID).firestore();
+    const leadDb = testEnvironment.authenticatedContext(LEAD_ID).firestore();
+    const ref = ["trips", TRIP_ID, "events", "lifecycle"] as const;
+
+    await assertFails(
+      updateDoc(doc(memberDb, ...ref), { status: "paused", updatedAt: now() }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(leadDb, ...ref), { status: "paused", updatedAt: now() }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(leadDb, ...ref), { status: "completed", updatedAt: now() }),
     );
   });
 
